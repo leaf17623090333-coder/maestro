@@ -6,6 +6,7 @@ import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
 import { output } from '../../../../infra/utils/output.ts';
 import { handleCommandError } from '../../../../domain/errors.ts';
+import { revokePlan } from '../../../../app/plans/revoke-plan.ts';
 
 export default defineCommand({
   meta: { name: 'plan-revoke', description: 'Revoke plan approval' },
@@ -18,14 +19,9 @@ export default defineCommand({
   },
   async run({ args }) {
     try {
-      const { planAdapter, featureAdapter } = getServices();
-      const wasApproved = planAdapter.isApproved(args.feature);
-      planAdapter.revokeApproval(args.feature);
-      if (wasApproved) {
-        featureAdapter.updateStatus(args.feature, 'planning');
-      }
-
-      output({ feature: args.feature }, () => `[ok] plan approval revoked`);
+      const services = getServices();
+      await revokePlan(services, args.feature);
+      output({ feature: args.feature, revoked: true }, () => `[ok] plan approval revoked`);
     } catch (err) {
       handleCommandError('plan-revoke', err);
     }
