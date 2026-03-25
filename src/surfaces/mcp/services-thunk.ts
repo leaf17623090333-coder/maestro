@@ -6,18 +6,20 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { initServices, type MaestroServices } from '../../services.ts';
+import { createContainer, type MaestroContainer } from '../../container.ts';
 import { MaestroError } from '../../domain/errors.ts';
 import type { ToolboxRegistry } from '../../infra/toolbox/registry.ts';
 import type { WorkflowRegistry } from '../../app/workflow/registry.ts';
 
+export type MaestroServices = MaestroContainer;
+
 export interface ServicesThunk {
   /** Get or initialize services. Throws if .maestro/ is missing. */
-  get(): MaestroServices;
+  get(): MaestroContainer;
   /** Check if services have been initialized. */
   isInitialized(): boolean;
   /** Force initialization (used by maestro_init after creating .maestro/). */
-  forceInit(): MaestroServices;
+  forceInit(): MaestroContainer;
 }
 
 export function createServicesThunk(
@@ -25,15 +27,19 @@ export function createServicesThunk(
   toolbox?: ToolboxRegistry,
   workflowRegistry?: WorkflowRegistry,
 ): ServicesThunk {
-  let cached: MaestroServices | null = null;
+  let cached: MaestroContainer | null = null;
 
-  function inject(services: MaestroServices): MaestroServices {
-    if (workflowRegistry) services.workflowRegistry = workflowRegistry;
-    return services;
+  function init(): MaestroContainer {
+    const container = createContainer(directory, toolbox);
+    if (workflowRegistry) {
+      // Inject workflow registry into frozen container via property override
+      return Object.freeze({ ...container, workflowRegistry });
+    }
+    return container;
   }
 
   return {
-    get(): MaestroServices {
+    get(): MaestroContainer {
       if (cached) return cached;
 
       const maestroDir = path.join(directory, '.maestro');
@@ -44,7 +50,7 @@ export function createServicesThunk(
         );
       }
 
-      cached = inject(initServices(directory, toolbox));
+      cached = init();
       return cached;
     },
 
@@ -52,8 +58,8 @@ export function createServicesThunk(
       return cached !== null;
     },
 
-    forceInit(): MaestroServices {
-      cached = inject(initServices(directory, toolbox));
+    forceInit(): MaestroContainer {
+      cached = init();
       return cached;
     },
   };
