@@ -4,8 +4,8 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { isToolAllowed } from '../../../core/settings.ts';
-import type { AgentToolsSettings } from '../../../core/settings.ts';
+import { isToolAllowed } from '../../../domain/ports/settings.ts';
+import type { AgentToolsSettings } from '../../../domain/ports/settings.ts';
 import { scanAgentTools, detectAgentTool } from './loader.ts';
 import type { AgentToolManifest, AgentToolStatus } from './types.ts';
 

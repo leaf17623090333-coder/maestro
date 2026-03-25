@@ -13,17 +13,17 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { readStdin, writeOutput, resolveProjectDir, logHookError, getSessionsDir } from './_helpers.ts';
-import { ensureDir } from '../../core/fs-io.ts';
+import { ensureDir } from '../../infra/utils/fs-io.ts';
 import { initServices } from '../../services.ts';
-import { pruneContext, type PruneContextResult } from '../../dcp/prune-context.ts';
-import { WORKER_RULES } from '../../tasks/worker-rules.ts';
-import { deriveFolderTags } from '../../memory/execution/writer.ts';
-import { extractKeywords } from '../../dcp/relevance.ts';
-import { appendDoctrineTrace } from '../../doctrine/trace.ts';
-import type { DoctrineItem } from '../../doctrine/port.ts';
-import type { TaskInfo } from '../../core/types.ts';
-import { loadSessionState, recordInjection, saveSessionState } from '../../dcp/session.ts';
-import type { RichTaskFields } from '../../tasks/port.ts';
+import { pruneContext, type PruneContextResult } from '../../app/dcp/prune-context.ts';
+import { WORKER_RULES } from '../../app/tasks/worker-rules.ts';
+import { deriveFolderTags } from '../../app/memory/execution/writer.ts';
+import { extractKeywords } from '../../app/dcp/relevance.ts';
+import { appendDoctrineTrace } from '../../app/doctrine/trace.ts';
+import type { DoctrineItem } from '../../domain/ports/doctrine.ts';
+import type { TaskInfo } from '../../domain/types.ts';
+import { loadSessionState, recordInjection, saveSessionState } from '../../app/dcp/session.ts';
+import type { RichTaskFields } from '../../domain/ports/task.ts';
 
 export { WORKER_RULES };
 

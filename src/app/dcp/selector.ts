@@ -4,11 +4,11 @@
  * Uses token estimation (chars/4) for budget accounting.
  */
 
-import type { MemoryFileWithMeta, TaskInfo } from '../../core/types.ts';
+import type { MemoryFileWithMeta, TaskInfo } from '../../domain/types.ts';
 import type { TaskWithDeps } from '../tasks/graph/dependency.ts';
 import { scoreRelevance, buildTaskContext, type ProximityContext } from './relevance.ts';
 import { buildDownstreamMap } from '../tasks/graph/proximity.ts';
-import { estimateTokens } from '../../core/tokens.ts';
+import { estimateTokens } from '../../infra/utils/tokens.ts';
 
 export interface SelectedContext {
   memories: MemoryFileWithMeta[];  // ordered by score desc, within budget

@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'bun:test';
-import { detectInstall, selfUpdate, type ExecResult } from '../../usecases/self-update.ts';
-import { MaestroError } from '../../core/errors.ts';
+import { detectInstall, selfUpdate, type ExecResult } from '../../app/usecases/self-update.ts';
+import { MaestroError } from '../../domain/errors.ts';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';

@@ -4,7 +4,7 @@
  */
 
 import type { PruneContextResult } from './prune-context.ts';
-import type { MemoryFileWithMeta } from '../../core/types.ts';
+import type { MemoryFileWithMeta } from '../../domain/types.ts';
 import { COMPONENT_REGISTRY } from './components.ts';
 import { findDuplicates } from './dedup.ts';
 

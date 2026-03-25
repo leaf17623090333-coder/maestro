@@ -4,8 +4,8 @@
 
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
-import { output } from '../../../../core/output.ts';
-import { MaestroError, handleCommandError } from '../../../../core/errors.ts';
+import { output } from '../../../../infra/utils/output.ts';
+import { MaestroError, handleCommandError } from '../../../../domain/errors.ts';
 
 export default defineCommand({
   meta: { name: 'memory-delete', description: 'Delete a memory file' },

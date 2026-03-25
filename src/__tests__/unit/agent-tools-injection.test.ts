@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'bun:test';
 
-import { AgentToolsRegistry } from '../../toolbox/agents/registry.ts';
-import { clearAgentToolCache } from '../../toolbox/agents/loader.ts';
-import type { AgentToolManifest } from '../../toolbox/agents/types.ts';
+import { AgentToolsRegistry } from '../../infra/toolbox/agents/registry.ts';
+import { clearAgentToolCache } from '../../infra/toolbox/agents/loader.ts';
+import type { AgentToolManifest } from '../../infra/toolbox/agents/types.ts';
 
 const defaultSettings = { allow: [], deny: [], config: {} };
 
@@ -87,7 +87,7 @@ describe('buildAgentToolsRegistry', () => {
   });
 
   it('builds from built-in manifests', async () => {
-    const { buildAgentToolsRegistry } = await import('../../toolbox/agents/registry.ts');
+    const { buildAgentToolsRegistry } = await import('../../infra/toolbox/agents/registry.ts');
     const registry = buildAgentToolsRegistry(defaultSettings);
     const all = registry.getAll();
     expect(all.length).toBe(4);

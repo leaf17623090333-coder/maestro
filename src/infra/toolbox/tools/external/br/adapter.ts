@@ -11,15 +11,15 @@
  * Folder-to-ID mapping stored in `.maestro/features/<name>/br-mapping.json`.
  */
 
-import type { TaskInfo, TaskStatusType } from '../../../../../core/types.ts';
-import type { TaskPort, CreateOpts, ListOpts, RichTaskFields } from '../../../../../tasks/port.ts';
-import type { VerificationReport } from '../../../../../tasks/verification/port.ts';
-import { isValidTransition, VALID_TRANSITIONS } from '../../../../../tasks/transitions.ts';
-import { MaestroError } from '../../../../../core/errors.ts';
-import { getFeaturePath, getTaskReportPath, getTaskVerificationPath, getTaskPath } from '../../../../../core/paths.ts';
-import { readJson, writeJsonAtomic, ensureDir, readText, writeText } from '../../../../../core/fs-io.ts';
+import type { TaskInfo, TaskStatusType } from '../../../../../domain/types.ts';
+import type { TaskPort, CreateOpts, ListOpts, RichTaskFields } from '../../../../../domain/ports/task.ts';
+import type { VerificationReport } from '../../../../../domain/ports/verification.ts';
+import { isValidTransition, VALID_TRANSITIONS } from '../../../../../app/tasks/transitions.ts';
+import { MaestroError } from '../../../../../domain/errors.ts';
+import { getFeaturePath, getTaskReportPath, getTaskVerificationPath, getTaskPath } from '../../../../utils/paths.ts';
+import { readJson, writeJsonAtomic, ensureDir, readText, writeText } from '../../../../utils/fs-io.ts';
 import { CliTransport } from '../../../sdk/cli-transport.ts';
-import { buildTaskFolder } from '../../../../../core/slug.ts';
+import { buildTaskFolder } from '../../../../utils/slug.ts';
 import type { AdapterContext, AdapterFactory } from '../../../types.ts';
 import * as path from 'path';
 

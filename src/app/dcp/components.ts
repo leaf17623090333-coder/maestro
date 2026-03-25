@@ -6,7 +6,7 @@
  * and never pruned. Budget overflow removes from the bottom.
  */
 
-import { estimateTokens } from '../../core/tokens.ts';
+import { estimateTokens } from '../../infra/utils/tokens.ts';
 
 export interface DcpComponent {
   /** Component identifier. */

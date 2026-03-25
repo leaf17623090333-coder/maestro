@@ -3,10 +3,10 @@
  * All methods are no-op until Codex exposes a task management API.
  */
 
-import type { TaskStatusType } from '../../../core/types.ts';
-import type { HostBackend, HostMapping } from '../../../host/port.ts';
+import type { TaskStatusType } from '../../../domain/types.ts';
+import type { HostBackend, HostMapping } from '../../../domain/ports/host.ts';
 import { readHostMapping, writeHostMapping } from './mapping.ts';
-import { getFeaturePath } from '../../../core/paths.ts';
+import { getFeaturePath } from '../../utils/paths.ts';
 
 export class CodexHostBackend implements HostBackend {
   readonly hostType = 'codex' as const;

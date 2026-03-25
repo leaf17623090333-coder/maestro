@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'bun:test';
 
-import { WorkflowRegistry } from '../../workflow/registry.ts';
+import { WorkflowRegistry } from '../../app/workflow/registry.ts';
 
 describe('WorkflowRegistry', () => {
   it('registers and retrieves tools', () => {

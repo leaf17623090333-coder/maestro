@@ -4,8 +4,8 @@ import * as path from 'path';
 import { mkdtemp, rm } from 'fs/promises';
 import { tmpdir } from 'os';
 
-import { FsMemoryAdapter } from '../../memory/adapter.ts';
-import { recordSelections } from '../../dcp/selector.ts';
+import { FsMemoryAdapter } from '../../infra/adapters/memory/adapter.ts';
+import { recordSelections } from '../../app/dcp/selector.ts';
 
 describe('memory selection tracking', () => {
   let tmpDir: string;

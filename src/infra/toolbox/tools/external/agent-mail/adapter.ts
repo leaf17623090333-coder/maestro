@@ -6,15 +6,15 @@
  * File is always written; Agent Mail is best-effort.
  */
 
-import type { HandoffPort, HandoffDocument, HandoffResult } from '../../../../../handoff/port.ts';
-import type { TaskPort, RichTaskFields } from '../../../../../tasks/port.ts';
-import type { MemoryPort } from '../../../../../memory/port.ts';
-import type { SettingsPort } from '../../../../../core/settings.ts';
-import { selectMemories } from '../../../../../dcp/selector.ts';
-import { scoreByGoal } from '../../../../../handoff/scorer.ts';
-import { resolveDcpConfig } from '../../../../../dcp/config.ts';
-import { getHandoffPath, getHandoffsPath } from '../../../../../core/paths.ts';
-import { ensureDir, writeText, readText } from '../../../../../core/fs-io.ts';
+import type { HandoffPort, HandoffDocument, HandoffResult } from '../../../../../domain/ports/handoff.ts';
+import type { TaskPort, RichTaskFields } from '../../../../../domain/ports/task.ts';
+import type { MemoryPort } from '../../../../../domain/ports/memory.ts';
+import type { SettingsPort } from '../../../../../domain/ports/settings.ts';
+import { selectMemories } from '../../../../../app/dcp/selector.ts';
+import { scoreByGoal } from '../../../../../app/handoff/scorer.ts';
+import { resolveDcpConfig } from '../../../../../app/dcp/config.ts';
+import { getHandoffPath, getHandoffsPath } from '../../../../utils/paths.ts';
+import { ensureDir, writeText, readText } from '../../../../utils/fs-io.ts';
 import { HttpTransport } from '../../../sdk/http-transport.ts';
 import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';

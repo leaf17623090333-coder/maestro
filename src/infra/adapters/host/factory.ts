@@ -2,8 +2,8 @@
  * Host backend factory -- creates the appropriate adapter based on detected host type.
  */
 
-import type { HostType } from '../../../core/host-detect.ts';
-import type { HostBackend } from '../../../host/port.ts';
+import type { HostType } from '../../utils/host-detect.ts';
+import type { HostBackend } from '../../../domain/ports/host.ts';
 import { ClaudeCodeHostBackend } from './claude-code.ts';
 import { CodexHostBackend } from './codex.ts';
 

@@ -7,15 +7,15 @@
  * revision) are never pruned; lowest-priority components drop first.
  */
 
-import { type MemoryFileWithMeta, type TaskInfo } from '../../core/types.ts';
-import type { DcpSettings, DoctrineSettings } from '../../core/settings.ts';
+import { type MemoryFileWithMeta, type TaskInfo } from '../../domain/types.ts';
+import type { DcpSettings, DoctrineSettings } from '../../domain/ports/settings.ts';
 import type { TaskWithDeps } from '../tasks/graph/dependency.ts';
-import type { DoctrineItem } from '../../doctrine/port.ts';
+import type { DoctrineItem } from '../../domain/ports/doctrine.ts';
 import { selectMemories } from './selector.ts';
 import { isExecutionMemory } from '../memory/execution/writer.ts';
 import { resolveDcpConfig } from './config.ts';
 import { resolveDoctrineConfig } from '../doctrine/config.ts';
-import { estimateTokens } from '../../core/tokens.ts';
+import { estimateTokens } from '../../infra/utils/tokens.ts';
 import { pruneComponents } from './components.ts';
 
 export interface PruneContextParams {

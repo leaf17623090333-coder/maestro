@@ -11,7 +11,7 @@
 
 import type { PipelineStage } from './workflow.ts';
 import type { WorkflowRegistry } from './registry.ts';
-import type { ToolboxRegistry } from '../../toolbox/registry.ts';
+import type { ToolboxRegistry } from '../../infra/toolbox/registry.ts';
 import { discoverExternalSkillsByStage } from '../skills/external-discovery.ts';
 
 export interface Playbook {

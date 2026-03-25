@@ -4,9 +4,9 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { parseFrontmatterRich } from '../../core/frontmatter.ts';
-import { ensureDir } from '../../core/fs-io.ts';
-import { MaestroError } from '../../core/errors.ts';
+import { parseFrontmatterRich } from '../../infra/utils/frontmatter.ts';
+import { ensureDir } from '../../infra/utils/fs-io.ts';
+import { MaestroError } from '../../domain/errors.ts';
 
 export interface InstallResult {
   name: string;

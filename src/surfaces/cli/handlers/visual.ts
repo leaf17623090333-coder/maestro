@@ -1,11 +1,11 @@
 import { defineCommand } from 'citty';
 import { getServices } from '../../../services.ts';
-import { visualize } from '../../../visual/visualize.ts';
-import type { MaestroVisualType, VisualResult } from '../../../visual/types.ts';
-import { MAESTRO_VISUAL_TYPES } from '../../../visual/types.ts';
-import { output } from '../../../core/output.ts';
-import { handleCommandError } from '../../../core/errors.ts';
-import { requireFeature, FEATURE_HINT } from '../../../core/resolve.ts';
+import { visualize } from '../../../app/visual/visualize.ts';
+import type { MaestroVisualType, VisualResult } from '../../../app/visual/types.ts';
+import { MAESTRO_VISUAL_TYPES } from '../../../app/visual/types.ts';
+import { output } from '../../../infra/utils/output.ts';
+import { handleCommandError } from '../../../domain/errors.ts';
+import { requireFeature, FEATURE_HINT } from '../../../infra/utils/resolve.ts';
 
 function formatResult(result: VisualResult): string {
   const lines: string[] = [];

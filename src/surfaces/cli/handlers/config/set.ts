@@ -6,10 +6,10 @@
 import * as path from 'path';
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
-import { output } from '../../../../core/output.ts';
-import { handleCommandError } from '../../../../core/errors.ts';
-import { ensureDir, writeJsonAtomic, readJson } from '../../../../core/fs-io.ts';
-import { setNestedValue } from '../../../../core/object-utils.ts';
+import { output } from '../../../../infra/utils/output.ts';
+import { handleCommandError } from '../../../../domain/errors.ts';
+import { ensureDir, writeJsonAtomic, readJson } from '../../../../infra/utils/fs-io.ts';
+import { setNestedValue } from '../../../../infra/utils/object-utils.ts';
 import { homedir } from 'os';
 
 export default defineCommand({

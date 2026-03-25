@@ -4,9 +4,9 @@
 
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
-import { output } from '../../../../core/output.ts';
-import { renderTable } from '../../../../core/output.ts';
-import { handleCommandError } from '../../../../core/errors.ts';
+import { output } from '../../../../infra/utils/output.ts';
+import { renderTable } from '../../../../infra/utils/output.ts';
+import { handleCommandError } from '../../../../domain/errors.ts';
 
 export default defineCommand({
   meta: { name: 'feature-list', description: 'List all features' },

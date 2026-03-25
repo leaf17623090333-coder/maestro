@@ -4,7 +4,7 @@
  * Gracefully degrades when search is unavailable.
  */
 
-import type { SearchPort } from '../../search/port.ts';
+import type { SearchPort } from '../../domain/ports/search.ts';
 
 export interface SearchOpts {
   agent?: string;

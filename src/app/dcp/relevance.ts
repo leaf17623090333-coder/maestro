@@ -3,7 +3,7 @@
  * Deterministic, no LLM calls. All factors normalized to 0.0-1.0.
  */
 
-import type { MemoryFileWithMeta, TaskInfo } from '../../core/types.ts';
+import type { MemoryFileWithMeta, TaskInfo } from '../../domain/types.ts';
 import { extractSourceTask, scoreDependencyProximity } from '../tasks/graph/proximity.ts';
 
 const STOPWORDS = new Set([

@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { findProjectRoot } from '../../features/detection.ts';
-import { ensureDir } from '../../core/fs-io.ts';
+import { findProjectRoot } from '../../infra/adapters/features/detection.ts';
+import { ensureDir } from '../../infra/utils/fs-io.ts';
 
 /** Parse JSON from stdin. Returns {} on parse failure. */
 export async function readStdin(): Promise<Record<string, unknown>> {
@@ -45,7 +45,7 @@ export const HOOK_EVENTS = {
 } as const;
 export type HookEventName = typeof HOOK_EVENTS[keyof typeof HOOK_EVENTS];
 
-import { getSessionsDir, EVENTS_FILE } from '../../core/paths.ts';
+import { getSessionsDir, EVENTS_FILE } from '../../infra/utils/paths.ts';
 export { getSessionsDir, EVENTS_FILE };
 
 /** Log error to hook error log (best-effort). */

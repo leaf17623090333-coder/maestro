@@ -3,13 +3,13 @@
  */
 
 import { defineCommand } from 'citty';
-import { output } from '../../../core/output.ts';
-import { handleCommandError } from '../../../core/errors.ts';
-import { getMaestroPath } from '../../../core/paths.ts';
-import { ensureDir } from '../../../core/fs-io.ts';
-import { findProjectRoot } from '../../../features/detection.ts';
-import { resolveTaskBackend } from '../../../core/resolve-backend.ts';
-import { FsSettingsAdapter } from '../../../core/settings-adapter.ts';
+import { output } from '../../../infra/utils/output.ts';
+import { handleCommandError } from '../../../domain/errors.ts';
+import { getMaestroPath } from '../../../infra/utils/paths.ts';
+import { ensureDir } from '../../../infra/utils/fs-io.ts';
+import { findProjectRoot } from '../../../infra/adapters/features/detection.ts';
+import { resolveTaskBackend } from '../../../infra/utils/resolve-backend.ts';
+import { FsSettingsAdapter } from '../../../infra/settings/adapter.ts';
 import * as fs from 'fs';
 import * as path from 'path';
 

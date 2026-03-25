@@ -4,8 +4,8 @@ import {
   scanAgentTools,
   detectAgentTool,
   clearAgentToolCache,
-} from '../../toolbox/agents/loader.ts';
-import type { AgentToolManifest } from '../../toolbox/agents/types.ts';
+} from '../../infra/toolbox/agents/loader.ts';
+import type { AgentToolManifest } from '../../infra/toolbox/agents/types.ts';
 
 describe('scanAgentTools', () => {
   it('finds the 4 built-in agent tool manifests', () => {

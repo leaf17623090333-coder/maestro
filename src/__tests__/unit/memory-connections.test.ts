@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import { FsMemoryAdapter } from '../../memory/adapter.ts';
+import { FsMemoryAdapter } from '../../infra/adapters/memory/adapter.ts';
 
 describe('memory connections', () => {
   let tmpDir: string;

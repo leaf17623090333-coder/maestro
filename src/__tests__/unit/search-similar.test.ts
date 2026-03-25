@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import { FsSearchAdapter } from '../../search/fs-adapter.ts';
+import { FsSearchAdapter } from '../../infra/adapters/search/fs-adapter.ts';
 
 describe('FsSearchAdapter.searchSimilar', () => {
   let tmpDir: string;

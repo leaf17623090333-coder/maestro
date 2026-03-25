@@ -3,12 +3,12 @@
  * Updated for 6-state model (pending/claimed/done/blocked/review/revision).
  */
 
-import type { TaskInfo, TaskStatusType, TaskOrigin } from '../../core/types.ts';
-import type { TaskPort, CreateOpts, ListOpts } from '../../tasks/port.ts';
-import { isDependencySatisfied } from '../../tasks/transitions.ts';
-import type { VerificationReport } from '../../tasks/verification/port.ts';
-import { MaestroError } from '../../core/errors.ts';
-import { buildTaskFolder } from '../../core/slug.ts';
+import type { TaskInfo, TaskStatusType, TaskOrigin } from '../../domain/types.ts';
+import type { TaskPort, CreateOpts, ListOpts } from '../../domain/ports/task.ts';
+import { isDependencySatisfied } from '../../app/tasks/transitions.ts';
+import type { VerificationReport } from '../../domain/ports/verification.ts';
+import { MaestroError } from '../../domain/errors.ts';
+import { buildTaskFolder } from '../../infra/utils/slug.ts';
 
 interface StoredTask extends TaskInfo {
   description?: string;

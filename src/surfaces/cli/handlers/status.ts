@@ -4,11 +4,11 @@
 
 import { defineCommand } from 'citty';
 import { getServices } from '../../../services.ts';
-import { checkStatus, type StatusResult } from '../../../workflow/status.ts';
-import { output, renderStatusLine } from '../../../core/output.ts';
-import { handleCommandError } from '../../../core/errors.ts';
-import { requireFeature, FEATURE_HINT } from '../../../core/resolve.ts';
-import { truncateList, formatTruncation } from '../../../core/truncation.ts';
+import { checkStatus, type StatusResult } from '../../../app/workflow/status.ts';
+import { output, renderStatusLine } from '../../../infra/utils/output.ts';
+import { handleCommandError } from '../../../domain/errors.ts';
+import { requireFeature, FEATURE_HINT } from '../../../infra/utils/resolve.ts';
+import { truncateList, formatTruncation } from '../../../infra/utils/truncation.ts';
 
 function formatStatus(result: StatusResult): string {
   const lines: string[] = [];

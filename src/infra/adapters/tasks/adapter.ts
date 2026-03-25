@@ -9,10 +9,10 @@
  *       report.md     -- task completion report
  */
 
-import type { TaskInfo, TaskStatus } from '../../../core/types.ts';
-import type { TaskPort, CreateOpts, ListOpts, RichTaskFields } from '../../../tasks/port.ts';
-import { isDependencySatisfied } from '../../../tasks/transitions.ts';
-import { MaestroError } from '../../../core/errors.ts';
+import type { TaskInfo, TaskStatus } from '../../../domain/types.ts';
+import type { TaskPort, CreateOpts, ListOpts, RichTaskFields } from '../../../domain/ports/task.ts';
+import { isDependencySatisfied } from '../../../app/tasks/transitions.ts';
+import { MaestroError } from '../../../domain/errors.ts';
 import {
   getTasksPath,
   getTaskPath,
@@ -20,12 +20,12 @@ import {
   getTaskSpecPath,
   getTaskReportPath,
   getTaskVerificationPath,
-} from '../../../core/paths.ts';
-import type { VerificationReport } from '../../../tasks/verification/port.ts';
-import { ensureDir, readJson, readText, writeText } from '../../../core/fs-io.ts';
-import { writeJsonAtomic } from '../../../core/fs-io.ts';
-import { buildTaskFolder } from '../../../core/slug.ts';
-import { extractDesignNotes, extractAcceptanceCriteria } from '../../../tasks/bead-builder.ts';
+} from '../../utils/paths.ts';
+import type { VerificationReport } from '../../../domain/ports/verification.ts';
+import { ensureDir, readJson, readText, writeText } from '../../utils/fs-io.ts';
+import { writeJsonAtomic } from '../../utils/fs-io.ts';
+import { buildTaskFolder } from '../../utils/slug.ts';
+import { extractDesignNotes, extractAcceptanceCriteria } from '../../../app/tasks/bead-builder.ts';
 import * as fs from 'fs';
 
 export class FsTaskAdapter implements TaskPort {

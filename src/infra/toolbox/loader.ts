@@ -5,7 +5,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { execFileSync } from 'node:child_process';
-import { isToolAllowed } from '../../core/settings.ts';
+import { isToolAllowed } from '../../domain/ports/settings.ts';
 import type { ToolManifest, ToolStatus } from './types.ts';
 import type { TransportType } from './sdk/types.ts';
 

@@ -4,13 +4,13 @@
  */
 
 import type { VerificationReport } from '../tasks/verification/port.ts';
-import type { MemoryPort } from '../../../memory/port.ts';
+import type { MemoryPort } from '../../../domain/ports/memory.ts';
 import type { DoctrinePort } from '../doctrine/port.ts';
-import type { TaskInfo } from '../../../core/types.ts';
+import type { TaskInfo } from '../../../domain/types.ts';
 import { extractKeywords } from '../../dcp/relevance.ts';
-import { formatDurationMinutes } from '../../../core/time-utils.ts';
-import { prependMetadataFrontmatter } from '../../../core/frontmatter.ts';
-import { getChangedFilesSince } from '../../../core/git.ts';
+import { formatDurationMinutes } from '../../../infra/utils/time-utils.ts';
+import { prependMetadataFrontmatter } from '../../../infra/utils/frontmatter.ts';
+import { getChangedFilesSince } from '../../../infra/utils/git.ts';
 import { readDoctrineTrace, collectDoctrineNames } from '../../doctrine/trace.ts';
 
 export const EXEC_MEMORY_PREFIX = 'exec-';

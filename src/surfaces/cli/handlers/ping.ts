@@ -4,9 +4,9 @@
 
 import { defineCommand } from 'citty';
 import { getServices } from '../../../services.ts';
-import { ping, type PingResult } from '../../../workflow/ping.ts';
-import { output, renderStatusLine } from '../../../core/output.ts';
-import { handleCommandError } from '../../../core/errors.ts';
+import { ping, type PingResult } from '../../../app/workflow/ping.ts';
+import { output, renderStatusLine } from '../../../infra/utils/output.ts';
+import { handleCommandError } from '../../../domain/errors.ts';
 
 function formatPing(result: PingResult): string {
   const lines: string[] = [];

@@ -4,9 +4,9 @@
 
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
-import { output, renderTable } from '../../../../core/output.ts';
-import { handleCommandError } from '../../../../core/errors.ts';
-import { requireGraphPort } from '../../../../core/resolve.ts';
+import { output, renderTable } from '../../../../infra/utils/output.ts';
+import { handleCommandError } from '../../../../domain/errors.ts';
+import { requireGraphPort } from '../../../../infra/utils/resolve.ts';
 
 export default defineCommand({
   meta: { name: 'graph-insights', description: 'Show dependency graph metrics' },

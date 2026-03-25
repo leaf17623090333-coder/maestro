@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'bun:test';
 
-import { CliTransport } from '../../toolbox/sdk/cli-transport.ts';
-import { inferTransport } from '../../toolbox/loader.ts';
-import type { ToolManifest } from '../../toolbox/types.ts';
+import { CliTransport } from '../../infra/toolbox/sdk/cli-transport.ts';
+import { inferTransport } from '../../infra/toolbox/loader.ts';
+import type { ToolManifest } from '../../infra/toolbox/types.ts';
 
 // ============================================================================
 // CliTransport

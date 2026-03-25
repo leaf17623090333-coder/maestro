@@ -3,8 +3,8 @@ import {
   scoreDependencyProximity,
   extractSourceTask,
   buildDownstreamMap,
-} from '../../tasks/graph/proximity.ts';
-import type { TaskWithDeps } from '../../tasks/graph/dependency.ts';
+} from '../../app/tasks/graph/proximity.ts';
+import type { TaskWithDeps } from '../../app/tasks/graph/dependency.ts';
 
 /**
  * Build task list. `id` defaults to `folder` (already a slug).

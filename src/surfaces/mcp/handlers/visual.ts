@@ -3,10 +3,10 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ServicesThunk } from '../services-thunk.ts';
 import { respond, withErrorHandling } from '../respond.ts';
 import { ANNOTATIONS_MUTATING } from '../annotations.ts';
-import { requireFeature } from '../../../core/resolve.ts';
+import { requireFeature } from '../../../infra/utils/resolve.ts';
 import { featureParam } from '../params.ts';
-import { visualize } from '../../../visual/visualize.ts';
-import { debugVisualize } from '../../../visual/debug-visualize.ts';
+import { visualize } from '../../../app/visual/visualize.ts';
+import { debugVisualize } from '../../../app/visual/debug-visualize.ts';
 
 export function registerVisualTools(server: McpServer, thunk: ServicesThunk): void {
   server.registerTool(

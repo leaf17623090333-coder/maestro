@@ -5,8 +5,8 @@ import {
   formatWarning,
   formatSuggestion,
   formatHint,
-} from '../../core/errors.ts';
-import { truncateList, formatTruncation } from "../../core/truncation";
+} from '../../domain/errors.ts';
+import { truncateList, formatTruncation } from "../../infra/utils/truncation.ts";
 
 describe("MaestroError", () => {
   test("constructs with message only", () => {

@@ -3,8 +3,8 @@
  */
 
 import type { AdapterContext, ToolManifest } from '../types.ts';
-import type { MaestroSettings } from '../../../core/settings.ts';
-import { DEFAULT_SETTINGS } from '../../../core/settings.ts';
+import type { MaestroSettings } from '../../../domain/ports/settings.ts';
+import { DEFAULT_SETTINGS } from '../../../domain/ports/settings.ts';
 
 // ============================================================================
 // Mock CLI Transport

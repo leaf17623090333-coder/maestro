@@ -4,7 +4,7 @@
  */
 
 import type { WorkflowRegistry, ToolWorkflowMeta } from './registry.ts';
-import type { ToolboxRegistry } from '../../toolbox/registry.ts';
+import type { ToolboxRegistry } from '../../infra/toolbox/registry.ts';
 import type { PipelineStage } from './stages.ts';
 
 export interface RecommendationContext {

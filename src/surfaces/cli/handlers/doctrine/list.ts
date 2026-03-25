@@ -4,10 +4,10 @@
 
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
-import { output } from '../../../../core/output.ts';
-import { handleCommandError } from '../../../../core/errors.ts';
-import { requireDoctrinePort } from '../../../../core/resolve.ts';
-import type { DoctrineStatus } from '../../../../doctrine/port.ts';
+import { output } from '../../../../infra/utils/output.ts';
+import { handleCommandError } from '../../../../domain/errors.ts';
+import { requireDoctrinePort } from '../../../../infra/utils/resolve.ts';
+import type { DoctrineStatus } from '../../../../domain/ports/doctrine.ts';
 
 export default defineCommand({
   meta: { name: 'doctrine-list', description: 'List doctrine items' },

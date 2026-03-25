@@ -3,10 +3,10 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ServicesThunk } from '../services-thunk.ts';
 import { respond, withErrorHandling } from '../respond.ts';
 import { ANNOTATIONS_READONLY, ANNOTATIONS_MUTATING } from '../annotations.ts';
-import { requireDoctrinePort } from '../../../core/resolve.ts';
-import { buildDoctrineItem } from '../../../doctrine/factory.ts';
-import { MaestroError } from '../../../core/errors.ts';
-import { suggestDoctrine } from '../../../doctrine/suggest.ts';
+import { requireDoctrinePort } from '../../../infra/utils/resolve.ts';
+import { buildDoctrineItem } from '../../../app/doctrine/factory.ts';
+import { MaestroError } from '../../../domain/errors.ts';
+import { suggestDoctrine } from '../../../app/doctrine/suggest.ts';
 
 export function registerDoctrineTools(server: McpServer, thunk: ServicesThunk): void {
   // Mutating: write | approve | suggest | deprecate

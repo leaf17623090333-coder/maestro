@@ -4,9 +4,9 @@
 
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
-import { writePlan } from '../../../../plans/write-plan.ts';
-import { output } from '../../../../core/output.ts';
-import { handleCommandError, MaestroError } from '../../../../core/errors.ts';
+import { writePlan } from '../../../../app/plans/write-plan.ts';
+import { output } from '../../../../infra/utils/output.ts';
+import { handleCommandError, MaestroError } from '../../../../domain/errors.ts';
 import * as fs from 'fs';
 
 export default defineCommand({

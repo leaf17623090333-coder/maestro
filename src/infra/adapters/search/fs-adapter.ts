@@ -5,9 +5,9 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { getSessionsDir, EVENTS_FILE } from '../../../core/paths.ts';
-import type { SearchPort, SessionSearchResult } from '../../../search/port.ts';
-import { extractKeywords } from '../../../dcp/relevance.ts';
+import { getSessionsDir, EVENTS_FILE } from '../../utils/paths.ts';
+import type { SearchPort, SessionSearchResult } from '../../../domain/ports/search.ts';
+import { extractKeywords } from '../../../app/dcp/relevance.ts';
 
 export class FsSearchAdapter implements SearchPort {
   private eventsPath: string;

@@ -4,10 +4,10 @@
  */
 
 import type { MaestroServices } from '../../services.ts';
-import type { DoctrinePort } from '../../doctrine/port.ts';
-import type { GraphPort } from '../../tasks/graph/port.ts';
-import type { HandoffPort } from '../../handoff/port.ts';
-import type { SearchPort } from '../../search/port.ts';
+import type { DoctrinePort } from '../../domain/ports/doctrine.ts';
+import type { GraphPort } from '../../domain/ports/graph.ts';
+import type { HandoffPort } from '../../domain/ports/handoff.ts';
+import type { SearchPort } from '../../domain/ports/search.ts';
 import { MaestroError } from '../../domain/errors.ts';
 
 /**

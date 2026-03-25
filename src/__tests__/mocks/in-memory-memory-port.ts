@@ -2,10 +2,10 @@
  * InMemoryMemoryPort -- mock MemoryPort for unit testing (including DCP).
  */
 
-import type { MemoryFile, MemoryFileWithMeta, MemoryMetadata } from '../../core/types.ts';
-import type { MemoryPort } from '../../memory/port.ts';
-import { parseFrontmatterRich, stripFrontmatter, serializeFrontmatter } from '../../core/frontmatter.ts';
-import { inferMetadata } from '../../memory/execution/inference.ts';
+import type { MemoryFile, MemoryFileWithMeta, MemoryMetadata } from '../../domain/types.ts';
+import type { MemoryPort } from '../../domain/ports/memory.ts';
+import { parseFrontmatterRich, stripFrontmatter, serializeFrontmatter } from '../../infra/utils/frontmatter.ts';
+import { inferMetadata } from '../../app/memory/execution/inference.ts';
 
 interface StoredMemory {
   name: string;
@@ -144,7 +144,7 @@ export class InMemoryMemoryPort implements MemoryPort {
     return parsed !== null && parsed.compressed === true;
   }
 
-  readFull(featureName: string, fileName: string): import('../../core/types.ts').MemoryFileWithMeta | null {
+  readFull(featureName: string, fileName: string): import('../../domain/types.ts').MemoryFileWithMeta | null {
     const name = fileName.replace(/\.md$/, '');
     return this.listWithMeta(featureName).find(f => f.name === name) ?? null;
   }

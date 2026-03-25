@@ -3,18 +3,18 @@
  * Composite query for feature, plan, tasks, and context.
  */
 
-import type { TaskPort } from '../../tasks/port.ts';
-import type { FeaturePort } from '../../features/port.ts';
-import type { PlanPort } from '../../plans/port.ts';
-import type { MemoryPort } from '../../memory/port.ts';
-import type { GraphPort } from '../../tasks/graph/port.ts';
-import type { SearchPort } from '../../search/port.ts';
-import type { HandoffPort } from '../../handoff/port.ts';
+import type { TaskPort } from '../../domain/ports/task.ts';
+import type { FeaturePort } from '../../domain/ports/feature.ts';
+import type { PlanPort } from '../../domain/ports/plan.ts';
+import type { MemoryPort } from '../../domain/ports/memory.ts';
+import type { GraphPort } from '../../domain/ports/graph.ts';
+import type { SearchPort } from '../../domain/ports/search.ts';
+import type { HandoffPort } from '../../domain/ports/handoff.ts';
 import { countTaskStatuses, getNextAction } from './stages.ts';
 import { computeRunnableAndBlocked } from '../tasks/graph/dependency.ts';
-import { MaestroError } from '../../core/errors.ts';
-import type { SettingsPort } from '../../core/settings.ts';
-import { type TaskInfo, type FeatureStatusType, type PlanComment } from '../../core/types.ts';
+import { MaestroError } from '../../domain/errors.ts';
+import type { SettingsPort } from '../../domain/ports/settings.ts';
+import { type TaskInfo, type FeatureStatusType, type PlanComment } from '../../domain/types.ts';
 import { resolveDcpConfig } from '../dcp/config.ts';
 
 export interface StatusServices {

@@ -3,8 +3,8 @@
  */
 
 import * as path from 'node:path';
-import { ensureDir, writeText } from '../../core/fs-io.ts';
-import { MaestroError } from '../../core/errors.ts';
+import { ensureDir, writeText } from '../../infra/utils/fs-io.ts';
+import { MaestroError } from '../../domain/errors.ts';
 import * as fs from 'node:fs';
 
 export interface CreateResult {

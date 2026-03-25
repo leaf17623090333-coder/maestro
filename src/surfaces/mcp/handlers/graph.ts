@@ -9,7 +9,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ServicesThunk } from '../services-thunk.ts';
 import { respond, withErrorHandling } from '../respond.ts';
 import { ANNOTATIONS_READONLY, ANNOTATIONS_MUTATING } from '../annotations.ts';
-import { requireGraphPort, requireFeature } from '../../../core/resolve.ts';
+import { requireGraphPort, requireFeature } from '../../../infra/utils/resolve.ts';
 import { featureParam } from '../params.ts';
 
 export function registerGraphTools(server: McpServer, thunk: ServicesThunk): void {

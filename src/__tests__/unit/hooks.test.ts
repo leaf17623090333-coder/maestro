@@ -8,7 +8,7 @@ import {
   writeOutput,
   getSessionsDir,
   type HookEventName,
-} from '../../hooks/_helpers.ts';
+} from '../../surfaces/hooks/_helpers.ts';
 
 // ---------------------------------------------------------------------------
 // _helpers.ts -- HOOK_EVENTS
@@ -123,7 +123,7 @@ describe('pretooluse hook (via subprocess)', () => {
   let tmpDir: string;
   const pretoolPath = path.resolve(
     import.meta.dir,
-    '../../hooks/pretooluse.ts',
+    '../../surfaces/hooks/pretooluse.ts',
   );
 
   beforeEach(() => {

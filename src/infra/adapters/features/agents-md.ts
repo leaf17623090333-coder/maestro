@@ -5,10 +5,10 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { fileExists, readText, writeText } from '../../../core/fs-io.ts';
-import type { MemoryFile } from '../../../core/types.ts';
+import { fileExists, readText, writeText } from '../../utils/fs-io.ts';
+import type { MemoryFile } from '../../../domain/types.ts';
 import type { FsMemoryAdapter } from '../memory/adapter.ts';
-import { checkCli } from '../../../core/cli-detect.ts';
+import { checkCli } from '../../utils/cli-detect.ts';
 
 export interface InitResult {
   content: string;

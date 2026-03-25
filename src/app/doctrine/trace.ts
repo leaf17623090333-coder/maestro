@@ -6,8 +6,8 @@
  */
 
 import * as path from 'path';
-import { readJson, writeJsonAtomic } from '../../core/fs-io.ts';
-import { getTaskPath } from '../../core/paths.ts';
+import { readJson, writeJsonAtomic } from '../../infra/utils/fs-io.ts';
+import { getTaskPath } from '../../infra/utils/paths.ts';
 
 export interface DoctrineTraceEntry {
   revision: number;

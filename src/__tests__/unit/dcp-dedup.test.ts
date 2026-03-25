@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'bun:test';
-import { findDuplicates } from '../../dcp/dedup.ts';
-import type { MemoryFileWithMeta } from '../../core/types.ts';
+import { findDuplicates } from '../../app/dcp/dedup.ts';
+import type { MemoryFileWithMeta } from '../../domain/types.ts';
 
 function makeMemory(name: string, bodyContent: string): MemoryFileWithMeta {
   return {

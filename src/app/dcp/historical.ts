@@ -6,13 +6,13 @@
  * Deterministic, no LLM calls.
  */
 
-import type { FeaturePort } from '../../features/port.ts';
-import type { MemoryPort } from '../../memory/port.ts';
-import type { MemoryFileWithMeta } from '../../core/types.ts';
+import type { FeaturePort } from '../../domain/ports/feature.ts';
+import type { MemoryPort } from '../../domain/ports/memory.ts';
+import type { MemoryFileWithMeta } from '../../domain/types.ts';
 import { isExecutionMemory } from '../memory/execution/writer.ts';
 import { parseExecMemory, type ParsedExecMemory, groupByTagCluster, listRecentFeatures } from '../memory/execution/parser.ts';
 import { extractKeywords, TAG_WEIGHT, KEYWORD_WEIGHT } from './relevance.ts';
-import { formatDurationMinutes, parseDurationMinutes } from '../../core/time-utils.ts';
+import { formatDurationMinutes, parseDurationMinutes } from '../../infra/utils/time-utils.ts';
 
 export interface HistoricalPitfall {
   pattern: string;

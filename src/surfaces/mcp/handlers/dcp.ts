@@ -9,15 +9,15 @@ import type { MaestroServices } from '../../../services.ts';
 import type { ServicesThunk } from '../services-thunk.ts';
 import { respond, withErrorHandling } from '../respond.ts';
 import { ANNOTATIONS_READONLY } from '../annotations.ts';
-import { requireFeature } from '../../../core/resolve.ts';
+import { requireFeature } from '../../../infra/utils/resolve.ts';
 import { featureParam, taskParam } from '../params.ts';
-import { pruneContext } from '../../../dcp/prune-context.ts';
-import { resolveDcpConfig, type ResolvedDcpConfig } from '../../../dcp/config.ts';
-import { WORKER_RULES } from '../../../tasks/worker-rules.ts';
-import { collectMetrics, formatMetricsSummary } from '../../../dcp/metrics.ts';
-import { COMPONENT_REGISTRY } from '../../../dcp/components.ts';
-import { DEFAULT_SETTINGS } from '../../../core/settings.ts';
-import type { TaskInfo, MemoryFileWithMeta } from '../../../core/types.ts';
+import { pruneContext } from '../../../app/dcp/prune-context.ts';
+import { resolveDcpConfig, type ResolvedDcpConfig } from '../../../app/dcp/config.ts';
+import { WORKER_RULES } from '../../../app/tasks/worker-rules.ts';
+import { collectMetrics, formatMetricsSummary } from '../../../app/dcp/metrics.ts';
+import { COMPONENT_REGISTRY } from '../../../app/dcp/components.ts';
+import { DEFAULT_SETTINGS } from '../../../domain/ports/settings.ts';
+import type { TaskInfo, MemoryFileWithMeta } from '../../../domain/types.ts';
 
 interface DcpContext {
   feature: string;

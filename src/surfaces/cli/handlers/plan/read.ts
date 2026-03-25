@@ -4,8 +4,8 @@
 
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
-import { output } from '../../../../core/output.ts';
-import { handleCommandError, MaestroError } from '../../../../core/errors.ts';
+import { output } from '../../../../infra/utils/output.ts';
+import { handleCommandError, MaestroError } from '../../../../domain/errors.ts';
 
 export default defineCommand({
   meta: { name: 'plan-read', description: 'Read feature plan' },

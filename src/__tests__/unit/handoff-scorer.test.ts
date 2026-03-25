@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'bun:test';
-import { scoreByGoal } from '../../handoff/scorer.ts';
-import type { MemoryFileWithMeta } from '../../core/types.ts';
+import { scoreByGoal } from '../../app/handoff/scorer.ts';
+import type { MemoryFileWithMeta } from '../../domain/types.ts';
 
 function makeMemory(
   name: string,

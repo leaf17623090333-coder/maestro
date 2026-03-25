@@ -3,13 +3,13 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ServicesThunk } from '../services-thunk.ts';
 import { respond, withErrorHandling } from '../respond.ts';
 import { ANNOTATIONS_READONLY, ANNOTATIONS_MUTATING } from '../annotations.ts';
-import { requireFeature } from '../../../core/resolve.ts';
+import { requireFeature } from '../../../infra/utils/resolve.ts';
 import { featureParam } from '../params.ts';
-import { writePlan } from '../../../plans/write-plan.ts';
-import { approvePlan } from '../../../plans/approve-plan.ts';
-import { MaestroError } from '../../../core/errors.ts';
-import { buildTransitionHint } from '../../../workflow/playbook.ts';
-import { extractPlanOutline } from '../../../plans/parser.ts';
+import { writePlan } from '../../../app/plans/write-plan.ts';
+import { approvePlan } from '../../../app/plans/approve-plan.ts';
+import { MaestroError } from '../../../domain/errors.ts';
+import { buildTransitionHint } from '../../../app/workflow/playbook.ts';
+import { extractPlanOutline } from '../../../app/plans/parser.ts';
 
 export function registerPlanTools(server: McpServer, thunk: ServicesThunk): void {
   // Mutating: write | approve | revoke | comment | comments_clear

@@ -5,7 +5,7 @@
  * Scoring: 40% keyword overlap, 25% category, 20% recency, 15% priority.
  */
 
-import type { MemoryFileWithMeta } from '../../core/types.ts';
+import type { MemoryFileWithMeta } from '../../domain/types.ts';
 import { extractKeywords, scorePriority } from '../dcp/relevance.ts';
 
 export interface ScoredMemory {

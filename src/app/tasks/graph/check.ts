@@ -3,9 +3,9 @@
  */
 
 import { buildEffectiveDependencies } from './dependency.ts';
-import type { TaskPort } from '../../../tasks/port.ts';
+import type { TaskPort } from '../../../domain/ports/task.ts';
 import { isDependencySatisfied } from '../transitions.ts';
-import type { TaskInfo, TaskStatusType } from '../../../core/types.ts';
+import type { TaskInfo, TaskStatusType } from '../../../domain/types.ts';
 
 /**
  * Check if a task's dependencies are satisfied.

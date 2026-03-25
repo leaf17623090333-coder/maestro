@@ -1,5 +1,5 @@
-import type { DoctrineStatus } from '../../../doctrine/port.ts';
-import type { TemplateRenderer, DoctrineNetworkData } from '../../../visual/types.ts';
+import type { DoctrineStatus } from '../../../domain/ports/doctrine.ts';
+import type { TemplateRenderer, DoctrineNetworkData } from '../../../app/visual/types.ts';
 import { escapeHtml, sanitizeMermaidLabel } from '../renderer.ts';
 import { MERMAID_CDN, ZOOM_CONTROLS_SCRIPT, ZOOM_CONTROLS_HTML } from '../css.ts';
 

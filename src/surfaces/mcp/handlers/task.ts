@@ -3,17 +3,17 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ServicesThunk } from '../services-thunk.ts';
 import { respond, withErrorHandling } from '../respond.ts';
 import { ANNOTATIONS_READONLY, ANNOTATIONS_MUTATING } from '../annotations.ts';
-import { requireFeature } from '../../../core/resolve.ts';
+import { requireFeature } from '../../../infra/utils/resolve.ts';
 import { featureParam, taskParam } from '../params.ts';
-import { syncPlan } from '../../../tasks/sync-plan.ts';
-import { translatePlan } from '../../../tasks/translate-plan.ts';
-import { verifyTask } from '../../../tasks/verify-task.ts';
-import { resolveVerificationConfig } from '../../../tasks/verification/config.ts';
-import type { ListOpts, TaskPort } from '../../../tasks/port.ts';
-import type { TaskStatusType } from '../../../core/types.ts';
-import { writeExecutionMemory } from '../../../memory/execution/writer.ts';
-import { buildTransitionHint, type TransitionHint } from '../../../workflow/playbook.ts';
-import { taskBrief } from '../../../tasks/task-brief.ts';
+import { syncPlan } from '../../../app/tasks/sync-plan.ts';
+import { translatePlan } from '../../../app/tasks/translate-plan.ts';
+import { verifyTask } from '../../../app/tasks/verify-task.ts';
+import { resolveVerificationConfig } from '../../../infra/adapters/tasks/verification-config.ts';
+import type { ListOpts, TaskPort } from '../../../domain/ports/task.ts';
+import type { TaskStatusType } from '../../../domain/types.ts';
+import { writeExecutionMemory } from '../../../app/memory/execution/writer.ts';
+import { buildTransitionHint, type TransitionHint } from '../../../app/workflow/playbook.ts';
+import { taskBrief } from '../../../app/tasks/task-brief.ts';
 
 async function maybeFinalTaskHint(
   taskPort: TaskPort, feature: string, tool: 'task_done' | 'task_accept',
@@ -92,7 +92,7 @@ export function registerTaskTools(server: McpServer, thunk: ServicesThunk): void
             });
             const acceptedTask = await services.taskPort.done(feature, input.task, input.summary);
             try {
-              const { prependMetadataFrontmatter } = await import('../../../core/frontmatter.ts');
+              const { prependMetadataFrontmatter } = await import('../../../infra/utils/frontmatter.ts');
               const body = `Task ${input.task} auto-accepted after ${vConfig.maxRevisions} revision(s). Score: ${result.report.score.toFixed(2)}`;
               services.memoryAdapter.write(feature, `verification-auto-accept-${input.task}`,
                 prependMetadataFrontmatter(body, { tags: ['verification', 'auto-accept'], category: 'debug', priority: 1 }));

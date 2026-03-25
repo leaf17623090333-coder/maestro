@@ -4,7 +4,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { MaestroError } from '../../core/errors.ts';
+import { MaestroError } from '../../domain/errors.ts';
 
 export interface ExecResult {
   exitCode: number;

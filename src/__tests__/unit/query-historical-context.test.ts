@@ -1,9 +1,9 @@
 import { describe, test, expect } from 'bun:test';
-import { queryHistoricalContext, type HistoricalContextResult } from '../../dcp/historical.ts';
-import { buildExecutionMemory } from '../../memory/execution/writer.ts';
-import type { FeaturePort } from '../../features/port.ts';
-import type { MemoryPort } from '../../memory/port.ts';
-import type { FeatureJson, MemoryFileWithMeta } from '../../core/types.ts';
+import { queryHistoricalContext, type HistoricalContextResult } from '../../app/dcp/historical.ts';
+import { buildExecutionMemory } from '../../app/memory/execution/writer.ts';
+import type { FeaturePort } from '../../domain/ports/feature.ts';
+import type { MemoryPort } from '../../domain/ports/memory.ts';
+import type { FeatureJson, MemoryFileWithMeta } from '../../domain/types.ts';
 
 function makeFeatureAdapter(features: Array<{ name: string; createdAt: string; status?: string }>): FeaturePort {
   return {

@@ -4,9 +4,9 @@
 
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
-import { output } from '../../../../core/output.ts';
-import { renderStatusLine } from '../../../../core/output.ts';
-import { handleCommandError } from '../../../../core/errors.ts';
+import { output } from '../../../../infra/utils/output.ts';
+import { renderStatusLine } from '../../../../infra/utils/output.ts';
+import { handleCommandError } from '../../../../domain/errors.ts';
 
 export default defineCommand({
   meta: { name: 'feature-active', description: 'Show or set active feature' },

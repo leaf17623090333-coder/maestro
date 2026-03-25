@@ -4,11 +4,11 @@
 
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
-import { output } from '../../../../core/output.ts';
-import { handleCommandError } from '../../../../core/errors.ts';
-import { parseTags } from '../../../../core/resolve.ts';
-import { prependMetadataFrontmatter } from '../../../../core/frontmatter.ts';
-import { MEMORY_CATEGORIES } from '../../../../core/types.ts';
+import { output } from '../../../../infra/utils/output.ts';
+import { handleCommandError } from '../../../../domain/errors.ts';
+import { parseTags } from '../../../../infra/utils/resolve.ts';
+import { prependMetadataFrontmatter } from '../../../../infra/utils/frontmatter.ts';
+import { MEMORY_CATEGORIES } from '../../../../domain/types.ts';
 
 export default defineCommand({
   meta: { name: 'memory-write', description: 'Write a memory file' },

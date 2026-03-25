@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test';
-import { createSessionState, recordInjection, getSessionSummary } from '../../dcp/session.ts';
+import { createSessionState, recordInjection, getSessionSummary } from '../../app/dcp/session.ts';
 
 describe('DcpSessionState', () => {
   test('createSessionState returns fresh state', () => {

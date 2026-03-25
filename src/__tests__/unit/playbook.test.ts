@@ -1,9 +1,9 @@
 import { describe, test, expect } from 'bun:test';
-import { buildPlaybook, buildTransitionHint } from '../../workflow/playbook.ts';
-import { WorkflowRegistry } from '../../workflow/registry.ts';
-import { declareAllTools } from '../../workflow/tool-declarations.ts';
-import { BUILTIN_SKILL_NAMES } from '../../skills/registry';
-import type { PipelineStage } from '../../workflow/stages.ts';
+import { buildPlaybook, buildTransitionHint } from '../../app/workflow/playbook.ts';
+import { WorkflowRegistry } from '../../app/workflow/registry.ts';
+import { declareAllTools } from '../../app/workflow/tool-declarations.ts';
+import { BUILTIN_SKILL_NAMES } from '../../app/skills/registry';
+import type { PipelineStage } from '../../app/workflow/stages.ts';
 
 const ALL_STAGES: PipelineStage[] = ['discovery', 'research', 'planning', 'approval', 'execution', 'done'];
 

@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test';
-import { history, type HistoryServices } from '../../workflow/history.ts';
+import { history, type HistoryServices } from '../../app/workflow/history.ts';
 
 function makeMockServices(overrides: Partial<HistoryServices> = {}): HistoryServices {
   return {

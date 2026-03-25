@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'bun:test';
-import { createWorkflowEngine, type StatusContext } from '../../workflow/engine.ts';
-import { WorkflowRegistry } from '../../workflow/registry.ts';
-import { declareAllTools } from '../../workflow/tool-declarations.ts';
+import { createWorkflowEngine, type StatusContext } from '../../app/workflow/engine.ts';
+import { WorkflowRegistry } from '../../app/workflow/registry.ts';
+import { declareAllTools } from '../../app/workflow/tool-declarations.ts';
 
 function makeRegistry(): WorkflowRegistry {
   const reg = new WorkflowRegistry();

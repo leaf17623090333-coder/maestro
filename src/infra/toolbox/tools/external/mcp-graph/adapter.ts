@@ -6,7 +6,7 @@
 import { createMcpPortAdapter, extractJson } from '../../../sdk/bridge-adapter.ts';
 import type { BridgeMapping } from '../../../sdk/bridge-adapter.ts';
 import type { AdapterContext, AdapterFactory } from '../../../types.ts';
-import type { GraphPort, GraphInsights, NextRecommendation, ExecutionPlan } from '../../../../../tasks/graph/port.ts';
+import type { GraphPort, GraphInsights, NextRecommendation, ExecutionPlan } from '../../../../../domain/ports/graph.ts';
 
 const GRAPH_MAPPINGS: BridgeMapping[] = [
   {

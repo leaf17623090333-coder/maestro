@@ -1,4 +1,4 @@
-import type { TemplateRenderer, ConsoleTimelineData } from '../../../visual/types.ts';
+import type { TemplateRenderer, ConsoleTimelineData } from '../../../app/visual/types.ts';
 import { escapeHtml, safeStringify } from '../renderer.ts';
 
 const LEVEL_COLORS: Record<string, string> = {

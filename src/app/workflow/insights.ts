@@ -3,15 +3,15 @@
  * Lists execution memories, computes downstream edges, and calculates coverage.
  */
 
-import type { TaskPort } from '../../tasks/port.ts';
-import type { MemoryPort } from '../../memory/port.ts';
-import type { DoctrinePort } from '../../doctrine/port.ts';
+import type { TaskPort } from '../../domain/ports/task.ts';
+import type { MemoryPort } from '../../domain/ports/memory.ts';
+import type { DoctrinePort } from '../../domain/ports/doctrine.ts';
 import { buildDownstreamMap, extractSourceTask, scoreDependencyProximity } from '../tasks/graph/proximity.ts';
 import type { TaskWithDeps } from '../tasks/graph/dependency.ts';
 import { isExecutionMemory } from '../memory/execution/writer.ts';
 import { parseExecMemory } from '../memory/execution/parser.ts';
 import { resolveDoctrineConfig } from '../doctrine/config.ts';
-import type { DoctrineSettings } from '../../core/settings.ts';
+import type { DoctrineSettings } from '../../domain/ports/settings.ts';
 
 export interface ExecutionInsight {
   sourceTask: string;

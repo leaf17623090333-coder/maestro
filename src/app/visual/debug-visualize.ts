@@ -1,13 +1,13 @@
 import { z } from 'zod';
 import type { DebugVisualType, VisualResult, TemplateRenderer } from './types.ts';
-import { renderPage, writeVisual } from '../../visual/renderer.ts';
-import { renderComponentTree } from '../../visual/templates/component-tree.ts';
-import { renderStateFlow } from '../../visual/templates/state-flow.ts';
-import { renderErrorCascade } from '../../visual/templates/error-cascade.ts';
-import { renderNetworkWaterfall } from '../../visual/templates/network-waterfall.ts';
-import { renderDomDiff } from '../../visual/templates/dom-diff.ts';
-import { renderConsoleTimeline } from '../../visual/templates/console-timeline.ts';
-import { MaestroError } from '../../core/errors.ts';
+import { renderPage, writeVisual } from '../../infra/visual/renderer.ts';
+import { renderComponentTree } from '../../infra/visual/templates/component-tree.ts';
+import { renderStateFlow } from '../../infra/visual/templates/state-flow.ts';
+import { renderErrorCascade } from '../../infra/visual/templates/error-cascade.ts';
+import { renderNetworkWaterfall } from '../../infra/visual/templates/network-waterfall.ts';
+import { renderDomDiff } from '../../infra/visual/templates/dom-diff.ts';
+import { renderConsoleTimeline } from '../../infra/visual/templates/console-timeline.ts';
+import { MaestroError } from '../../domain/errors.ts';
 
 // ============================================================================
 // Zod Schemas

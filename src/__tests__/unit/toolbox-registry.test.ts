@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach } from 'bun:test';
 
-import { ToolboxRegistry, buildToolbox } from '../../toolbox/registry.ts';
-import { clearDetectCache, ADAPTER_FACTORIES, getAdapterFactory } from '../../toolbox/loader.ts';
-import { DEFAULT_SETTINGS } from '../../core/settings.ts';
-import type { MaestroSettings } from '../../core/settings.ts';
-import type { ToolManifest } from '../../toolbox/types.ts';
+import { ToolboxRegistry, buildToolbox } from '../../infra/toolbox/registry.ts';
+import { clearDetectCache, ADAPTER_FACTORIES, getAdapterFactory } from '../../infra/toolbox/loader.ts';
+import { DEFAULT_SETTINGS } from '../../domain/ports/settings.ts';
+import type { MaestroSettings } from '../../domain/ports/settings.ts';
+import type { ToolManifest } from '../../infra/toolbox/types.ts';
 
 // ============================================================================
 // Helpers

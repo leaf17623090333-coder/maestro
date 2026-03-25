@@ -9,11 +9,11 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ServicesThunk } from '../services-thunk.ts';
 import { respond, withErrorHandling } from '../respond.ts';
 import { ANNOTATIONS_READONLY, ANNOTATIONS_MUTATING } from '../annotations.ts';
-import { requireFeature, resolveFeature, requireHandoffPort } from '../../../core/resolve.ts';
+import { requireFeature, resolveFeature, requireHandoffPort } from '../../../infra/utils/resolve.ts';
 import { featureParam } from '../params.ts';
-import { buildAndSendHandoff } from '../../../handoff/usecases.ts';
-import { getHandoffsPath, getHandoffPath } from '../../../core/paths.ts';
-import { readText, fileExists } from '../../../core/fs-io.ts';
+import { buildAndSendHandoff } from '../../../app/handoff/usecases.ts';
+import { getHandoffsPath, getHandoffPath } from '../../../infra/utils/paths.ts';
+import { readText, fileExists } from '../../../infra/utils/fs-io.ts';
 
 export function registerHandoffTools(server: McpServer, thunk: ServicesThunk): void {
   // Mutating: send | ack

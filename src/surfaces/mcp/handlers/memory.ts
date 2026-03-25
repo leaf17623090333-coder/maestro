@@ -3,14 +3,14 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ServicesThunk } from '../services-thunk.ts';
 import { respond, withErrorHandling } from '../respond.ts';
 import { ANNOTATIONS_MUTATING, ANNOTATIONS_DESTRUCTIVE, ANNOTATIONS_READONLY } from '../annotations.ts';
-import { requireFeature } from '../../../core/resolve.ts';
+import { requireFeature } from '../../../infra/utils/resolve.ts';
 import { featureParam } from '../params.ts';
-import { MaestroError } from '../../../core/errors.ts';
-import { prependMetadataFrontmatter } from '../../../core/frontmatter.ts';
-import { validateName } from '../../../core/validate-name.ts';
-import { selectMemories } from '../../../dcp/selector.ts';
-import { resolveDcpConfig } from '../../../dcp/config.ts';
-import { MEMORY_CATEGORIES, type MemoryRelation } from '../../../core/types.ts';
+import { MaestroError } from '../../../domain/errors.ts';
+import { prependMetadataFrontmatter } from '../../../infra/utils/frontmatter.ts';
+import { validateName } from '../../../infra/utils/validate-name.ts';
+import { selectMemories } from '../../../app/dcp/selector.ts';
+import { resolveDcpConfig } from '../../../app/dcp/config.ts';
+import { MEMORY_CATEGORIES, type MemoryRelation } from '../../../domain/types.ts';
 
 export function registerMemoryTools(server: McpServer, thunk: ServicesThunk): void {
   // Mutating: write | delete | promote | compress | consolidate | archive
@@ -102,7 +102,7 @@ export function registerMemoryTools(server: McpServer, thunk: ServicesThunk): vo
         }
         case 'consolidate': {
           const feature = requireFeature(services, input.feature);
-          const { consolidateMemories } = await import('../../../memory/consolidate.ts');
+          const { consolidateMemories } = await import('../../../app/memory/consolidate.ts');
           const result = consolidateMemories(services.memoryAdapter, feature, { autoPromote: input.autoPromote });
           return respond({ feature, ...result });
         }
@@ -213,7 +213,7 @@ export function registerMemoryTools(server: McpServer, thunk: ServicesThunk): vo
         }
         case 'insights': {
           const feature = requireFeature(services, input.feature);
-          const { findDuplicates } = await import('../../../dcp/dedup.ts');
+          const { findDuplicates } = await import('../../../app/dcp/dedup.ts');
           const memories = services.memoryAdapter.listWithMeta(feature);
           const stats = services.memoryAdapter.stats(feature);
           const duplicates = findDuplicates(memories);

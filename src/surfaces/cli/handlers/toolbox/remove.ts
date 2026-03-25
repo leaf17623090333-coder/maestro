@@ -5,8 +5,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { defineCommand } from 'citty';
-import { output } from '../../../../core/output.ts';
-import { MaestroError, handleCommandError } from '../../../../core/errors.ts';
+import { output } from '../../../../infra/utils/output.ts';
+import { MaestroError, handleCommandError } from '../../../../domain/errors.ts';
 
 const BUILT_IN_TOOLS = new Set(['fs-tasks']);
 
@@ -25,7 +25,7 @@ export default defineCommand({
         throw new MaestroError(`Cannot remove built-in tool '${args.name}'`);
       }
 
-      const toolDir = path.join(import.meta.dir, '../../../toolbox/tools/external', args.name);
+      const toolDir = path.join(import.meta.dir, '../../../../infra/toolbox/tools/external', args.name);
       if (!fs.existsSync(toolDir)) {
         throw new MaestroError(
           `Tool '${args.name}' not found in external tools`,

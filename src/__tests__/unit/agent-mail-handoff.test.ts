@@ -3,12 +3,12 @@
  */
 
 import { describe, test, expect, beforeEach } from 'bun:test';
-import { AgentMailHandoffAdapter } from '../../toolbox/tools/external/agent-mail/adapter.ts';
+import { AgentMailHandoffAdapter } from '../../infra/toolbox/tools/external/agent-mail/adapter.ts';
 import { InMemoryTaskPort } from '../mocks/in-memory-task-port.ts';
 import { InMemoryMemoryPort } from '../mocks/in-memory-memory-port.ts';
-import type { SettingsPort } from '../../core/settings.ts';
-import { DEFAULT_SETTINGS } from '../../core/settings.ts';
-import type { HandoffDocument } from '../../handoff/port.ts';
+import type { SettingsPort } from '../../domain/ports/settings.ts';
+import { DEFAULT_SETTINGS } from '../../domain/ports/settings.ts';
+import type { HandoffDocument } from '../../domain/ports/handoff.ts';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';

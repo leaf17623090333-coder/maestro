@@ -12,10 +12,10 @@
  */
 
 import { defineCommand } from 'citty';
-import { output } from '../../../core/output.ts';
-import { handleCommandError } from '../../../core/errors.ts';
-import { ensureDir, writeAtomic } from '../../../core/fs-io.ts';
-import { BUILTIN_SKILLS } from '../../../skills/registry.ts';
+import { output } from '../../../infra/utils/output.ts';
+import { handleCommandError } from '../../../domain/errors.ts';
+import { ensureDir, writeAtomic } from '../../../infra/utils/fs-io.ts';
+import { BUILTIN_SKILLS } from '../../../app/skills/registry.ts';
 import * as path from 'path';
 
 type Platform = 'claude-code' | 'codex' | 'other';

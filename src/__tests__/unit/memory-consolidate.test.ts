@@ -4,8 +4,8 @@ import * as path from 'path';
 import { mkdtemp, rm } from 'fs/promises';
 import { tmpdir } from 'os';
 
-import { FsMemoryAdapter } from '../../memory/adapter.ts';
-import { consolidateMemories } from '../../memory/consolidate.ts';
+import { FsMemoryAdapter } from '../../infra/adapters/memory/adapter.ts';
+import { consolidateMemories } from '../../app/memory/consolidate.ts';
 
 describe('consolidateMemories', () => {
   let tmpDir: string;

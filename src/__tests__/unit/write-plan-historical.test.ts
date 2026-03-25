@@ -1,10 +1,10 @@
 import { describe, test, expect } from 'bun:test';
-import { writePlan, type WritePlanServices } from '../../plans/write-plan.ts';
-import type { PlanPort } from '../../plans/port.ts';
-import type { FeaturePort } from '../../features/port.ts';
-import type { MemoryPort } from '../../memory/port.ts';
-import type { FeatureJson, MemoryFileWithMeta } from '../../core/types.ts';
-import { buildExecutionMemory } from '../../memory/execution/writer.ts';
+import { writePlan, type WritePlanServices } from '../../app/plans/write-plan.ts';
+import type { PlanPort } from '../../domain/ports/plan.ts';
+import type { FeaturePort } from '../../domain/ports/feature.ts';
+import type { MemoryPort } from '../../domain/ports/memory.ts';
+import type { FeatureJson, MemoryFileWithMeta } from '../../domain/types.ts';
+import { buildExecutionMemory } from '../../app/memory/execution/writer.ts';
 
 const VALID_PLAN = [
   '## Discovery',

@@ -4,9 +4,9 @@
 
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
-import { approvePlan } from '../../../../plans/approve-plan.ts';
-import { output } from '../../../../core/output.ts';
-import { handleCommandError } from '../../../../core/errors.ts';
+import { approvePlan } from '../../../../app/plans/approve-plan.ts';
+import { output } from '../../../../infra/utils/output.ts';
+import { handleCommandError } from '../../../../domain/errors.ts';
 
 export default defineCommand({
   meta: { name: 'plan-approve', description: 'Approve feature plan' },

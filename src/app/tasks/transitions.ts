@@ -3,7 +3,7 @@
  * Extracted from TaskPort to keep the port definition pure (types only).
  */
 
-import type { TaskStatusType } from '../../core/types.ts';
+import type { TaskStatusType } from '../../domain/types.ts';
 
 /**
  * Valid state transitions for task status (6-state model).

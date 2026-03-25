@@ -2,7 +2,7 @@
  * HTTP fetch transport with retry, timeout, auth, and best-effort mode.
  */
 
-import { MaestroError } from '../../../core/errors.ts';
+import { MaestroError } from '../../../domain/errors.ts';
 import type { HttpTransportConfig } from './types.ts';
 
 const DEFAULT_TIMEOUT = 10_000;

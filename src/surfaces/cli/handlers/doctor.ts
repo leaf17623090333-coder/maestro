@@ -4,9 +4,9 @@
 
 import { defineCommand } from 'citty';
 import { getServices } from '../../../services.ts';
-import { doctor, type DoctorReport } from '../../../workflow/doctor.ts';
-import { output, renderTable } from '../../../core/output.ts';
-import { handleCommandError } from '../../../core/errors.ts';
+import { doctor, type DoctorReport } from '../../../app/workflow/doctor.ts';
+import { output, renderTable } from '../../../infra/utils/output.ts';
+import { handleCommandError } from '../../../domain/errors.ts';
 
 const STATUS_MARKER: Record<string, string> = {
   ok: '[ok]',

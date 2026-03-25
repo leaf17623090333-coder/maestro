@@ -5,11 +5,11 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ServicesThunk } from '../services-thunk.ts';
 import { respond, textResponse, withErrorHandling } from '../respond.ts';
 import { ANNOTATIONS_READONLY } from '../annotations.ts';
-import { loadSkill, loadSkillReference, listSkills } from '../../../skills/registry.ts';
-import { MaestroError } from '../../../core/errors.ts';
-import { installSkill } from '../../../skills/install.ts';
-import { createSkill } from '../../../skills/create.ts';
-import { syncSkills } from '../../../skills/sync.ts';
+import { loadSkill, loadSkillReference, listSkills } from '../../../app/skills/registry.ts';
+import { MaestroError } from '../../../domain/errors.ts';
+import { installSkill } from '../../../app/skills/install.ts';
+import { createSkill } from '../../../app/skills/create.ts';
+import { syncSkills } from '../../../app/skills/sync.ts';
 
 export function registerSkillTools(server: McpServer, _thunk: ServicesThunk, directory?: string): void {
   // Single merged tool: action: load | list | install | create | remove | sync

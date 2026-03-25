@@ -3,8 +3,8 @@
  * Detects duplicates, compresses stale memories, identifies promotion candidates.
  */
 
-import type { MemoryFileWithMeta, MemoryMetadata, MemoryConnection } from '../../core/types.ts';
-import type { MemoryPort } from '../../memory/port.ts';
+import type { MemoryFileWithMeta, MemoryMetadata, MemoryConnection } from '../../domain/types.ts';
+import type { MemoryPort } from '../../domain/ports/memory.ts';
 import { extractKeywords, computeSetOverlap } from '../dcp/relevance.ts';
 
 const DUPLICATE_THRESHOLD = 0.8;  // 80% keyword overlap = duplicate

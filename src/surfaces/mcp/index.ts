@@ -26,11 +26,11 @@ import { registerVisualTools } from './handlers/visual.ts';
 import { registerDoctorTools } from './handlers/doctor.ts';
 import { registerHistoryTools } from './handlers/history.ts';
 import { VERSION } from '../../version.ts';
-import { FsSettingsAdapter } from '../../core/settings-adapter.ts';
-import { buildToolbox } from '../../toolbox/registry.ts';
-import { WorkflowRegistry } from '../../workflow/registry.ts';
-import { declareAllTools } from '../../workflow/tool-declarations.ts';
-import { createWorkflowEngine } from '../../workflow/engine.ts';
+import { FsSettingsAdapter } from '../../infra/settings/adapter.ts';
+import { buildToolbox } from '../../infra/toolbox/registry.ts';
+import { WorkflowRegistry } from '../../app/workflow/registry.ts';
+import { declareAllTools } from '../../app/workflow/tool-declarations.ts';
+import { createWorkflowEngine } from '../../app/workflow/engine.ts';
 import { registerWorkflowTools } from './handlers/workflow.ts';
 
 export function createMaestroServer(directory: string): McpServer {

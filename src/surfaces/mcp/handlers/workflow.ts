@@ -6,8 +6,8 @@ import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ServicesThunk } from '../services-thunk.ts';
 import { respond, withErrorHandling } from '../respond.ts';
-import { buildPlaybook } from '../../../workflow/playbook.ts';
-import type { PipelineStage } from '../../../workflow/stages.ts';
+import { buildPlaybook } from '../../../app/workflow/playbook.ts';
+import type { PipelineStage } from '../../../app/workflow/stages.ts';
 
 const ALL_STAGES: PipelineStage[] = ['discovery', 'research', 'planning', 'approval', 'execution', 'done'];
 

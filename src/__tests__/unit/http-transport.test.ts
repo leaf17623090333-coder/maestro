@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, mock } from 'bun:test';
 
-import { HttpTransport } from '../../toolbox/sdk/http-transport.ts';
+import { HttpTransport } from '../../infra/toolbox/sdk/http-transport.ts';
 
 // ============================================================================
 // Mock fetch

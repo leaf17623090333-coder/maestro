@@ -4,10 +4,10 @@
 
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
-import { syncPlan } from '../../../../tasks/sync-plan.ts';
-import { translatePlan } from '../../../../tasks/translate-plan.ts';
-import { output } from '../../../../core/output.ts';
-import { handleCommandError } from '../../../../core/errors.ts';
+import { syncPlan } from '../../../../app/tasks/sync-plan.ts';
+import { translatePlan } from '../../../../app/tasks/translate-plan.ts';
+import { output } from '../../../../infra/utils/output.ts';
+import { handleCommandError } from '../../../../domain/errors.ts';
 
 export default defineCommand({
   meta: { name: 'task-sync', description: 'Sync tasks from approved plan' },

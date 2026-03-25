@@ -3,7 +3,7 @@
  * Used by consolidation pipeline and DCP metrics.
  */
 
-import type { MemoryFileWithMeta } from '../../core/types.ts';
+import type { MemoryFileWithMeta } from '../../domain/types.ts';
 import { extractKeywords, computeSetOverlap } from './relevance.ts';
 
 export interface DuplicatePair {

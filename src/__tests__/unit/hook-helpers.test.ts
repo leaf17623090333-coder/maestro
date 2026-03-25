@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from 'bun:test';
-import { resolveProjectDir, logHookError } from '../../hooks/_helpers.ts';
+import { resolveProjectDir, logHookError } from '../../surfaces/hooks/_helpers.ts';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';

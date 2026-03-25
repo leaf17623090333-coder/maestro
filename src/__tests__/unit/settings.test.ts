@@ -9,8 +9,8 @@ import {
   mergeSettings,
   isToolAllowed,
   type MaestroSettings,
-} from '../../core/settings.ts';
-import { FsSettingsAdapter, migrateFromConfig } from '../../core/settings-adapter.ts';
+} from '../../domain/ports/settings.ts';
+import { FsSettingsAdapter, migrateFromConfig } from '../../infra/settings/adapter.ts';
 // ============================================================================
 // mergeSettings
 // ============================================================================

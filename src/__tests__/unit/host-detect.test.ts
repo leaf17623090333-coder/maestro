@@ -1,5 +1,5 @@
 import { describe, test, expect, afterEach } from 'bun:test';
-import { detectHost, isHosted, _resetHostDetection } from '../../core/host-detect.ts';
+import { detectHost, isHosted, _resetHostDetection } from '../../infra/utils/host-detect.ts';
 
 afterEach(() => {
   _resetHostDetection();

@@ -4,7 +4,7 @@
  * Replaces the static PLAYBOOKS lookup table.
  */
 
-import type { ToolboxRegistry } from '../../toolbox/registry.ts';
+import type { ToolboxRegistry } from '../../infra/toolbox/registry.ts';
 
 export type ToolCategory = 'primary' | 'conditional' | 'meta' | 'utility';
 

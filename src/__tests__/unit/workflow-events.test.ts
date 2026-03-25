@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test';
-import { WorkflowEventBus, type WorkflowEvent } from '../../workflow/events.ts';
+import { WorkflowEventBus, type WorkflowEvent } from '../../app/workflow/events.ts';
 
 describe('WorkflowEventBus', () => {
   test('emits event to registered listener', () => {

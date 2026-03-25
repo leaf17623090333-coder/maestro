@@ -1,10 +1,10 @@
-import type { TaskPort } from '../../tasks/port.ts';
-import type { FeaturePort } from '../../features/port.ts';
-import type { MemoryPort } from '../../memory/port.ts';
-import type { DoctrinePort } from '../../doctrine/port.ts';
-import { MaestroError } from '../../core/errors.ts';
-import type { FeatureJson } from '../../core/types.ts';
-import type { DoctrineSettings } from '../../core/settings.ts';
+import type { TaskPort } from '../../domain/ports/task.ts';
+import type { FeaturePort } from '../../domain/ports/feature.ts';
+import type { MemoryPort } from '../../domain/ports/memory.ts';
+import type { DoctrinePort } from '../../domain/ports/doctrine.ts';
+import { MaestroError } from '../../domain/errors.ts';
+import type { FeatureJson } from '../../domain/types.ts';
+import type { DoctrineSettings } from '../../domain/ports/settings.ts';
 import { suggestDoctrine, type DoctrineSuggestion } from '../doctrine/suggest.ts';
 import { consolidateMemories, type ConsolidationResult } from '../memory/consolidate.ts';
 

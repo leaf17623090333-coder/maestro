@@ -6,7 +6,7 @@
 import { createMcpPortAdapter, extractJson } from '../../../sdk/bridge-adapter.ts';
 import type { BridgeMapping } from '../../../sdk/bridge-adapter.ts';
 import type { AdapterContext, AdapterFactory } from '../../../types.ts';
-import type { SearchPort, SessionSearchResult } from '../../../../../search/port.ts';
+import type { SearchPort, SessionSearchResult } from '../../../../../domain/ports/search.ts';
 
 const SEARCH_MAPPINGS: BridgeMapping[] = [
   {

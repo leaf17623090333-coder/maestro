@@ -4,11 +4,11 @@
  * Writes/reads handoff documents under .maestro/features/<feature>/handoffs/.
  */
 
-import type { HandoffPort, HandoffDocument, HandoffResult } from '../../../handoff/port.ts';
-import type { TaskPort } from '../../../tasks/port.ts';
-import type { MemoryPort } from '../../../memory/port.ts';
-import { getHandoffPath, getHandoffsPath } from '../../../core/paths.ts';
-import { ensureDir, writeText, readText, fileExists } from '../../../core/fs-io.ts';
+import type { HandoffPort, HandoffDocument, HandoffResult } from '../../../domain/ports/handoff.ts';
+import type { TaskPort } from '../../../domain/ports/task.ts';
+import type { MemoryPort } from '../../../domain/ports/memory.ts';
+import { getHandoffPath, getHandoffsPath } from '../../utils/paths.ts';
+import { ensureDir, writeText, readText, fileExists } from '../../utils/fs-io.ts';
 import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';

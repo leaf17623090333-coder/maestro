@@ -6,11 +6,11 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type { DoctrineItem, DoctrinePort, DoctrineStatus } from '../../../doctrine/port.ts';
-import { getDoctrinePath, getDoctrineItemPath } from '../../../core/paths.ts';
-import { readJson, writeJsonAtomic } from '../../../core/fs-io.ts';
-import { acquireLockSync } from '../../../core/locking.ts';
-import { extractKeywords, TAG_WEIGHT, KEYWORD_WEIGHT } from '../../../dcp/relevance.ts';
+import type { DoctrineItem, DoctrinePort, DoctrineStatus } from '../../../domain/ports/doctrine.ts';
+import { getDoctrinePath, getDoctrineItemPath } from '../../utils/paths.ts';
+import { readJson, writeJsonAtomic } from '../../utils/fs-io.ts';
+import { acquireLockSync } from '../../utils/locking.ts';
+import { extractKeywords, TAG_WEIGHT, KEYWORD_WEIGHT } from '../../../app/dcp/relevance.ts';
 
 export const CURRENT_SCHEMA_VERSION = 1;
 const RELEVANCE_THRESHOLD = 0.2;

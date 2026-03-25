@@ -1,10 +1,10 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { readStdin, writeOutput, resolveProjectDir, logHookError, getSessionsDir, EVENTS_FILE } from './_helpers.ts';
-import { writeJsonAtomic, ensureDir, writeText } from '../../core/fs-io.ts';
+import { writeJsonAtomic, ensureDir, writeText } from '../../infra/utils/fs-io.ts';
 import { initServices } from '../../services.ts';
-import { checkStatus } from '../../workflow/status.ts';
-import { getHandoffsPath } from '../../core/paths.ts';
+import { checkStatus } from '../../app/workflow/status.ts';
+import { getHandoffsPath } from '../../infra/utils/paths.ts';
 
 const HOOK_NAME = 'precompact';
 

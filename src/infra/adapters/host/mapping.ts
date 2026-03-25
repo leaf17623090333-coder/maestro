@@ -4,8 +4,8 @@
  */
 
 import * as path from 'node:path';
-import { readJson, writeJsonAtomic } from '../../../core/fs-io.ts';
-import type { HostMapping } from '../../../host/port.ts';
+import { readJson, writeJsonAtomic } from '../../utils/fs-io.ts';
+import type { HostMapping } from '../../../domain/ports/host.ts';
 
 const MAPPING_FILE = 'host-mapping.json';
 

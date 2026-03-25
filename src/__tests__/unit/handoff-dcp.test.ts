@@ -7,11 +7,11 @@
  */
 
 import { describe, test, expect, beforeEach } from 'bun:test';
-import { AgentMailHandoffAdapter } from '../../toolbox/tools/external/agent-mail/adapter.ts';
+import { AgentMailHandoffAdapter } from '../../infra/toolbox/tools/external/agent-mail/adapter.ts';
 import { InMemoryTaskPort } from '../mocks/in-memory-task-port.ts';
 import { InMemoryMemoryPort } from '../mocks/in-memory-memory-port.ts';
-import type { SettingsPort, DcpSettings } from '../../core/settings.ts';
-import { DEFAULT_SETTINGS } from '../../core/settings.ts';
+import type { SettingsPort, DcpSettings } from '../../domain/ports/settings.ts';
+import { DEFAULT_SETTINGS } from '../../domain/ports/settings.ts';
 
 // ---------------------------------------------------------------------------
 // Helpers

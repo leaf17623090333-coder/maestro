@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'bun:test';
-import { pruneContext } from '../../dcp/prune-context.ts';
-import { WORKER_RULES } from '../../tasks/worker-rules.ts';
-import type { MemoryFileWithMeta, TaskInfo } from '../../core/types.ts';
+import { pruneContext } from '../../app/dcp/prune-context.ts';
+import { WORKER_RULES } from '../../app/tasks/worker-rules.ts';
+import type { MemoryFileWithMeta, TaskInfo } from '../../domain/types.ts';
 
 /**
  * Tests for DCP preview functionality.

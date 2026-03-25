@@ -5,9 +5,9 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ServicesThunk } from '../services-thunk.ts';
 import { respond, withErrorHandling } from '../respond.ts';
 import { ANNOTATIONS_MUTATING } from '../annotations.ts';
-import { getMaestroPath } from '../../../core/paths.ts';
-import { ensureDir } from '../../../core/fs-io.ts';
-import { MaestroError } from '../../../core/errors.ts';
+import { getMaestroPath } from '../../../infra/utils/paths.ts';
+import { ensureDir } from '../../../infra/utils/fs-io.ts';
+import { MaestroError } from '../../../domain/errors.ts';
 
 const execFileAsync = promisify(execFile);
 

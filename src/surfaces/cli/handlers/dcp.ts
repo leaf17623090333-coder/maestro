@@ -4,12 +4,12 @@
 
 import { defineCommand } from 'citty';
 import { getServices } from '../../../services.ts';
-import { output, renderTable } from '../../../core/output.ts';
-import { MaestroError, handleCommandError } from '../../../core/errors.ts';
-import { requireFeature, FEATURE_HINT } from '../../../core/resolve.ts';
-import { pruneContext } from '../../../dcp/prune-context.ts';
-import { resolveDcpConfig } from '../../../dcp/config.ts';
-import { WORKER_RULES } from '../../../tasks/worker-rules.ts';
+import { output, renderTable } from '../../../infra/utils/output.ts';
+import { MaestroError, handleCommandError } from '../../../domain/errors.ts';
+import { requireFeature, FEATURE_HINT } from '../../../infra/utils/resolve.ts';
+import { pruneContext } from '../../../app/dcp/prune-context.ts';
+import { resolveDcpConfig } from '../../../app/dcp/config.ts';
+import { WORKER_RULES } from '../../../app/tasks/worker-rules.ts';
 
 export default defineCommand({
   meta: { name: 'dcp-preview', description: 'Preview DCP memory selection for a task' },

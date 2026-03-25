@@ -6,7 +6,7 @@
  * annotations, validates the dependency graph, and detects cycles.
  */
 
-import { buildTaskFolder, titleToSlug } from '../../core/slug.ts';
+import { buildTaskFolder, titleToSlug } from '../../infra/utils/slug.ts';
 
 export interface ParsedTask {
   /** Primary identifier -- slug derived from title. */

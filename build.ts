@@ -23,7 +23,7 @@ async function build() {
 
   // Step 0b: Run generators (MUST run before server bundle -- loadSkill depends on registry.generated.ts)
   console.log('[build] Generating skills registry...');
-  await $`bun src/skills/generate.ts`;
+  await $`bun src/app/skills/generate.ts`;
 
   console.log('[build] Generating command registry...');
   await $`bun src/surfaces/cli/_generate.ts`;

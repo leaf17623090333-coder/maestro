@@ -1,10 +1,10 @@
 import * as fs from 'fs';
 import { defineCommand } from 'citty';
-import { debugVisualize } from '../../../visual/debug-visualize.ts';
-import type { DebugVisualType, VisualResult } from '../../../visual/types.ts';
-import { DEBUG_VISUAL_TYPES } from '../../../visual/types.ts';
-import { output } from '../../../core/output.ts';
-import { handleCommandError, MaestroError } from '../../../core/errors.ts';
+import { debugVisualize } from '../../../app/visual/debug-visualize.ts';
+import type { DebugVisualType, VisualResult } from '../../../app/visual/types.ts';
+import { DEBUG_VISUAL_TYPES } from '../../../app/visual/types.ts';
+import { output } from '../../../infra/utils/output.ts';
+import { handleCommandError, MaestroError } from '../../../domain/errors.ts';
 
 function formatResult(result: VisualResult): string {
   const lines: string[] = [];

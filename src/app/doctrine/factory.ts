@@ -3,8 +3,8 @@
  * Centralizes timestamp handling, zero-initialized effectiveness, and schema versioning.
  */
 
-import type { DoctrineItem, DoctrineConditions, DoctrineStatus } from '../../doctrine/port.ts';
-import { CURRENT_SCHEMA_VERSION } from '../../doctrine/adapter.ts';
+import type { DoctrineItem, DoctrineConditions, DoctrineStatus } from '../../domain/ports/doctrine.ts';
+import { CURRENT_SCHEMA_VERSION } from '../../infra/adapters/doctrine/adapter.ts';
 
 export interface BuildDoctrineItemOpts {
   name: string;

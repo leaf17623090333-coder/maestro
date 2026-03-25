@@ -11,33 +11,33 @@
  */
 
 // Built-in adapters (not toolbox-driven, always static)
-import { FsFeatureAdapter } from './features/adapter.ts';
-import { FsPlanAdapter } from './plans/adapter.ts';
-import { FsMemoryAdapter } from './memory/adapter.ts';
-import { AgentsMdAdapter } from './features/agents-md.ts';
-import { MaestroError } from './core/errors.ts';
-import { FsVerificationAdapter } from './tasks/verification/adapter.ts';
-import { resolveVerificationConfig } from './tasks/verification/config.ts';
-import { FsDoctrineAdapter } from './doctrine/adapter.ts';
-import { FsSettingsAdapter } from './core/settings-adapter.ts';
-import { FsTaskAdapter } from './tasks/adapter.ts';
-import { buildToolbox, ToolboxRegistry } from './toolbox/registry.ts';
-import { getAdapterFactory } from './toolbox/loader.ts';
-import { buildAgentToolsRegistry, AgentToolsRegistry } from './toolbox/agents/registry.ts';
-import type { AdapterContext } from './toolbox/types.ts';
-import type { MaestroSettings, SettingsPort } from './core/settings.ts';
-import type { TaskPort } from './tasks/port.ts';
-import type { VerificationPort } from './tasks/verification/port.ts';
-import type { FeaturePort } from './features/port.ts';
-import type { PlanPort } from './plans/port.ts';
-import type { MemoryPort } from './memory/port.ts';
-import type { GraphPort } from './tasks/graph/port.ts';
-import type { HandoffPort } from './handoff/port.ts';
-import type { SearchPort } from './search/port.ts';
-import type { DoctrinePort } from './doctrine/port.ts';
-import type { HostBackend } from './host/port.ts';
-import { createHostBackend } from './host/factory.ts';
-import { detectHost } from './core/host-detect.ts';
+import { FsFeatureAdapter } from './infra/adapters/features/adapter.ts';
+import { FsPlanAdapter } from './infra/adapters/plans/adapter.ts';
+import { FsMemoryAdapter } from './infra/adapters/memory/adapter.ts';
+import { AgentsMdAdapter } from './infra/adapters/features/agents-md.ts';
+import { MaestroError } from './domain/errors.ts';
+import { FsVerificationAdapter } from './infra/adapters/tasks/verification-adapter.ts';
+import { resolveVerificationConfig } from './infra/adapters/tasks/verification-config.ts';
+import { FsDoctrineAdapter } from './infra/adapters/doctrine/adapter.ts';
+import { FsSettingsAdapter } from './infra/settings/adapter.ts';
+import { FsTaskAdapter } from './infra/adapters/tasks/adapter.ts';
+import { buildToolbox, ToolboxRegistry } from './infra/toolbox/registry.ts';
+import { getAdapterFactory } from './infra/toolbox/loader.ts';
+import { buildAgentToolsRegistry, AgentToolsRegistry } from './infra/toolbox/agents/registry.ts';
+import type { AdapterContext } from './infra/toolbox/types.ts';
+import type { MaestroSettings, SettingsPort } from './domain/ports/settings.ts';
+import type { TaskPort } from './domain/ports/task.ts';
+import type { VerificationPort } from './domain/ports/verification.ts';
+import type { FeaturePort } from './domain/ports/feature.ts';
+import type { PlanPort } from './domain/ports/plan.ts';
+import type { MemoryPort } from './domain/ports/memory.ts';
+import type { GraphPort } from './domain/ports/graph.ts';
+import type { HandoffPort } from './domain/ports/handoff.ts';
+import type { SearchPort } from './domain/ports/search.ts';
+import type { DoctrinePort } from './domain/ports/doctrine.ts';
+import type { HostBackend } from './domain/ports/host.ts';
+import { createHostBackend } from './infra/adapters/host/factory.ts';
+import { detectHost } from './infra/utils/host-detect.ts';
 
 export interface MaestroServices {
   taskPort: TaskPort;
@@ -55,7 +55,7 @@ export interface MaestroServices {
   toolbox: ToolboxRegistry;
   settingsPort: SettingsPort;
   agentToolsRegistry: AgentToolsRegistry;
-  workflowRegistry?: import('./workflow/registry.ts').WorkflowRegistry;
+  workflowRegistry?: import('./app/workflow/registry.ts').WorkflowRegistry;
   /** Resolved task backend: 'fs' or 'br'. Use this instead of resolveTaskBackend(). */
   taskBackend: 'fs' | 'br';
   /** Host backend (null for standalone). */

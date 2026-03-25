@@ -3,7 +3,7 @@
  * Thin layer between MCP handlers and the HandoffPort.
  */
 
-import type { HandoffPort, HandoffDocument, HandoffResult } from '../../handoff/port.ts';
+import type { HandoffPort, HandoffDocument, HandoffResult } from '../../domain/ports/handoff.ts';
 
 export interface BuildAndSendOpts {
   targetAgent?: string;

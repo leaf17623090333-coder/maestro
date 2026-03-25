@@ -4,10 +4,10 @@
 
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
-import { output } from '../../../../core/output.ts';
-import { handleCommandError } from '../../../../core/errors.ts';
-import { requireDoctrinePort } from '../../../../core/resolve.ts';
-import { suggestDoctrine } from '../../../../doctrine/suggest.ts';
+import { output } from '../../../../infra/utils/output.ts';
+import { handleCommandError } from '../../../../domain/errors.ts';
+import { requireDoctrinePort } from '../../../../infra/utils/resolve.ts';
+import { suggestDoctrine } from '../../../../app/doctrine/suggest.ts';
 
 export default defineCommand({
   meta: { name: 'doctrine-suggest', description: 'Suggest doctrine from cross-feature execution patterns' },

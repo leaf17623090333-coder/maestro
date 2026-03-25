@@ -4,10 +4,10 @@
 
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
-import { output } from '../../../../core/output.ts';
-import { handleCommandError } from '../../../../core/errors.ts';
-import { requireDoctrinePort, parseTags } from '../../../../core/resolve.ts';
-import { buildDoctrineItem } from '../../../../doctrine/factory.ts';
+import { output } from '../../../../infra/utils/output.ts';
+import { handleCommandError } from '../../../../domain/errors.ts';
+import { requireDoctrinePort, parseTags } from '../../../../infra/utils/resolve.ts';
+import { buildDoctrineItem } from '../../../../app/doctrine/factory.ts';
 
 export default defineCommand({
   meta: { name: 'doctrine-approve', description: 'Approve a doctrine suggestion' },

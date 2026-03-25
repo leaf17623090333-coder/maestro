@@ -4,11 +4,11 @@
  * can call maestro_task_brief and get the same rich context.
  */
 
-import type { TaskPort, RichTaskFields } from '../../tasks/port.ts';
-import type { GraphPort } from '../../tasks/graph/port.ts';
-import type { DoctrinePort } from '../../doctrine/port.ts';
-import type { SettingsPort } from '../../core/settings.ts';
-import type { MemoryFileWithMeta } from '../../core/types.ts';
+import type { TaskPort, RichTaskFields } from '../../domain/ports/task.ts';
+import type { GraphPort } from '../../domain/ports/graph.ts';
+import type { DoctrinePort } from '../../domain/ports/doctrine.ts';
+import type { SettingsPort } from '../../domain/ports/settings.ts';
+import type { MemoryFileWithMeta } from '../../domain/types.ts';
 import type { TaskWithDeps } from '../tasks/graph/dependency.ts';
 import { selectMemories, type SelectedContext } from '../dcp/selector.ts';
 import { deriveFolderTags } from '../memory/execution/writer.ts';
@@ -17,8 +17,8 @@ import { appendDoctrineTrace } from '../doctrine/trace.ts';
 import { WORKER_RULES } from '../tasks/worker-rules.ts';
 import { resolveDcpConfig } from '../dcp/config.ts';
 import { resolveDoctrineConfig } from '../doctrine/config.ts';
-import { MaestroError } from '../../core/errors.ts';
-import { estimateTokens } from '../../core/tokens.ts';
+import { MaestroError } from '../../domain/errors.ts';
+import { estimateTokens } from '../../infra/utils/tokens.ts';
 import { fitWithinBudget } from '../dcp/budget.ts';
 
 export interface TaskBriefParams {

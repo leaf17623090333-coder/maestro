@@ -5,9 +5,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { defineCommand } from 'citty';
-import { output } from '../../../../core/output.ts';
-import { MaestroError, handleCommandError } from '../../../../core/errors.ts';
-import { loadManifest } from '../../../../toolbox/loader.ts';
+import { output } from '../../../../infra/utils/output.ts';
+import { MaestroError, handleCommandError } from '../../../../domain/errors.ts';
+import { loadManifest } from '../../../../infra/toolbox/loader.ts';
 
 export default defineCommand({
   meta: { name: 'toolbox-install', description: 'Install a tool from a local path' },
@@ -35,7 +35,7 @@ export default defineCommand({
         );
       }
 
-      const targetDir = path.join(import.meta.dir, '../../../toolbox/tools/external', manifest.name);
+      const targetDir = path.join(import.meta.dir, '../../../../infra/toolbox/tools/external', manifest.name);
       if (fs.existsSync(targetDir)) {
         throw new MaestroError(
           `Tool '${manifest.name}' already exists`,

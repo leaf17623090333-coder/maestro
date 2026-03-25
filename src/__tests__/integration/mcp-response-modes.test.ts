@@ -15,9 +15,9 @@ import { join } from 'path';
 import { tmpdir } from 'os';
 import { execSync } from 'child_process';
 import { initServices, type MaestroServices } from '../../services.ts';
-import { syncPlan } from '../../tasks/sync-plan.ts';
-import { extractPlanOutline } from '../../plans/parser.ts';
-import type { MemoryFile } from '../../core/types.ts';
+import { syncPlan } from '../../app/tasks/sync-plan.ts';
+import { extractPlanOutline } from '../../app/plans/parser.ts';
+import type { MemoryFile } from '../../domain/types.ts';
 
 let dir: string;
 let services: MaestroServices;
@@ -258,7 +258,7 @@ describe('plan_read response modes', () => {
 describe('status response modes', () => {
   test('researchTools detection function exists and returns array', async () => {
     // Import the function used by the status handler
-    const { detectResearchTools } = await import('../../workflow/research-tools.ts');
+    const { detectResearchTools } = await import('../../app/workflow/research-tools.ts');
     const tools = detectResearchTools(dir);
     expect(Array.isArray(tools)).toBe(true);
   });
@@ -269,7 +269,7 @@ describe('status response modes', () => {
 // ---------------------------------------------------------------------------
 describe('conditional tool registration', () => {
   test('checkCli returns boolean', async () => {
-    const { checkCli } = await import('../../core/cli-detect.ts');
+    const { checkCli } = await import('../../infra/utils/cli-detect.ts');
     // 'ls' should be available on any system
     expect(checkCli('ls')).toBe(true);
     // A nonsense CLI name should not be available
@@ -282,7 +282,7 @@ describe('conditional tool registration', () => {
 // ---------------------------------------------------------------------------
 describe('shared Zod params', () => {
   test('featureParam produces correct schema', async () => {
-    const { featureParam } = await import('../../mcp/params.ts');
+    const { featureParam } = await import('../../surfaces/mcp/params.ts');
     const schema = featureParam();
     // Should be optional string
     expect(schema.isOptional()).toBe(true);
@@ -293,7 +293,7 @@ describe('shared Zod params', () => {
   });
 
   test('taskParam produces required string schema', async () => {
-    const { taskParam } = await import('../../mcp/params.ts');
+    const { taskParam } = await import('../../surfaces/mcp/params.ts');
     const schema = taskParam();
     expect(schema.isOptional()).toBe(false);
     const fail = schema.safeParse(undefined);
@@ -303,7 +303,7 @@ describe('shared Zod params', () => {
   });
 
   test('limitParam produces optional number with default', async () => {
-    const { limitParam } = await import('../../mcp/params.ts');
+    const { limitParam } = await import('../../surfaces/mcp/params.ts');
     const schema = limitParam(10);
     expect(schema.isOptional()).toBe(true);
     const result = schema.parse(undefined);

@@ -10,8 +10,8 @@ import {
   scanBuiltInManifests,
   detectTool,
   clearDetectCache,
-} from '../../toolbox/loader.ts';
-import type { ToolManifest } from '../../toolbox/types.ts';
+} from '../../infra/toolbox/loader.ts';
+import type { ToolManifest } from '../../infra/toolbox/types.ts';
 
 // ============================================================================
 // loadManifest

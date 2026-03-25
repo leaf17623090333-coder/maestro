@@ -4,10 +4,10 @@
 
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
-import { output } from '../../../../core/output.ts';
-import { MaestroError, handleCommandError } from '../../../../core/errors.ts';
-import { AGENT_NAMES } from '../../../../core/types.ts';
-import type { AgentName } from '../../../../core/types.ts';
+import { output } from '../../../../infra/utils/output.ts';
+import { MaestroError, handleCommandError } from '../../../../domain/errors.ts';
+import { AGENT_NAMES } from '../../../../domain/types.ts';
+import type { AgentName } from '../../../../domain/types.ts';
 
 export default defineCommand({
   meta: { name: 'config-agent', description: 'Get agent-specific config' },

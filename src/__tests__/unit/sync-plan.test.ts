@@ -9,10 +9,10 @@ import { describe, test, expect, beforeEach, afterEach } from "bun:test";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
-import { syncPlan } from "../../tasks/sync-plan.ts";
-import { FsPlanAdapter } from "../../plans/adapter.ts";
+import { syncPlan } from "../../app/tasks/sync-plan.ts";
+import { FsPlanAdapter } from "../../infra/adapters/plans/adapter.ts";
 import { InMemoryTaskPort } from "../mocks/in-memory-task-port.ts";
-import type { TaskStatusType, TaskOrigin } from '../../core/types.ts';
+import type { TaskStatusType, TaskOrigin } from '../../domain/types.ts';
 
 // ---------------------------------------------------------------------------
 // Helpers

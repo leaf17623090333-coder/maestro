@@ -4,9 +4,9 @@
 
 import { defineCommand } from 'citty';
 import { getServices } from '../../../services.ts';
-import { output, renderStatusLine } from '../../../core/output.ts';
-import { MaestroError, handleCommandError } from '../../../core/errors.ts';
-import type { TaskInfo } from '../../../core/types.ts';
+import { output, renderStatusLine } from '../../../infra/utils/output.ts';
+import { MaestroError, handleCommandError } from '../../../domain/errors.ts';
+import type { TaskInfo } from '../../../domain/types.ts';
 
 export function makeInfoCommand() {
   return defineCommand({

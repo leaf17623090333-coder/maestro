@@ -5,13 +5,13 @@
 
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
-import { output } from '../../../../core/output.ts';
-import { MaestroError, handleCommandError } from '../../../../core/errors.ts';
-import { selectMemories } from '../../../../dcp/selector.ts';
-import { resolveDcpConfig } from '../../../../dcp/config.ts';
-import { estimateTokens } from '../../../../core/tokens.ts';
-import { fitWithinBudget } from '../../../../dcp/budget.ts';
-import type { MemoryFileWithMeta } from '../../../../core/types.ts';
+import { output } from '../../../../infra/utils/output.ts';
+import { MaestroError, handleCommandError } from '../../../../domain/errors.ts';
+import { selectMemories } from '../../../../app/dcp/selector.ts';
+import { resolveDcpConfig } from '../../../../app/dcp/config.ts';
+import { estimateTokens } from '../../../../infra/utils/tokens.ts';
+import { fitWithinBudget } from '../../../../app/dcp/budget.ts';
+import type { MemoryFileWithMeta } from '../../../../domain/types.ts';
 
 function parseBudget(raw: string): number {
   const n = parseInt(raw, 10);

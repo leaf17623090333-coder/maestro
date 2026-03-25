@@ -5,7 +5,7 @@
  * Always uses --robot/--json flags (never bare cass which launches TUI).
  */
 
-import type { SearchPort, SessionSearchResult } from '../../../../../search/port.ts';
+import type { SearchPort, SessionSearchResult } from '../../../../../domain/ports/search.ts';
 import { CliTransport } from '../../../sdk/cli-transport.ts';
 import type { AdapterContext, AdapterFactory } from '../../../types.ts';
 

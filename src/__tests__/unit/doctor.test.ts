@@ -1,10 +1,10 @@
 import { describe, test, expect, beforeEach } from 'bun:test';
-import { doctor, type DoctorServices } from '../../workflow/doctor.ts';
-import { ToolboxRegistry } from '../../toolbox/registry.ts';
-import { clearDetectCache } from '../../toolbox/loader.ts';
-import { DEFAULT_SETTINGS } from '../../core/settings.ts';
-import type { SettingsPort } from '../../core/settings.ts';
-import type { ToolManifest } from '../../toolbox/types.ts';
+import { doctor, type DoctorServices } from '../../app/workflow/doctor.ts';
+import { ToolboxRegistry } from '../../infra/toolbox/registry.ts';
+import { clearDetectCache } from '../../infra/toolbox/loader.ts';
+import { DEFAULT_SETTINGS } from '../../domain/ports/settings.ts';
+import type { SettingsPort } from '../../domain/ports/settings.ts';
+import type { ToolManifest } from '../../infra/toolbox/types.ts';
 
 function makeManifest(overrides: Partial<ToolManifest> & { name: string }): ToolManifest {
   return { binary: null, detect: null, provides: null, priority: 0, adapter: 'test.ts', ...overrides };

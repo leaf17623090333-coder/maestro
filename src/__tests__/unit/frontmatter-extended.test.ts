@@ -4,7 +4,7 @@ import {
   parseFrontmatterRich,
   stripFrontmatter,
   serializeFrontmatter,
-} from '../../core/frontmatter.ts';
+} from '../../infra/utils/frontmatter.ts';
 
 describe('parseFrontmatterRich', () => {
   test('parses inline arrays', () => {

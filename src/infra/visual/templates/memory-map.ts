@@ -1,4 +1,4 @@
-import type { TemplateRenderer, MemoryMapData, MemoryMapEntry } from '../../../visual/types.ts';
+import type { TemplateRenderer, MemoryMapData, MemoryMapEntry } from '../../../app/visual/types.ts';
 import { escapeHtml, sanitizeMermaidLabel } from '../renderer.ts';
 import { MERMAID_CDN } from '../css.ts';
 

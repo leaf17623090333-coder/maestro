@@ -2,9 +2,9 @@ import { describe, test, expect, beforeEach, afterEach } from 'bun:test';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { appendDoctrineTrace, readDoctrineTrace, collectDoctrineNames } from '../../doctrine/trace.ts';
-import { FsDoctrineAdapter } from '../../doctrine/adapter.ts';
-import type { DoctrineItem } from '../../doctrine/port.ts';
+import { appendDoctrineTrace, readDoctrineTrace, collectDoctrineNames } from '../../app/doctrine/trace.ts';
+import { FsDoctrineAdapter } from '../../infra/adapters/doctrine/adapter.ts';
+import type { DoctrineItem } from '../../domain/ports/doctrine.ts';
 
 let tmpDir: string;
 

@@ -2,7 +2,7 @@
  * Toolbox type system -- manifest schema, tool status, adapter context.
  */
 
-import type { MaestroSettings } from '../../core/settings.ts';
+import type { MaestroSettings } from '../../domain/ports/settings.ts';
 import type { TransportType } from './sdk/types.ts';
 
 // ============================================================================

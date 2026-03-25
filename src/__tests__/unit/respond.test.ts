@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test';
-import { respond, textResponse, errorResponse } from '../../mcp/respond.ts';
+import { respond, textResponse, errorResponse } from '../../surfaces/mcp/respond.ts';
 
 describe('respond', () => {
   test('wraps payload in MCP text content', () => {

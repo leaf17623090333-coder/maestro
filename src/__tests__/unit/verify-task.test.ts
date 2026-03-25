@@ -6,10 +6,10 @@
 
 import { describe, test, expect, beforeEach } from 'bun:test';
 import { InMemoryTaskPort } from '../mocks/in-memory-task-port.ts';
-import { verifyTask, type VerifyTaskOpts } from '../../tasks/verify-task.ts';
-import type { VerificationPort, VerificationReport, VerifyParams } from '../../tasks/verification/port.ts';
-import type { ResolvedVerificationConfig } from '../../tasks/verification/config.ts';
-import { DEFAULT_SETTINGS } from '../../core/settings.ts';
+import { verifyTask, type VerifyTaskOpts } from '../../app/tasks/verify-task.ts';
+import type { VerificationPort, VerificationReport, VerifyParams } from '../../domain/ports/verification.ts';
+import type { ResolvedVerificationConfig } from '../../infra/adapters/tasks/verification-config.ts';
+import { DEFAULT_SETTINGS } from '../../domain/ports/settings.ts';
 
 const FEATURE = 'test-feature';
 const TASK = '01-setup';

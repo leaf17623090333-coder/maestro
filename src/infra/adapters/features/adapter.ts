@@ -11,14 +11,14 @@ import {
   getTasksPath,
   getPlanPath,
   getCommentsPath,
-} from '../../../core/paths.ts';
-import { ensureDir, readJson, writeJsonAtomic, fileExists } from '../../../core/fs-io.ts';
-import { acquireLockSync } from '../../../core/locking.ts';
-import type { FeatureJson, FeatureStatusType, CommentsJson } from '../../../core/types.ts';
+} from '../../utils/paths.ts';
+import { ensureDir, readJson, writeJsonAtomic, fileExists } from '../../utils/fs-io.ts';
+import { acquireLockSync } from '../../utils/locking.ts';
+import type { FeatureJson, FeatureStatusType, CommentsJson } from '../../../domain/types.ts';
 import { listFeatures } from './detection.ts';
-import { MaestroError } from '../../../core/errors.ts';
-import { validateName } from '../../../core/validate-name.ts';
-import type { FeaturePort } from '../../../features/port.ts';
+import { MaestroError } from '../../../domain/errors.ts';
+import { validateName } from '../../utils/validate-name.ts';
+import type { FeaturePort } from '../../../domain/ports/feature.ts';
 
 export class FsFeatureAdapter implements FeaturePort {
   constructor(private projectRoot: string) {}

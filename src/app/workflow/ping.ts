@@ -3,10 +3,10 @@
  * Returns version, project root, task backend, and integration availability.
  */
 
-import type { GraphPort } from '../../tasks/graph/port.ts';
-import type { HandoffPort } from '../../handoff/port.ts';
-import type { SearchPort } from '../../search/port.ts';
-import type { AgentToolsRegistry } from '../../toolbox/agents/registry.ts';
+import type { GraphPort } from '../../domain/ports/graph.ts';
+import type { HandoffPort } from '../../domain/ports/handoff.ts';
+import type { SearchPort } from '../../domain/ports/search.ts';
+import type { AgentToolsRegistry } from '../../infra/toolbox/agents/registry.ts';
 import { VERSION } from '../../version.ts';
 
 export interface PingServices {

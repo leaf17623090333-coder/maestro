@@ -8,13 +8,13 @@
 
 import * as path from 'path';
 import { homedir } from 'os';
-import { readJson } from '../../core/fs-io.ts';
+import { readJson } from '../utils/fs-io.ts';
 import {
   DEFAULT_SETTINGS,
   mergeSettings,
   type MaestroSettings,
   type SettingsPort,
-} from '../../core/settings.ts';
+} from '../../domain/ports/settings.ts';
 /** Legacy config.json shape -- inlined for migration only. */
 interface LegacyConfig {
   enableToolsFor?: string[];

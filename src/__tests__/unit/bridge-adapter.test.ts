@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'bun:test';
 
-import { createMcpPortAdapter, extractJson } from '../../toolbox/sdk/bridge-adapter.ts';
-import type { BridgeMapping } from '../../toolbox/sdk/bridge-adapter.ts';
-import { MockMcpTransport } from '../../toolbox/sdk/test-harness.ts';
-import { McpBridge } from '../../toolbox/sdk/mcp-bridge.ts';
-import type { SearchPort, SessionSearchResult } from '../../search/port.ts';
-import type { GraphPort, GraphInsights } from '../../tasks/graph/port.ts';
+import { createMcpPortAdapter, extractJson } from '../../infra/toolbox/sdk/bridge-adapter.ts';
+import type { BridgeMapping } from '../../infra/toolbox/sdk/bridge-adapter.ts';
+import { MockMcpTransport } from '../../infra/toolbox/sdk/test-harness.ts';
+import { McpBridge } from '../../infra/toolbox/sdk/mcp-bridge.ts';
+import type { SearchPort, SessionSearchResult } from '../../domain/ports/search.ts';
+import type { GraphPort, GraphInsights } from '../../domain/ports/graph.ts';
 
 // ============================================================================
 // SearchPort bridge

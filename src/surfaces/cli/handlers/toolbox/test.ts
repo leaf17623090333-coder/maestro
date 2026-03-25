@@ -5,9 +5,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { defineCommand } from 'citty';
-import { output } from '../../../../core/output.ts';
-import { handleCommandError } from '../../../../core/errors.ts';
-import { loadManifest, inferTransport } from '../../../../toolbox/loader.ts';
+import { output } from '../../../../infra/utils/output.ts';
+import { handleCommandError } from '../../../../domain/errors.ts';
+import { loadManifest, inferTransport } from '../../../../infra/toolbox/loader.ts';
 import { execFileSync } from 'node:child_process';
 
 interface CheckResult {
@@ -17,9 +17,9 @@ interface CheckResult {
 }
 
 function findToolDir(name: string): string | null {
-  const builtIn = path.join(import.meta.dir, '../../../toolbox/tools/built-in', name);
+  const builtIn = path.join(import.meta.dir, '../../../../infra/toolbox/tools/built-in', name);
   if (fs.existsSync(builtIn)) return builtIn;
-  const external = path.join(import.meta.dir, '../../../toolbox/tools/external', name);
+  const external = path.join(import.meta.dir, '../../../../infra/toolbox/tools/external', name);
   if (fs.existsSync(external)) return external;
   return null;
 }

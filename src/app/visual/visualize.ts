@@ -8,15 +8,15 @@ import type {
   ExecutionTimelineData,
   DoctrineNetworkData,
 } from './types.ts';
-import { renderPage, writeVisual } from '../../visual/renderer.ts';
-import { renderPlanGraph } from '../../visual/templates/plan-graph.ts';
-import { renderStatusDashboard } from '../../visual/templates/status-dashboard.ts';
-import { renderMemoryMap } from '../../visual/templates/memory-map.ts';
-import { renderExecutionTimeline } from '../../visual/templates/execution-timeline.ts';
-import { renderDoctrineNetwork } from '../../visual/templates/doctrine-network.ts';
+import { renderPage, writeVisual } from '../../infra/visual/renderer.ts';
+import { renderPlanGraph } from '../../infra/visual/templates/plan-graph.ts';
+import { renderStatusDashboard } from '../../infra/visual/templates/status-dashboard.ts';
+import { renderMemoryMap } from '../../infra/visual/templates/memory-map.ts';
+import { renderExecutionTimeline } from '../../infra/visual/templates/execution-timeline.ts';
+import { renderDoctrineNetwork } from '../../infra/visual/templates/doctrine-network.ts';
 import { checkStatus } from '../workflow/status.ts';
 import { executionInsights } from '../workflow/insights.ts';
-import { MaestroError } from '../../core/errors.ts';
+import { MaestroError } from '../../domain/errors.ts';
 import { derivePipelineStage } from '../workflow/stages.ts';
 
 // ============================================================================

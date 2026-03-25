@@ -4,8 +4,8 @@ import type { ServicesThunk } from '../services-thunk.ts';
 import { respond, withErrorHandling } from '../respond.ts';
 import { ANNOTATIONS_READONLY } from '../annotations.ts';
 import { limitParam } from '../params.ts';
-import { history } from '../../../workflow/history.ts';
-import type { FeatureStatusType } from '../../../core/types.ts';
+import { history } from '../../../app/workflow/history.ts';
+import type { FeatureStatusType } from '../../../domain/types.ts';
 
 const FEATURE_STATUSES = ['planning', 'approved', 'executing', 'completed'] as const;
 

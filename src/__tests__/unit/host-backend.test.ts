@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'bun:test';
-import { createHostBackend } from '../../host/factory.ts';
-import { ClaudeCodeHostBackend } from '../../host/adapters/claude-code.ts';
-import { CodexHostBackend } from '../../host/adapters/codex.ts';
+import { createHostBackend } from '../../infra/adapters/host/factory.ts';
+import { ClaudeCodeHostBackend } from '../../infra/adapters/host/claude-code.ts';
+import { CodexHostBackend } from '../../infra/adapters/host/codex.ts';
 
 describe('createHostBackend', () => {
   test('returns ClaudeCodeHostBackend for claude-code', () => {

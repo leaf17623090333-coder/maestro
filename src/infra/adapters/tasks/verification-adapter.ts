@@ -8,14 +8,14 @@
  *   4. AC match: acceptance criteria keyword presence in summary
  */
 
-import type { VerificationPort, VerifyParams, VerificationReport, VerificationCriterion } from '../../../tasks/verification/port.ts';
+import type { VerificationPort, VerifyParams, VerificationReport, VerificationCriterion } from '../../../domain/ports/verification.ts';
 import type { ResolvedVerificationConfig } from './verification-config.ts';
 import { spawn } from 'child_process';
 import simpleGit from 'simple-git';
 import * as fs from 'fs';
 import * as path from 'path';
-import { readJson } from '../../../core/fs-io.ts';
-import { extractKeywords } from '../../../dcp/relevance.ts';
+import { readJson } from '../../utils/fs-io.ts';
+import { extractKeywords } from '../../../app/dcp/relevance.ts';
 
 const MAX_BUILD_OUTPUT = 2048;
 const MIN_SUMMARY_LENGTH = 20;

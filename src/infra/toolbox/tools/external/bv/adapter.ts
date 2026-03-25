@@ -5,7 +5,7 @@
  * Gracefully returns empty/null when bv is not installed.
  */
 
-import type { GraphPort, GraphInsights, NextRecommendation, ExecutionPlan } from '../../../../../tasks/graph/port.ts';
+import type { GraphPort, GraphInsights, NextRecommendation, ExecutionPlan } from '../../../../../domain/ports/graph.ts';
 import { CliTransport } from '../../../sdk/cli-transport.ts';
 import type { AdapterContext, AdapterFactory } from '../../../types.ts';
 

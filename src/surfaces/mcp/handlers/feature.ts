@@ -3,11 +3,11 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ServicesThunk } from '../services-thunk.ts';
 import { respond, withErrorHandling } from '../respond.ts';
 import { ANNOTATIONS_MUTATING, ANNOTATIONS_READONLY } from '../annotations.ts';
-import { requireFeature } from '../../../core/resolve.ts';
+import { requireFeature } from '../../../infra/utils/resolve.ts';
 import { featureParam } from '../params.ts';
-import { completeFeature } from '../../../features/complete-feature.ts';
-import { buildTransitionHint } from '../../../workflow/playbook.ts';
-import { MaestroError } from '../../../core/errors.ts';
+import { completeFeature } from '../../../app/features/complete-feature.ts';
+import { buildTransitionHint } from '../../../app/workflow/playbook.ts';
+import { MaestroError } from '../../../domain/errors.ts';
 
 export function registerFeatureTools(server: McpServer, thunk: ServicesThunk): void {
   // Mutating: create | complete

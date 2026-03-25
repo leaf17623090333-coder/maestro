@@ -4,9 +4,9 @@
 
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
-import { output } from '../../../../core/output.ts';
-import { MaestroError, handleCommandError } from '../../../../core/errors.ts';
-import { requireFeature, FEATURE_HINT } from '../../../../core/resolve.ts';
+import { output } from '../../../../infra/utils/output.ts';
+import { MaestroError, handleCommandError } from '../../../../domain/errors.ts';
+import { requireFeature, FEATURE_HINT } from '../../../../infra/utils/resolve.ts';
 
 export default defineCommand({
   meta: { name: 'memory-promote', description: 'Promote feature memory to global' },

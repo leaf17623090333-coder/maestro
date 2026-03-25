@@ -1,7 +1,7 @@
 import { describe, expect, test, mock } from 'bun:test';
 import { InMemoryTaskPort } from '../mocks/in-memory-task-port.ts';
-import { taskBrief, type TaskBriefParams } from '../../tasks/task-brief.ts';
-import { MaestroError } from '../../core/errors.ts';
+import { taskBrief, type TaskBriefParams } from '../../app/tasks/task-brief.ts';
+import { MaestroError } from '../../domain/errors.ts';
 
 function makeParams(overrides?: Partial<TaskBriefParams>): TaskBriefParams {
   return {

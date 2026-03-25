@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'bun:test';
-import { buildExecutionMemory, type ExecutionMemoryParams } from '../../memory/execution/writer.ts';
-import type { VerificationReport } from '../../tasks/verification/port.ts';
+import { buildExecutionMemory, type ExecutionMemoryParams } from '../../app/memory/execution/writer.ts';
+import type { VerificationReport } from '../../domain/ports/verification.ts';
 
 function makeParams(overrides: Partial<ExecutionMemoryParams> = {}): ExecutionMemoryParams {
   return {

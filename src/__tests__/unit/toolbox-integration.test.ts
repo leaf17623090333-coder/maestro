@@ -9,13 +9,13 @@ import * as path from 'path';
 import { mkdtemp, rm } from 'fs/promises';
 import { tmpdir } from 'os';
 
-import { ToolboxRegistry } from '../../toolbox/registry.ts';
-import { clearDetectCache } from '../../toolbox/loader.ts';
-import { DEFAULT_SETTINGS, mergeSettings } from '../../core/settings.ts';
-import type { MaestroSettings } from '../../core/settings.ts';
-import type { ToolManifest } from '../../toolbox/types.ts';
+import { ToolboxRegistry } from '../../infra/toolbox/registry.ts';
+import { clearDetectCache } from '../../infra/toolbox/loader.ts';
+import { DEFAULT_SETTINGS, mergeSettings } from '../../domain/ports/settings.ts';
+import type { MaestroSettings } from '../../domain/ports/settings.ts';
+import type { ToolManifest } from '../../infra/toolbox/types.ts';
 import { initServices } from '../../services.ts';
-import { FsTaskAdapter } from '../../tasks/adapter.ts';
+import { FsTaskAdapter } from '../../infra/adapters/tasks/adapter.ts';
 
 // ============================================================================
 // Helpers

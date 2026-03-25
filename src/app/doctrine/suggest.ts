@@ -3,15 +3,15 @@
  * All heuristic, no LLM. Requires minSampleSize features with matching pattern.
  */
 
-import type { FeaturePort } from '../../features/port.ts';
-import type { MemoryPort } from '../../memory/port.ts';
-import type { DoctrineItem, DoctrineConditions } from '../../doctrine/port.ts';
+import type { FeaturePort } from '../../domain/ports/feature.ts';
+import type { MemoryPort } from '../../domain/ports/memory.ts';
+import type { DoctrineItem, DoctrineConditions } from '../../domain/ports/doctrine.ts';
 import { isExecutionMemory } from '../memory/execution/writer.ts';
 import { parseExecMemory, type ParsedExecMemory, groupByTagCluster, listRecentFeatures } from '../memory/execution/parser.ts';
 import { extractKeywords } from '../dcp/relevance.ts';
-import { titleToSlug } from '../../core/slug.ts';
+import { titleToSlug } from '../../infra/utils/slug.ts';
 import { resolveDoctrineConfig } from './config.ts';
-import type { DoctrineSettings } from '../../core/settings.ts';
+import type { DoctrineSettings } from '../../domain/ports/settings.ts';
 
 export interface DoctrineSuggestion {
   name: string;

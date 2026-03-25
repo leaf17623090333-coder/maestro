@@ -3,8 +3,8 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ServicesThunk } from '../services-thunk.ts';
 import { respond, withErrorHandling } from '../respond.ts';
 import { ANNOTATIONS_READONLY, ANNOTATIONS_MUTATING } from '../annotations.ts';
-import { readJson, writeJsonAtomic, ensureDir } from '../../../core/fs-io.ts';
-import { getNestedValue, setNestedValue } from '../../../core/object-utils.ts';
+import { readJson, writeJsonAtomic, ensureDir } from '../../../infra/utils/fs-io.ts';
+import { getNestedValue, setNestedValue } from '../../../infra/utils/object-utils.ts';
 import * as path from 'path';
 
 const REDACT_PATTERN = /apiKey|token|secret|password/i;

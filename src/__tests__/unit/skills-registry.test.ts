@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import { listSkills, loadSkill, loadSkillReference, BUILTIN_SKILL_NAMES, BUILTIN_SKILLS, getBuiltinSkillsByStage } from '../../skills/registry.ts';
-import { SKILL_ALIASES } from '../../skills/aliases.ts';
+import { listSkills, loadSkill, loadSkillReference, BUILTIN_SKILL_NAMES, BUILTIN_SKILLS, getBuiltinSkillsByStage } from '../../app/skills/registry.ts';
+import { SKILL_ALIASES } from '../../app/skills/aliases.ts';
 
 describe('skills registry', () => {
   let tmpDir: string;

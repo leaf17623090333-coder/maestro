@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'bun:test';
-import { executionInsights } from '../../workflow/insights.ts';
+import { executionInsights } from '../../app/workflow/insights.ts';
 import { InMemoryTaskPort } from '../mocks/in-memory-task-port.ts';
-import { buildExecutionMemory } from '../../memory/execution/writer.ts';
+import { buildExecutionMemory } from '../../app/memory/execution/writer.ts';
 
 const FEATURE = 'test-feature';
 

@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'bun:test';
 
-import { McpBridge, extractText, extractJson } from '../../toolbox/sdk/mcp-bridge.ts';
-import { MockMcpTransport } from '../../toolbox/sdk/test-harness.ts';
-import type { McpToolResult } from '../../toolbox/sdk/mcp-transport.ts';
+import { McpBridge, extractText, extractJson } from '../../infra/toolbox/sdk/mcp-bridge.ts';
+import { MockMcpTransport } from '../../infra/toolbox/sdk/test-harness.ts';
+import type { McpToolResult } from '../../infra/toolbox/sdk/mcp-transport.ts';
 
 // ============================================================================
 // extractText / extractJson

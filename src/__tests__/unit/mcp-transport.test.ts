@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'bun:test';
 
-import { McpTransport } from '../../toolbox/sdk/mcp-transport.ts';
+import { McpTransport } from '../../infra/toolbox/sdk/mcp-transport.ts';
 
 /**
  * MCP transport tests -- lightweight verification of construction and types.

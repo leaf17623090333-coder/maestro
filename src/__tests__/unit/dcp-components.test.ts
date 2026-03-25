@@ -4,7 +4,7 @@ import {
   allocateBudget,
   pruneComponents,
   type DcpComponent,
-} from '../../dcp/components.ts';
+} from '../../app/dcp/components.ts';
 
 describe('COMPONENT_REGISTRY', () => {
   test('has exactly 10 components', () => {

@@ -3,7 +3,7 @@
  * Updated for 6-state model (pending/claimed/done/blocked/review/revision).
  */
 
-import type { TaskStatusType } from '../../core/types.ts';
+import type { TaskStatusType } from '../../domain/types.ts';
 
 export type PipelineStage = 'discovery' | 'research' | 'planning' | 'approval' | 'execution' | 'done';
 

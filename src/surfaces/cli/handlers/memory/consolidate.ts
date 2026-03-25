@@ -4,9 +4,9 @@
 
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
-import { output } from '../../../../core/output.ts';
-import { handleCommandError } from '../../../../core/errors.ts';
-import { consolidateMemories } from '../../../../memory/consolidate.ts';
+import { output } from '../../../../infra/utils/output.ts';
+import { handleCommandError } from '../../../../domain/errors.ts';
+import { consolidateMemories } from '../../../../app/memory/consolidate.ts';
 
 export default defineCommand({
   meta: { name: 'memory-consolidate', description: 'Consolidate memories: merge duplicates, compress stale, identify promotions' },

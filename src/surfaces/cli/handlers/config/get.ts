@@ -5,9 +5,9 @@
 
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
-import { output } from '../../../../core/output.ts';
-import { MaestroError, handleCommandError } from '../../../../core/errors.ts';
-import { getNestedValue } from '../../../../core/object-utils.ts';
+import { output } from '../../../../infra/utils/output.ts';
+import { MaestroError, handleCommandError } from '../../../../domain/errors.ts';
+import { getNestedValue } from '../../../../infra/utils/object-utils.ts';
 
 export default defineCommand({
   meta: { name: 'config-get', description: 'Get a config value' },

@@ -3,13 +3,13 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ServicesThunk } from '../services-thunk.ts';
 import { respond, withErrorHandling } from '../respond.ts';
 import { ANNOTATIONS_READONLY } from '../annotations.ts';
-import { requireFeature } from '../../../core/resolve.ts';
+import { requireFeature } from '../../../infra/utils/resolve.ts';
 import { featureParam } from '../params.ts';
-import { checkStatus } from '../../../workflow/status.ts';
-import { detectResearchTools } from '../../../workflow/research-tools.ts';
-import { derivePipelineStage } from '../../../workflow/stages.ts';
-import { buildPlaybookWithExternalSkills } from '../../../workflow/playbook.ts';
-import type { WorkflowEngine } from '../../../workflow/engine.ts';
+import { checkStatus } from '../../../app/workflow/status.ts';
+import { detectResearchTools } from '../../../app/workflow/research-tools.ts';
+import { derivePipelineStage } from '../../../app/workflow/stages.ts';
+import { buildPlaybookWithExternalSkills } from '../../../app/workflow/playbook.ts';
+import type { WorkflowEngine } from '../../../app/workflow/engine.ts';
 
 export function registerStatusTools(server: McpServer, thunk: ServicesThunk, engine?: WorkflowEngine): void {
   server.registerTool(

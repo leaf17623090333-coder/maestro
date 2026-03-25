@@ -6,8 +6,8 @@
  */
 
 import { describe, test, expect } from 'bun:test';
-import { selectMemories } from '../../dcp/selector.ts';
-import type { MemoryFileWithMeta, TaskInfo } from '../../core/types.ts';
+import { selectMemories } from '../../app/dcp/selector.ts';
+import type { MemoryFileWithMeta, TaskInfo } from '../../domain/types.ts';
 
 // We test the selectMemories + budget logic directly since the CLI command
 // is a thin wrapper around getServices() + these utilities.

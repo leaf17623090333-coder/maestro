@@ -7,9 +7,9 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { initServices, type MaestroServices } from '../../services.ts';
-import { MaestroError } from '../../core/errors.ts';
-import type { ToolboxRegistry } from '../../toolbox/registry.ts';
-import type { WorkflowRegistry } from '../../workflow/registry.ts';
+import { MaestroError } from '../../domain/errors.ts';
+import type { ToolboxRegistry } from '../../infra/toolbox/registry.ts';
+import type { WorkflowRegistry } from '../../app/workflow/registry.ts';
 
 export interface ServicesThunk {
   /** Get or initialize services. Throws if .maestro/ is missing. */

@@ -5,7 +5,7 @@
 
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { MaestroError } from '../../../core/errors.ts';
+import { MaestroError } from '../../../domain/errors.ts';
 import type { CliTransportConfig } from './types.ts';
 
 const execFileAsync = promisify(execFile);

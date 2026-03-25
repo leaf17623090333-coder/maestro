@@ -2,8 +2,8 @@
  * ToolboxRegistry -- resolves port providers from manifests + settings.
  */
 
-import { isToolAllowed } from '../../core/settings.ts';
-import type { MaestroSettings } from '../../core/settings.ts';
+import { isToolAllowed } from '../../domain/ports/settings.ts';
+import type { MaestroSettings } from '../../domain/ports/settings.ts';
 import { scanBuiltInManifests, detectTool, inferTransport } from './loader.ts';
 import type { ToolManifest, ToolStatus } from './types.ts';
 import type { TransportType } from './sdk/types.ts';

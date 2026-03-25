@@ -4,9 +4,9 @@
 
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
-import { completeFeature } from '../../../../features/complete-feature.ts';
-import { output } from '../../../../core/output.ts';
-import { handleCommandError } from '../../../../core/errors.ts';
+import { completeFeature } from '../../../../app/features/complete-feature.ts';
+import { output } from '../../../../infra/utils/output.ts';
+import { handleCommandError } from '../../../../domain/errors.ts';
 
 export default defineCommand({
   meta: { name: 'feature-complete', description: 'Mark feature as completed' },

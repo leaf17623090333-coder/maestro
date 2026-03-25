@@ -4,8 +4,8 @@
 
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
-import { output, renderTable } from '../../../../core/output.ts';
-import { handleCommandError } from '../../../../core/errors.ts';
+import { output, renderTable } from '../../../../infra/utils/output.ts';
+import { handleCommandError } from '../../../../domain/errors.ts';
 
 export default defineCommand({
   meta: { name: 'memory-list', description: 'List memory files' },

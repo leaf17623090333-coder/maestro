@@ -5,9 +5,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { defineCommand } from 'citty';
-import { output } from '../../../../core/output.ts';
-import { MaestroError, handleCommandError } from '../../../../core/errors.ts';
-import type { TransportType } from '../../../../toolbox/sdk/types.ts';
+import { output } from '../../../../infra/utils/output.ts';
+import { MaestroError, handleCommandError } from '../../../../domain/errors.ts';
+import type { TransportType } from '../../../../infra/toolbox/sdk/types.ts';
 
 const VALID_TRANSPORTS: TransportType[] = ['cli', 'http', 'mcp-stdio', 'mcp-http'];
 
@@ -77,9 +77,9 @@ function generateAdapter(name: string, transport: TransportType, provides?: stri
  * Maps MCP tools to ${provides} port methods via McpBridge.
  */
 
-import { createMcpPortAdapter, extractJson } from '../../../../sdk/bridge-adapter.ts';
-import type { BridgeMapping } from '../../../../sdk/bridge-adapter.ts';
-import type { AdapterContext, AdapterFactory } from '../../../../types.ts';
+import { createMcpPortAdapter, extractJson } from '../../../sdk/bridge-adapter.ts';
+import type { BridgeMapping } from '../../../sdk/bridge-adapter.ts';
+import type { AdapterContext, AdapterFactory } from '../../../types.ts';
 
 const MAPPINGS: BridgeMapping[] = [
 ${mappingsStr}
@@ -93,11 +93,11 @@ export const createAdapter: AdapterFactory = (ctx: AdapterContext) => {
 
   // Non-MCP or unknown port: generate basic skeleton
   const importLine = transport === 'cli'
-    ? "import { CliTransport } from '../../../../sdk/cli-transport.ts';"
+    ? "import { CliTransport } from '../../../sdk/cli-transport.ts';"
     : transport === 'http'
-      ? "import { HttpTransport } from '../../../../sdk/http-transport.ts';"
+      ? "import { HttpTransport } from '../../../sdk/http-transport.ts';"
       : isMcp
-        ? "import { McpTransport } from '../../../../sdk/mcp-transport.ts';"
+        ? "import { McpTransport } from '../../../sdk/mcp-transport.ts';"
         : '';
 
   return `/**
@@ -105,7 +105,7 @@ export const createAdapter: AdapterFactory = (ctx: AdapterContext) => {
  */
 
 ${importLine}
-import type { AdapterContext, AdapterFactory } from '../../../../types.ts';
+import type { AdapterContext, AdapterFactory } from '../../../types.ts';
 
 export const createAdapter: AdapterFactory = (ctx: AdapterContext) => {
   // TODO: create transport from ctx.manifest config
@@ -147,7 +147,7 @@ export default defineCommand({
         throw new MaestroError('Tool name must be kebab-case (lowercase letters, numbers, hyphens)');
       }
 
-      const toolDir = path.join(import.meta.dir, '../../../toolbox/tools/external', args.name);
+      const toolDir = path.join(import.meta.dir, '../../../../infra/toolbox/tools/external', args.name);
       if (fs.existsSync(toolDir)) {
         throw new MaestroError(`Tool '${args.name}' already exists at ${toolDir}`);
       }

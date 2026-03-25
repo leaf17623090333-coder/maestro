@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'bun:test';
-import { recommend, type RecommendationContext } from '../../workflow/recommender.ts';
-import { WorkflowRegistry } from '../../workflow/registry.ts';
-import { declareAllTools } from '../../workflow/tool-declarations.ts';
+import { recommend, type RecommendationContext } from '../../app/workflow/recommender.ts';
+import { WorkflowRegistry } from '../../app/workflow/registry.ts';
+import { declareAllTools } from '../../app/workflow/tool-declarations.ts';
 
 function makeRegistry(): WorkflowRegistry {
   const reg = new WorkflowRegistry();

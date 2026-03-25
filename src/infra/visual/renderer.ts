@@ -2,9 +2,9 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
 import { execFile } from 'child_process';
-import { writeAtomic, ensureDir } from '../../core/fs-io.ts';
+import { writeAtomic, ensureDir } from '../utils/fs-io.ts';
 import { MAESTRO_CSS, GOOGLE_FONTS_LINK } from './css.ts';
-import type { VisualType, VisualResult } from '../../visual/types.ts';
+import type { VisualType, VisualResult } from '../../app/visual/types.ts';
 
 const VISUALS_DIR = path.join(os.homedir(), '.maestro', 'visuals');
 const VISUALS_MAX_FILES = 100;

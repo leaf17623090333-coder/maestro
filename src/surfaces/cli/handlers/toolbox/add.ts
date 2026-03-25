@@ -6,9 +6,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { defineCommand } from 'citty';
-import { output } from '../../../../core/output.ts';
-import { MaestroError, handleCommandError } from '../../../../core/errors.ts';
-import type { TransportType } from '../../../../toolbox/sdk/types.ts';
+import { output } from '../../../../infra/utils/output.ts';
+import { MaestroError, handleCommandError } from '../../../../domain/errors.ts';
+import type { TransportType } from '../../../../infra/toolbox/sdk/types.ts';
 
 const VALID_TRANSPORTS: TransportType[] = ['cli', 'http', 'mcp-stdio', 'mcp-http'];
 
@@ -56,7 +56,7 @@ export default defineCommand({
         throw new MaestroError('Tool name must be kebab-case');
       }
 
-      const toolDir = path.join(import.meta.dir, '../../../toolbox/tools/external', args.name);
+      const toolDir = path.join(import.meta.dir, '../../../../infra/toolbox/tools/external', args.name);
       if (fs.existsSync(path.join(toolDir, 'manifest.json'))) {
         throw new MaestroError(`Tool '${args.name}' already has a manifest at ${toolDir}`);
       }

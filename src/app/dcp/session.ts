@@ -5,7 +5,7 @@
  */
 
 import * as path from 'node:path';
-import { readJson, writeJsonAtomic, ensureDir } from '../../core/fs-io.ts';
+import { readJson, writeJsonAtomic, ensureDir } from '../../infra/utils/fs-io.ts';
 
 export interface DcpSessionState {
   injectionCount: number;

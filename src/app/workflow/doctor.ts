@@ -4,15 +4,15 @@
  * v2: uses toolbox status for richer per-tool output.
  */
 
-import type { SettingsPort } from '../../core/settings.ts';
-import type { FeaturePort } from '../../features/port.ts';
-import type { TaskPort } from '../../tasks/port.ts';
-import type { GraphPort } from '../../tasks/graph/port.ts';
-import type { HandoffPort } from '../../handoff/port.ts';
-import type { SearchPort } from '../../search/port.ts';
-import type { DoctrinePort } from '../../doctrine/port.ts';
-import type { ToolboxRegistry } from '../../toolbox/registry.ts';
-import type { AgentToolsRegistry } from '../../toolbox/agents/registry.ts';
+import type { SettingsPort } from '../../domain/ports/settings.ts';
+import type { FeaturePort } from '../../domain/ports/feature.ts';
+import type { TaskPort } from '../../domain/ports/task.ts';
+import type { GraphPort } from '../../domain/ports/graph.ts';
+import type { HandoffPort } from '../../domain/ports/handoff.ts';
+import type { SearchPort } from '../../domain/ports/search.ts';
+import type { DoctrinePort } from '../../domain/ports/doctrine.ts';
+import type { ToolboxRegistry } from '../../infra/toolbox/registry.ts';
+import type { AgentToolsRegistry } from '../../infra/toolbox/agents/registry.ts';
 
 export interface DoctorServices {
   settingsPort: SettingsPort;

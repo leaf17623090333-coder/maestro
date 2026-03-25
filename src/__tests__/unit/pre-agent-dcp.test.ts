@@ -1,8 +1,8 @@
 import { describe, test, expect } from 'bun:test';
-import { formatRichContext, formatGraphContext } from '../../hooks/pre-agent.ts';
-import { WORKER_RULES } from '../../tasks/worker-rules.ts';
-import { pruneContext } from '../../dcp/prune-context.ts';
-import type { MemoryFileWithMeta, TaskInfo } from '../../core/types.ts';
+import { formatRichContext, formatGraphContext } from '../../surfaces/hooks/pre-agent.ts';
+import { WORKER_RULES } from '../../app/tasks/worker-rules.ts';
+import { pruneContext } from '../../app/dcp/prune-context.ts';
+import type { MemoryFileWithMeta, TaskInfo } from '../../domain/types.ts';
 
 function makeMemory(name: string, bodyContent: string, overrides: Partial<MemoryFileWithMeta> = {}): MemoryFileWithMeta {
   return {

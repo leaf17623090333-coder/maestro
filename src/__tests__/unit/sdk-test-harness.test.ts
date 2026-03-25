@@ -5,8 +5,8 @@ import {
   MockHttpTransport,
   MockMcpTransport,
   createTestContext,
-} from '../../toolbox/sdk/test-harness.ts';
-import { McpBridge } from '../../toolbox/sdk/mcp-bridge.ts';
+} from '../../infra/toolbox/sdk/test-harness.ts';
+import { McpBridge } from '../../infra/toolbox/sdk/mcp-bridge.ts';
 
 // ============================================================================
 // MockCliTransport

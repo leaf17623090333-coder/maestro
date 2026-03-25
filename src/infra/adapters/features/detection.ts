@@ -4,7 +4,7 @@
 
 import * as path from 'path';
 import * as fs from 'fs';
-import { getFeaturesPath } from '../../../core/paths.ts';
+import { getFeaturesPath } from '../../utils/paths.ts';
 
 export function listFeatures(projectRoot: string): string[] {
   const featuresPath = getFeaturesPath(projectRoot);
