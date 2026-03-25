@@ -28,6 +28,9 @@ async function build() {
   console.log('[build] Generating command registry...');
   await $`bun src/surfaces/cli/_generate.ts`;
 
+  console.log('[build] Generating tool manifests...');
+  await $`bun src/infra/toolbox/generate-manifests.ts`;
+
   // Step 1: Server bundle (Node target, ESM)
   console.log('[build] Bundling MCP server...');
   checkBuild(await Bun.build({

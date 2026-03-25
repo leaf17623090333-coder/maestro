@@ -8,6 +8,7 @@ import { execFileSync } from 'node:child_process';
 import { isToolAllowed } from '../../domain/ports/settings.ts';
 import type { ToolManifest, ToolStatus } from './types.ts';
 import type { TransportType } from './sdk/types.ts';
+import { BUILT_IN_MANIFESTS } from './manifests.generated.ts';
 
 // ============================================================================
 // Manifest Loading
@@ -53,11 +54,11 @@ export function scanToolboxDir(toolboxRoot: string): ToolManifest[] {
 }
 
 /**
- * Scan built-in manifests shipped with the package (src/toolbox/tools/).
+ * Return built-in manifests embedded at build time.
+ * The generated file is inlined by the bundler, eliminating runtime fs scanning.
  */
 export function scanBuiltInManifests(): ToolManifest[] {
-  const toolboxRoot = path.join(import.meta.dir);
-  return scanToolboxDir(toolboxRoot);
+  return BUILT_IN_MANIFESTS;
 }
 
 // ============================================================================
