@@ -1,13 +1,8 @@
 /**
  * PreToolUse:Agent hook -- inject task spec into agent prompts.
  *
- * When an Agent is spawned for a claimed task, injects:
- * - Compiled task spec (via DCP)
- * - Worker rules (call task_done/task_block)
- * - Relevant feature memories (DCP-scored)
- * - Rich context and graph context (when available)
- *
- * Non-task agents pass through without injection.
+ * Delegates to taskBrief() for all data gathering and DCP scoring,
+ * then formats the structured result into a flat injection string.
  */
 
 import * as fs from 'node:fs';
@@ -15,73 +10,93 @@ import * as path from 'node:path';
 import { readStdin, writeOutput, resolveProjectDir, logHookError, getSessionsDir } from './_helpers.ts';
 import { ensureDir } from '../../infra/utils/fs-io.ts';
 import { initServices } from '../../services.ts';
-import { pruneContext, type PruneContextResult } from '../../app/dcp/prune-context.ts';
+import { taskBrief, type TaskBriefResult } from '../../app/tasks/task-brief.ts';
 import { WORKER_RULES } from '../../app/tasks/worker-rules.ts';
-import { deriveFolderTags } from '../../app/memory/execution/writer.ts';
-import { extractKeywords } from '../../app/dcp/relevance.ts';
-import { appendDoctrineTrace } from '../../app/doctrine/trace.ts';
-import type { DoctrineItem } from '../../domain/ports/doctrine.ts';
-import type { TaskInfo } from '../../domain/types.ts';
 import { loadSessionState, recordInjection, saveSessionState } from '../../app/dcp/session.ts';
-import type { RichTaskFields } from '../../domain/ports/task.ts';
+import { estimateTokens } from '../../infra/utils/tokens.ts';
 
 export { WORKER_RULES };
 
 const TASK_PATTERN = /(?:task[:\s_-]+|(?:^|\s))((?:\d{2}-|maestro-[a-z0-9]+-)?[a-z][a-z0-9-]+)/i;
 
-/** Subset of GraphInsights from tasks/graph/port.ts -- only the fields formatGraphContext needs. */
-type GraphInsightsSubset = { criticalPath: Array<{ id: string; title: string }>; bottlenecks: Array<{ id: string; title: string }> };
-
-/** Format rich bead context (design/AC) from getRichFields result. */
-export function formatRichContext(
-  richResult: PromiseSettledResult<RichTaskFields | null>,
-): string {
-  const rich = richResult.status === 'fulfilled' ? richResult.value : null;
-  if (!rich) return '';
+function formatBriefAsInjection(result: TaskBriefResult, agentGuidance: string | null): string {
   const parts: string[] = [];
-  if (rich.design) parts.push(`## Design Notes\n\n${rich.design}`);
-  if (rich.acceptanceCriteria) parts.push(`## Acceptance Criteria\n\n${rich.acceptanceCriteria}`);
-  return parts.length > 0 ? '\n' + parts.join('\n\n') + '\n' : '';
-}
 
-/** Format graph context (critical path/bottleneck flags) from getInsights result. */
-export function formatGraphContext(
-  insightsResult: PromiseSettledResult<GraphInsightsSubset | null>,
-  taskId: string,
-  task: TaskInfo,
-): string {
-  const insights = insightsResult.status === 'fulfilled' ? insightsResult.value : null;
-  if (!insights) return '';
-  const onCriticalPath = insights.criticalPath.some(n => n.id === taskId || n.title === task.name);
-  const isBottleneck = insights.bottlenecks.some(n => n.id === taskId || n.title === task.name);
-  if (!onCriticalPath && !isBottleneck) return '';
-  const flags: string[] = [];
-  if (onCriticalPath) flags.push('on critical path');
-  if (isBottleneck) flags.push('bottleneck (blocks other tasks)');
-  return `\n## Graph Context\n\n[!] This task is ${flags.join(' and ')}. Prioritize correctness.\n`;
-}
+  // Spec (always present)
+  parts.push(`## Task Spec\n\n${result.spec}`);
 
-/** Track session DCP state (best-effort). */
-function trackSessionDcp(
-  projectDir: string,
-  metrics: PruneContextResult['metrics'],
-): void {
-  try {
-    const sessionsDir = getSessionsDir(projectDir);
-    const state = loadSessionState(sessionsDir);
-    recordInjection(state, metrics);
-    saveSessionState(sessionsDir, state);
-  } catch {
-    // Best effort
+  // Worker rules
+  parts.push(`\n\n## Worker Rules\n\n${result.workerRules}`);
+
+  // Revision context
+  if (result.revisionContext) {
+    const rc = result.revisionContext;
+    const lines = [`\n\n## Revision Context (attempt ${rc.attempt})`, ''];
+    if (rc.feedback) lines.push(`**Feedback**: ${rc.feedback}`);
+    if (rc.failedChecks.length > 0) {
+      lines.push('', '**Failed checks**:');
+      for (const c of rc.failedChecks) lines.push(`- ${c.name}: ${c.detail}`);
+    }
+    if (rc.suggestions.length > 0) {
+      lines.push('', '**Suggestions**:');
+      for (const s of rc.suggestions) lines.push(`- ${s}`);
+    }
+    parts.push(lines.join('\n'));
   }
+
+  // Rich fields
+  if (result.richFields?.design) {
+    parts.push(`\n\n## Design Notes\n\n${result.richFields.design}`);
+  }
+  if (result.richFields?.acceptanceCriteria) {
+    parts.push(`\n\n## Acceptance Criteria\n\n${result.richFields.acceptanceCriteria}`);
+  }
+
+  // Graph context
+  if (result.graphContext) {
+    const flags: string[] = [];
+    if (result.graphContext.onCriticalPath) flags.push('on critical path');
+    if (result.graphContext.isBottleneck) flags.push('bottleneck (blocks other tasks)');
+    if (flags.length > 0) {
+      parts.push(`\n\n## Graph Context\n\n[!] This task is ${flags.join(' and ')}. Prioritize correctness.`);
+    }
+  }
+
+  // Memories
+  if (result.memories.length > 0) {
+    const memParts = result.memories.map(m =>
+      `### ${m.name} (score: ${m.score})\n\n${m.content}`
+    );
+    parts.push(`\n\n## Relevant Memories\n\n${memParts.join('\n\n---\n\n')}`);
+  }
+
+  // Completed tasks
+  if (result.completedTasks.length > 0) {
+    const taskLines = result.completedTasks.map(t => `- **${t.name}**: ${t.summary}`);
+    parts.push(`\n\n## Completed Tasks\n\n${taskLines.join('\n')}`);
+  }
+
+  // Doctrine
+  if (result.doctrine.length > 0) {
+    const docLines = result.doctrine.map(d => `- **${d.name}**: ${d.rule}`);
+    parts.push(`\n\n## Operating Doctrine\n\n${docLines.join('\n')}`);
+  }
+
+  // Agent tools guidance
+  if (agentGuidance) {
+    const guidanceBudget = 500 * 4;
+    const trimmed = agentGuidance.length > guidanceBudget
+      ? agentGuidance.slice(0, guidanceBudget) + '\n[truncated]'
+      : agentGuidance;
+    parts.push(`\n\n## Code Intelligence Tools\n\n${trimmed}`);
+  }
+
+  return parts.join('');
 }
 
-/** Append DCP metrics to JSONL file (best-effort). */
 function logDcpMetrics(
-  projectDir: string,
-  featureName: string,
-  taskId: string,
-  metrics: PruneContextResult['metrics'] & { doctrineInjected?: boolean; doctrineNames?: string[] },
+  projectDir: string, featureName: string, taskId: string,
+  result: TaskBriefResult,
 ): void {
   try {
     const logDir = getSessionsDir(projectDir);
@@ -91,182 +106,78 @@ function logDcpMetrics(
       timestamp: new Date().toISOString(),
       feature: featureName,
       task: taskId,
-      ...metrics,
+      totalTokens: result.dcp.totalTokens,
+      memoriesIncluded: result.dcp.memoriesIncluded,
+      memoriesDropped: result.dcp.memoriesDropped,
+      doctrineInjected: result.doctrine.length > 0,
+      doctrineNames: result.doctrine.map(d => d.name),
     }) + '\n';
     fs.appendFileSync(logPath, entry);
-  } catch {
-    // Best effort -- never throw from metrics logging
-  }
+  } catch { /* best-effort */ }
+}
+
+function trackSessionDcp(projectDir: string, result: TaskBriefResult): void {
+  try {
+    const sessionsDir = getSessionsDir(projectDir);
+    const state = loadSessionState(sessionsDir);
+    recordInjection(state, {
+      totalTokens: result.dcp.totalTokens,
+      totalBytes: result.dcp.totalBytes,
+      memoriesIncluded: result.dcp.memoriesIncluded,
+      memoriesDropped: result.dcp.memoriesDropped,
+      components: {},
+    });
+    saveSessionState(sessionsDir, state);
+  } catch { /* best-effort */ }
 }
 
 async function main(): Promise<void> {
   const input = await readStdin();
   const projectDir = resolveProjectDir();
 
-  if (!projectDir) {
-    writeOutput({});
-    return;
-  }
+  if (!projectDir) { writeOutput({}); return; }
 
-  // Extract Agent tool input
   const toolInput = (input.tool_input ?? input.input ?? {}) as Record<string, unknown>;
   const prompt = (toolInput.prompt ?? '') as string;
+  if (!prompt) { writeOutput({}); return; }
 
-  if (!prompt) {
-    writeOutput({});
-    return;
-  }
-
-  // Check if prompt references a task id
   const match = prompt.match(TASK_PATTERN);
-  if (!match) {
-    writeOutput({});
-    return;
-  }
+  if (!match) { writeOutput({}); return; }
 
   const taskId = match[1];
 
   try {
     const services = initServices(projectDir);
     const activeFeature = services.featureAdapter.getActive();
-    if (!activeFeature) {
-      writeOutput({});
-      return;
-    }
+    if (!activeFeature) { writeOutput({}); return; }
 
     const featureName = activeFeature.name;
+
+    // Check task is claimed before doing expensive brief
     const task = await services.taskPort.get(featureName, taskId);
+    if (!task || task.status !== 'claimed') { writeOutput({}); return; }
 
-    // Accept claimed tasks (fresh or re-claimed from revision)
-    if (!task || task.status !== 'claimed') {
-      writeOutput({});
-      return;
-    }
+    // Delegate all data gathering to taskBrief
+    const result = await taskBrief({
+      taskPort: services.taskPort,
+      featureAdapter: services.featureAdapter,
+      memoryAdapter: services.memoryAdapter,
+      settingsPort: services.settingsPort,
+      directory: projectDir,
+      graphPort: services.graphPort,
+      doctrinePort: services.doctrinePort,
+    }, featureName, taskId);
 
-    // Read compiled spec
-    const spec = await services.taskPort.readSpec(featureName, taskId);
-    if (!spec) {
-      writeOutput({});
-      return;
-    }
-
-    // Build revision context if this is a re-claimed task from revision
-    let revisionContext = '';
-    if (task.revisionCount && task.revisionCount > 0) {
-      const verificationReport = await services.taskPort.readVerification(featureName, taskId);
-      const parts: string[] = [
-        `\n## Revision Context (attempt ${task.revisionCount + 1})`,
-        '',
-      ];
-      if (task.revisionFeedback) {
-        parts.push(`**Feedback**: ${task.revisionFeedback}`);
-      }
-      if (verificationReport) {
-        const failed = verificationReport.criteria.filter(c => !c.passed);
-        if (failed.length > 0) {
-          parts.push('', '**Failed checks**:');
-          for (const c of failed) {
-            parts.push(`- ${c.name}: ${c.detail}`);
-          }
-        }
-        if (verificationReport.suggestions.length > 0) {
-          parts.push('', '**Suggestions**:');
-          for (const s of verificationReport.suggestions) {
-            parts.push(`- ${s}`);
-          }
-        }
-      }
-      parts.push('');
-      revisionContext = parts.join('\n');
-    }
-
-    // Parallelize independent async reads
-    const [richResult, insightsResult, allTasksResult] = await Promise.allSettled([
-      services.taskPort.getRichFields?.(featureName, taskId) ?? Promise.resolve(null),
-      services.graphPort?.getInsights() ?? Promise.resolve(null),
-      services.taskPort.list(featureName, { includeAll: true }),
-    ]);
-
-    const richContext = formatRichContext(richResult as PromiseSettledResult<RichTaskFields | null>);
-    const graphContext = formatGraphContext(
-      insightsResult as PromiseSettledResult<GraphInsightsSubset | null>,
-      taskId, task,
-    );
-
-    const memories = services.memoryAdapter.listWithMeta(featureName);
-
-    let doctrineItems: DoctrineItem[] = [];
-    try {
-      if (services.doctrinePort) {
-        const derivedTags = deriveFolderTags(taskId);
-        const specKeywords = extractKeywords(spec);
-        doctrineItems = services.doctrinePort.findRelevant(derivedTags, specKeywords);
-      }
-    } catch (err) {
-      logHookError(projectDir, 'pre-agent:doctrine', err);
-    }
-
-    if (doctrineItems.length > 0) {
-      appendDoctrineTrace(
-        projectDir, featureName, taskId,
-        task.revisionCount ?? 0,
-        doctrineItems.map(d => d.name),
-      );
-    }
-
-    const allTasks = allTasksResult.status === 'fulfilled' ? (allTasksResult.value ?? []) : [];
-    const completedTasks = allTasks
-      .filter(t => t.status === 'done' && t.summary)
-      .map(t => ({ name: t.name, summary: t.summary! }));
-
-    // Read configs from settings (v2)
-    const settings = services.settingsPort.get();
-    const dcpConfig = settings.dcp;
-    const doctrineConfig = settings.doctrine;
-
-    // Get feature creation time for recency scoring (from activeFeature, already fetched)
-    const featureCreatedAt = activeFeature.createdAt;
-
-    // Convert task list to TaskWithDeps for dependency-proximity scoring
-    const taskDeps = allTasks.map(t => ({
-      id: t.id, folder: t.folder, status: t.status, dependsOn: t.dependsOn,
-    }));
-
-    // Prune and assemble
-    const { injection, metrics } = pruneContext({
-      featureName, taskFolder: taskId, task, spec,
-      memories, completedTasks,
-      richContext, graphContext, revisionContext,
-      workerRules: WORKER_RULES,
-      dcpConfig, doctrineConfig, doctrineItems,
-      featureCreatedAt,
-      allTasks: taskDeps,
-    });
-
-    // Agent tools guidance (code intelligence protocol)
-    let fullInjection = injection;
     const agentGuidance = services.agentToolsRegistry.assembleProtocol('code-intelligence');
-    if (agentGuidance) {
-      const guidanceBudget = 500 * 4; // 500 tokens ~= 2000 chars
-      const trimmed = agentGuidance.length > guidanceBudget
-        ? agentGuidance.slice(0, guidanceBudget) + '\n[truncated]'
-        : agentGuidance;
-      fullInjection += `\n\n## Code Intelligence Tools\n\n${trimmed}`;
-    }
+    const injection = formatBriefAsInjection(result, agentGuidance);
 
-    logDcpMetrics(projectDir, featureName, taskId, {
-      ...metrics,
-      doctrineInjected: doctrineItems.length > 0,
-      doctrineNames: doctrineItems.map(d => d.name),
-    });
-
-    // Track session-level DCP state
-    trackSessionDcp(projectDir, metrics);
+    logDcpMetrics(projectDir, featureName, taskId, result);
+    trackSessionDcp(projectDir, result);
 
     writeOutput({
       hookSpecificOutput: {
         hookEventName: 'PreToolUse',
-        additionalContext: fullInjection,
+        additionalContext: injection,
       },
     });
   } catch {
@@ -274,7 +185,6 @@ async function main(): Promise<void> {
   }
 }
 
-// Only auto-run when executed directly, not when imported by tests or other modules
 const isBunDirect = typeof Bun !== 'undefined' && Bun.main === Bun.resolveSync(import.meta.path, '.');
 if (isBunDirect) {
   try {

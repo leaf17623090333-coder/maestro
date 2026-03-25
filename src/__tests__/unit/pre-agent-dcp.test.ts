@@ -1,5 +1,4 @@
 import { describe, test, expect } from 'bun:test';
-import { formatRichContext, formatGraphContext } from '../../surfaces/hooks/pre-agent.ts';
 import { WORKER_RULES } from '../../app/tasks/worker-rules.ts';
 import { pruneContext } from '../../app/dcp/prune-context.ts';
 import type { MemoryFileWithMeta, TaskInfo } from '../../domain/types.ts';
@@ -26,100 +25,6 @@ function makeTask(overrides: Partial<TaskInfo> = {}): TaskInfo {
   };
 }
 
-describe('formatRichContext', () => {
-  test('formats design and AC when present', () => {
-    const result = formatRichContext({
-      status: 'fulfilled',
-      value: { design: 'Use JWT', acceptanceCriteria: '- Token refresh works' },
-    });
-    expect(result).toContain('## Design Notes');
-    expect(result).toContain('Use JWT');
-    expect(result).toContain('## Acceptance Criteria');
-    expect(result).toContain('Token refresh works');
-  });
-
-  test('returns empty for rejected promise', () => {
-    const result = formatRichContext({
-      status: 'rejected',
-      reason: new Error('fail'),
-    });
-    expect(result).toBe('');
-  });
-
-  test('returns empty for null value', () => {
-    const result = formatRichContext({
-      status: 'fulfilled',
-      value: null,
-    });
-    expect(result).toBe('');
-  });
-
-  test('returns empty for empty fields', () => {
-    const result = formatRichContext({
-      status: 'fulfilled',
-      value: {},
-    });
-    expect(result).toBe('');
-  });
-});
-
-describe('formatGraphContext', () => {
-  test('flags critical path task', () => {
-    const result = formatGraphContext(
-      {
-        status: 'fulfilled',
-        value: {
-          criticalPath: [{ id: '01-setup-auth', title: 'Setup auth' }],
-          bottlenecks: [],
-        },
-      },
-      '01-setup-auth',
-      makeTask(),
-    );
-    expect(result).toContain('on critical path');
-    expect(result).toContain('Prioritize correctness');
-  });
-
-  test('flags bottleneck task', () => {
-    const result = formatGraphContext(
-      {
-        status: 'fulfilled',
-        value: {
-          criticalPath: [],
-          bottlenecks: [{ id: '01-setup-auth', title: 'Setup auth' }],
-        },
-      },
-      '01-setup-auth',
-      makeTask(),
-    );
-    expect(result).toContain('bottleneck');
-  });
-
-  test('returns empty for non-critical task', () => {
-    const result = formatGraphContext(
-      {
-        status: 'fulfilled',
-        value: {
-          criticalPath: [{ id: '02-other', title: 'Other task' }],
-          bottlenecks: [],
-        },
-      },
-      '01-setup-auth',
-      makeTask(),
-    );
-    expect(result).toBe('');
-  });
-
-  test('returns empty for rejected promise', () => {
-    const result = formatGraphContext(
-      { status: 'rejected', reason: new Error('fail') },
-      '01-setup-auth',
-      makeTask(),
-    );
-    expect(result).toBe('');
-  });
-});
-
 describe('pre-agent hook integration with pruneContext', () => {
   test('DCP enabled: relevant memories selected, bodyContent used', () => {
     const memories = [
@@ -138,7 +43,7 @@ describe('pre-agent hook integration with pruneContext', () => {
       spec: 'Implement JWT authentication',
       memories,
 
-      richContext: formatRichContext({ status: 'fulfilled', value: { design: 'Use JWT' } }),
+      richContext: '## Design Notes\n\nUse JWT',
       graphContext: '',
       workerRules: WORKER_RULES,
       dcpConfig: { enabled: true, memoryBudgetTokens: 2500 },
