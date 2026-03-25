@@ -6,20 +6,20 @@
 
 | File | Purpose |
 |------|---------|
-| [product.md](product.md) | Product definition -- purpose, users, features |
-| [tech-stack.md](tech-stack.md) | Technology stack -- languages, frameworks, tools |
-| [guidelines.md](guidelines.md) | Coding guidelines -- principles, conventions, NFRs |
-| [product-guidelines.md](product-guidelines.md) | Product guidelines -- voice, tone, UX, branding |
-| [workflow.md](workflow.md) | Workflow configuration -- methodology, commits, coverage |
-| [building_the_project.md](building_the_project.md) | Build commands and release automation |
-| [running_tests.md](running_tests.md) | Test commands and CI-parity validation |
+| [product.md](product.md) | Product definition: purpose, users, and key capabilities |
+| [tech-stack.md](tech-stack.md) | Technology stack, tools, infrastructure, and test stack |
+| [guidelines.md](guidelines.md) | Coding guidelines, conventions, and verification defaults |
+| [product-guidelines.md](product-guidelines.md) | Product voice, UX, branding, and writing guidance |
+| [workflow.md](workflow.md) | Delivery methodology, quality gates, and commit strategy |
+| [code_styleguides/general.md](code_styleguides/general.md) | General engineering style guide |
+| [code_styleguides/typescript.md](code_styleguides/typescript.md) | TypeScript-specific style guide |
 
 ## Registry
 
 | File | Purpose |
 |------|---------|
-| [../tracks.md](../tracks.md) | Tracks registry -- all feature and bug tracks |
+| [../tracks.md](../tracks.md) | Tracks registry for feature, bug, and chore work |
 
 ## Usage
 
-Skills resolve context by reading this index first, then loading the relevant files.
+Load this index first, then open only the specific context files needed for the current task.

@@ -4,5 +4,5 @@
 > Status markers: `[ ]` New | `[~]` In Progress | `[x]` Complete
 
 ---
-- [x] **Track: Add sub agent parallels to maestro:implement**
-  *Type: feature | ID: [sub_agent_parallels_20260225](./tracks/sub_agent_parallels_20260225/)*
+- [ ] **Track: Skills System Full Port**
+  *Type: feature | ID: [skills_full_port_20260315](./tracks/skills_full_port_20260315/)*

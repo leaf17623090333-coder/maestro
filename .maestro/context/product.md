@@ -1,14 +1,16 @@
 # Product Definition
 
 ## Purpose
-Maestro is an AI agent workflow skillpack that enforces plan-first, TDD-driven development through structured tracks, multi-agent teams, and persistent knowledge capture. It targets Claude Code, Amp, and other AI coding assistants via a universal skills format.
+`maestro` is an agent-optimized development orchestrator for AI coding assistants. It turns feature delivery into a plan-first workflow with explicit context capture, approval gates, task generation, direct worker CLI launches, and report flows that help agents execute safely across sessions.
 
 ## Target Users
-Developers using AI coding assistants who want structured, repeatable workflows for feature development, bug fixing, and project management.
+- AI coding agents that need a durable, CLI-based workflow instead of direct MCP orchestration
+- Engineers maintaining agent-driven delivery systems and developer-tooling workflows
+- Teams that want plan approval, task tracking, and structured execution around code changes
 
 ## Key Features
-- Track-based development lifecycle: setup --> spec --> plan --> implement --> review
-- Multi-agent team execution with specialized workers (TDD, quick fixes, security review, etc.)
-- Persistent knowledge capture via wisdom files, notepad, and handoff metadata
-- CLI-agnostic skill format compatible with Claude Code, Amp, and other runtimes
-- Hook-driven safety rails (plan protection, verification injection, orchestrator guards)
+- Feature lifecycle management from creation through completion
+- Plan authoring, review, approval, and task synchronization
+- Task and subtask spec/report storage for durable execution context
+- Direct worker CLI execution with prompt, report, and session tracking
+- Persistent context, session, config, sandbox, and skill-management commands

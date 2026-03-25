@@ -1,17 +1,24 @@
 {
-  "name": "maestro-marketplace",
-  "description": "Marketplace for maestro workflow plugin",
+  "name": "maestro",
   "owner": {
-    "name": "Reina MacCredy"
+    "name": "maestro"
+  },
+  "metadata": {
+    "description": "Agent-optimized development orchestrator with parallel task execution and workflow enforcement",
+    "version": "0.2.0",
+    "repository": "https://github.com/user/maestro"
   },
   "plugins": [
     {
       "name": "maestro",
-      "source": {
-        "source": "url",
-        "url": "https://github.com/ReinaMacCredy/maestro.git"
+      "source": "./",
+      "description": "Agent-optimized development orchestrator with parallel task execution and workflow enforcement",
+      "version": "0.2.0",
+      "author": {
+        "name": "maestro"
       },
-      "version": "0.14.19"
+      "category": "development",
+      "keywords": ["mcp", "orchestration", "tdd", "agent", "workflow"]
     }
   ]
 }

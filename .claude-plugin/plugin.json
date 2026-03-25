@@ -1,22 +1,16 @@
 {
   "name": "maestro",
-  "version": "0.14.19",
-  "description": "AI agent workflow plugin for Claude Code. Interview-driven planning with Agent Teams execution.",
-  "author": {
-    "name": "Reina MacCredy"
-  },
-  "repository": "https://github.com/ReinaMacCredy/maestro",
+  "version": "0.2.0",
+  "description": "Agent-optimized development orchestrator with parallel task execution and workflow enforcement",
+  "author": { "name": "maestro" },
+  "homepage": "https://github.com/user/maestro",
   "license": "MIT",
-  "keywords": [
-    "claude-code",
-    "workflow",
-    "planning",
-    "tdd",
-    "orchestration",
-    "agents",
-    "agent-teams"
-  ],
-  "agents": "./.claude/agents/",
-  "skills": "./.claude/skills/",
-  "hooks": "./.claude/hooks/hooks.json"
+  "keywords": ["mcp", "orchestration", "tdd", "agent"],
+  "mcpServers": {
+    "maestro": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/start.mjs"]
+    }
+  },
+  "skills": "./skills/built-in/"
 }

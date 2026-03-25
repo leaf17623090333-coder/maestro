@@ -1,19 +1,31 @@
 # Tech Stack
 
 ## Languages
-- Markdown (skill definitions, specs, plans, documentation)
-- Bash (hook scripts, validation, session management)
-- JSON (plugin metadata, settings, state files)
+- TypeScript
+- Markdown
+- YAML
+- JSON
 
-## Frameworks
-- Claude Code skills format (SKILL.md + reference/ pattern)
-- Claude Code agent definitions (.claude/agents/*.md)
-- Claude Code hooks system (.claude/hooks/hooks.json)
+## Frameworks and Libraries
+- Bun for runtime, package management, test execution, and compilation
+- `citty` for CLI command definition
+- `simple-git` for git integration
 
-## Tools & Infrastructure
-- Package manager: npx (skills installer via `npx skills add`)
-- Version management: jq (plugin.json / marketplace.json sync)
-- Changelog: git-cliff (conventional commit changelog generation)
-- CI/CD: GitHub Actions (validate.yml, release.yml)
-- Testing: bash scripts (test-hooks.sh, bash -n syntax checks)
-- Version control: git (conventional commits, git notes for task summaries)
+## Architecture
+- Clean architecture: `commands -> usecases -> ports <- adapters`
+- Module-level service wiring through `src/services.ts`
+- Standalone binary build targeting `dist/maestro`
+
+## Tools and Infrastructure
+- Package manager: Bun
+- Runtime: Bun
+- Version control: Git with direct worker CLI launches
+- Task backend: `br` / beads (optional integration)
+- CI/CD: GitHub Actions (`.github/workflows/ci.yml`)
+- Build entrypoint: `bun run build`
+- Test runner: `bun test`
+
+## Testing Stack
+- `bun:test` for unit and e2e coverage
+- Temp-repo e2e harness under `src/__tests__/e2e/`
+- Repo verification centered on build plus test pass, not a separate lint step

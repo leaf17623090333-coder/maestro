@@ -1,48 +1,33 @@
-# macOS
+node_modules/
+dist/
 .DS_Store
-.AppleDouble
-.LSOverride
+*.log
 
-# Editor
+# IDE
+.vscode/
+!.vscode/settings.json
+.idea/
 *.swp
 *.swo
 *~
-.idea/
-.vscode/
 
-# Dependencies
-node_modules/
-toolboxes/*/node_modules/
+# OS
+Thumbs.db
+.Spotlight-V100
+.Trashes
 
-# Local development
+# Environment
 .env
-.env.local
+.env.*
+!.env.example
 
-# Memory (user-specific)
-.memory/
-.memory-index/
-
-# Logs
-*.log
-test-output/
-
-# Python
-__pycache__/
-*.pyc
-# Demo
-demo.yml
+# Generated
+*.tsbuildinfo
+coverage/
 tmp/
-conductor/plans
+/hooks/
 
 # bv (beads viewer) local config and caches
 .bv/
-/mcp.json
-# Allow skill-level mcp.json for lazy-loading
-!skills/*/mcp.json
-tmp/ralph/
-
-# Maestro runtime state
-.maestro/
-
-# Git worktrees for isolated plan execution
-.worktrees/
+.collaborator
+docs/docs/architecture-v2.md

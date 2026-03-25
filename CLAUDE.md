@@ -1,46 +1,182 @@
-# CLAUDE.md
+# TypeScript Style Guide
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## Types
+- Prefer `interface` for object shapes and `type` for unions or intersections
+- Avoid `any`; use `unknown` and narrow with type guards
+- Use `readonly` for immutable data
+- Prefer `const` assertions for literal types
+- Use discriminated unions over optional fields for variant types
 
-## What This Project Is
-Maestro is an AI agent workflow skillpack focused on plan-first delivery, track-based implementation, and post-change verification. It targets Claude Code, Codex, Amp, and other agent runtimes through a shared skills layout and compatibility paths.
+## Naming
+- Types and interfaces: PascalCase
+- Variables and functions: camelCase
+- Constants: UPPER_SNAKE_CASE
+- Enums: PascalCase for both enum names and members
+- Files: kebab-case
 
-## Tech Stack
-- Markdown-driven skill definitions (`skills/*/SKILL.md`)
-- Bash scripts for hooks and workflow automation (`.claude/scripts/*.sh`, `scripts/*.sh`)
-- JSON configuration for plugin metadata and hooks (`.claude-plugin/*.json`, `.claude/hooks/hooks.json`)
-- GitHub Actions for validation and release automation (`.github/workflows/*.yml`)
+## Functions
+- Prefer arrow functions for callbacks and short expressions
+- Use named functions for top-level declarations
+- Add explicit return types for public API functions
+- Use function overloads sparingly; prefer union types
 
-## How to Build, Test, and Run
-- Install all skills locally: `npx skills add ReinaMacCredy/maestro`
-- List installable skills: `npx skills add ReinaMacCredy/maestro --list`
-- Install a subset of skills/agents: `npx skills add ReinaMacCredy/maestro --skill planning --agent claude-code --agent amp`
-- Run hook smoke tests: `bash scripts/test-hooks.sh`
-- Check shell script syntax: `bash -n scripts/*.sh`
-- Validate hook command references: `bash scripts/validate-hook-config.sh`
-- If ECC hook scripts are present, check Node syntax:
-  `find scripts/hooks/ecc -name '*.js' -print0 | xargs -0 -n1 node --check`
-- Validate release metadata versions match:
-  `PLUGIN_VERSION=$(jq -r '.version' .claude-plugin/plugin.json); MARKETPLACE_VERSION=$(jq -r '.plugins[0].version' .claude-plugin/marketplace.json); [ "$PLUGIN_VERSION" = "$MARKETPLACE_VERSION" ]`
-- Preview unreleased changelog: `git-cliff --unreleased --strip header`
-- Regenerate changelog: `git-cliff -o CHANGELOG.md`
+## Async
+- Always `await` promises; avoid fire-and-forget flows
+- Use `Promise.all()` for parallel independent operations
+- Handle errors with `try/catch` at the boundary rather than every call site
+- Prefer `async/await` over `.then()` chains
 
-## Tooling
-- `skills.sh` via `npx skills add` is the primary install path for this repository.
-- `scripts/install-codex.sh` installs/updates Maestro into `$CODEX_HOME/skills/maestro`.
-- `git-cliff` drives changelog generation in CI and local release prep.
-- `jq` is required for version sync checks and release metadata updates.
+## Imports
+- Group imports by built-in, external, internal, then relative
+- Use named imports instead of `import *`
+- Avoid circular dependencies
 
-## Rules
-- Treat `skills/` as the canonical skill source; keep compatibility paths aligned with it.
-- Keep `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` versions in sync.
-- Use conventional commit prefixes (`feat:`, `fix:`, etc.) so changelog and release automation classify changes correctly.
-- When changing hook behavior in `.claude/scripts/`, update and run `scripts/test-hooks.sh` before finishing.
-- Run syntax and smoke checks before opening or merging a PR.
-- Keep optional ECC skillpack off by default unless explicitly enabled.
-- ECC quality gates are enabled by default (`MAESTRO_ENABLE_ECC_QUALITY_GATES=0` to disable).
-- ECC learning hooks are disabled by default (`MAESTRO_ENABLE_LEARNING_HOOKS=1` to enable).
+## Nullability
+- Prefer `undefined` over `null`
+- Use optional chaining (`?.`) and nullish coalescing (`??`)
+- Avoid non-null assertions except in tests or tightly constrained cases
 
-## Reference Docs
-- `.maestro/context/building_the_project.md` -- installation, packaging, changelog, and release commands with source references.
-- `.maestro/context/running_tests.md` -- local validation/test commands and CI parity checks.
+## Testing
+- Use `describe` and `it` for structure
+- Mock external dependencies, not internal modules
+- Test error paths in addition to happy paths
+
+
+# maestro -- MCP Plugin for Agent-Optimized Development
+
+## Getting Started
+
+At the start of every session, call `maestro_status` (MCP) or `maestro status` (CLI).
+The status response includes a `playbook` field with stage-specific tools, skills, objectives, and anti-patterns.
+Load recommended skills from `playbook.skills` with `maestro_skill('<name>')`.
+`skills.recommended` is also present for backward compatibility.
+
+## Architecture
+
+maestro is a **pure MCP plugin** -- structured memory + workflow guardrails.
+Claude Code is the orchestrator (spawning agents natively), maestro is the filing cabinet with opinions.
+
+- **6 task states**: pending, claimed, done, blocked, review, revision
+- **26 MCP tools** (17 merged action-based + 9 standalone) across 13 groups
+- **Plain file backend** (default), optional br sync
+- **Hooks**: SessionStart (pipeline injection), PreToolUse:Agent (task spec injection)
+- **Doctrine Compiler**: cross-feature learning from execution history, injected into workers via separate budget
+- **Pipeline**: discovery --> research --> planning --> approval --> execution --> done (stages are skippable)
+- **DCP budgets**: token-based (chars/4 estimation). Config supports both `*BudgetTokens` (preferred) and `*BudgetBytes` (backward compat, auto-derives tokens)
+- **Skill stages**: built-in and external skills declare their pipeline stage via `stage:` frontmatter. Playbook auto-discovers external skills tagged for the current stage.
+
+## Workflow Phases
+
+| Phase | Trigger | MCP Tools / CLI Commands |
+|-------|---------|--------------------------|
+| Discovery | New feature request | `maestro_feature action:create`, `maestro_memory action:write` |
+| Research | Feature exists | Agent subagents, `maestro_memory action:write` to capture findings |
+| Planning | Research done | `maestro_plan action:write`, `maestro_plan_read` |
+| Approval | Plan written | `maestro_plan action:approve` |
+| Execution | Plan approved | `maestro_task action:sync`, `maestro_task_read what:next`, `maestro_task action:claim`, `maestro_task action:done` |
+| Completion | All tasks done | `maestro_feature action:complete`, `maestro_memory action:promote`, `maestro_doctrine action:approve` |
+
+## Planning Mode
+
+1. Load `maestro:design` and `maestro:parallel-exploration` skills
+2. Research the codebase, save findings with `maestro_memory action:write`
+3. Write the plan with `maestro_plan action:write`
+4. Review comments with `maestro_plan_read`
+5. Approve with `maestro_plan action:approve`
+
+## Execution Mode
+
+1. `maestro_task action:sync` -- generate tasks from approved plan
+2. `maestro_task_read what:next` -- find runnable tasks with compiled specs
+3. `maestro_task action:claim` -- claim a task for an agent
+4. Spawn Agent to implement (pre-agent hook auto-injects spec + worker rules)
+5. `maestro_task action:done` -- mark complete with summary
+6. Repeat until all tasks done
+
+## Blocked Tasks
+
+If a worker hits a blocker:
+1. Worker calls `maestro_task action:block` with reason
+2. Review blocker in `maestro_status`
+3. Resolve and call `maestro_task action:unblock` with decision
+
+## Stale Claims
+
+Claims expire after `claimExpiresMinutes` (default 120). Expired claims are auto-reset to pending when `maestro_task_next` is called.
+
+## MCP Tools (26)
+
+Tools use `action` (mutating) or `what` (read-only) params to route within each merged tool.
+
+| Tool | Type | Actions / What |
+|------|------|----------------|
+| `maestro_feature` | mutating | action: create, complete |
+| `maestro_feature_read` | read-only | what: list, info, active |
+| `maestro_plan` | mutating | action: write, approve, revoke, comment, comments_clear |
+| `maestro_plan_read` | read-only | (reads plan + comments) |
+| `maestro_task` | mutating | action: sync, claim, done, accept, reject, block, unblock, spec_write, report_write |
+| `maestro_task_read` | read-only | what: list, info, spec, report, next, brief |
+| `maestro_memory` | mutating | action: write, delete, promote, compress, consolidate, connect, archive |
+| `maestro_memory_read` | read-only | what: read, list, stats, insights, compile |
+| `maestro_doctrine` | mutating | action: write, approve, suggest, deprecate |
+| `maestro_doctrine_read` | read-only | what: list, read |
+| `maestro_handoff` | mutating | action: send, ack |
+| `maestro_handoff_read` | read-only | what: read, list, status, receive |
+| `maestro_skill` | read-only | action: load, list, install, create, remove, sync |
+| `maestro_graph` | mutating | action: insights, next, plan, discovery, reserve |
+| `maestro_search` | read-only | action: sessions, related, similar |
+| `maestro_visual` | mutating | type: any visualization type |
+| `maestro_dcp` | read-only | action: preview, stats, config |
+| `maestro_stage` | mutating | action: jump, skip, back |
+| `maestro_status` | read-only | (standalone) |
+| `maestro_ping` | read-only | (standalone) |
+| `maestro_init` | mutating | (standalone) |
+| `maestro_doctor` | read-only | (standalone) |
+| `maestro_history` | read-only | (standalone) |
+| `maestro_execution_insights` | read-only | (standalone) |
+| `maestro_config_get` | read-only | (standalone) |
+| `maestro_config_set` | mutating | (standalone) |
+
+All tools are prefixed `maestro_` in MCP.
+
+## CLI Commands (70)
+
+Commands organized by domain:
+
+### Feature (5)
+`feature-create`, `feature-list`, `feature-info`, `feature-active`, `feature-complete`
+
+### Plan (6)
+`plan-write`, `plan-read`, `plan-approve`, `plan-revoke`, `plan-comment`, `plan-comments-clear`
+
+### Task (12)
+`task-sync`, `task-list`, `task-next`, `task-info`, `task-claim`, `task-done`, `task-block`, `task-unblock`, `task-spec-read`, `task-spec-write`, `task-report-read`, `task-report-write`
+
+### Memory (9)
+`memory-write`, `memory-read`, `memory-list`, `memory-delete`, `memory-compile`, `memory-consolidate`, `memory-archive`, `memory-stats`, `memory-promote`
+
+### Handoff (3)
+`handoff-send`, `handoff-receive`, `handoff-ack`
+
+### Graph (3)
+`graph-insights`, `graph-next`, `graph-plan`
+
+### Search (2)
+`search-sessions`, `search-related`
+
+### Doctrine (6)
+`doctrine-list`, `doctrine-read`, `doctrine-write`, `doctrine-deprecate`, `doctrine-suggest`, `doctrine-approve`
+
+### Config (3)
+`config-get`, `config-set`, `config-agent`
+
+### Toolbox (6)
+`toolbox-add`, `toolbox-create`, `toolbox-install`, `toolbox-list`, `toolbox-remove`, `toolbox-test`
+
+### Visual (2)
+`visual`, `debug-visual`
+
+### Other (13)
+`init`, `install`, `status`, `agents-md`, `skill`, `skill-list`, `dcp-preview`, `ping`, `doctor`, `history`, `execution-insights`, `self-update`, `update`
+
+All commands accept `--json`. Use `maestro <command> --help` for full usage.
