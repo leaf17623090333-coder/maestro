@@ -28,7 +28,7 @@ export default defineCommand({
       if (value === undefined) {
         throw new MaestroError(`key '${args.key}' not found`);
       }
-      output(value, (v) => typeof v === 'object' ? JSON.stringify(v, null, 2) : String(v));
+      output({ key: args.key, value }, ({ value: v }) => typeof v === 'object' ? JSON.stringify(v, null, 2) : String(v));
     } catch (err) {
       handleCommandError('config-get', err);
     }

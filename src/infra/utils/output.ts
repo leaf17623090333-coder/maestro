@@ -20,7 +20,7 @@ export function getOutputMode(): OutputMode {
 
 function autoDetect(): void {
   if (mode !== undefined) return;
-  mode = process.argv.includes("--json") ? "json" : "text";
+  mode = (process.argv.includes("--json") || process.env.MAESTRO_OUTPUT === "json") ? "json" : "text";
 }
 
 export function output<T = unknown>(data: T, textFormatter: (data: T) => string): void {

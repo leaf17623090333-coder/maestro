@@ -150,6 +150,43 @@ Commands organized by domain:
 
 All commands accept `--json`. Use `maestro <command> --help` for full usage.
 
+## CLI Reference (Agent Use)
+
+All commands accept `--json`. Always pass `--json` explicitly on every call.
+Content params: prefer `--file <path>` for multi-line content. Alternatives: `--content "..."` (short text only) or `--stdin`.
+
+### Session
+maestro status --json                    # [read] orient: stage, playbook, next action
+maestro skill <name>                     # [read] load skill into context
+
+### Discovery
+maestro feature-create --name <name> --json          # [write]
+maestro feature-active --json                        # [read]
+
+### Research
+maestro memory-write --name <n> --file <path> --json # [write]
+maestro memory-read --name <n> --json                # [read]
+maestro memory-list --json                           # [read]
+
+### Planning
+maestro plan-write --file <path> --json              # [write]
+maestro plan-read --json                             # [read]
+maestro plan-approve --json                          # [write]
+
+### Execution
+maestro task-sync --json                             # [write]
+maestro task-next --json                             # [read]
+maestro task-claim --task <id> --agent-id <name> --json  # [write]
+maestro task-brief --task <id> --json                # [read]
+maestro task-done --task <id> --file <summary> --json    # [write]
+maestro task-block --task <id> --reason "..." --json     # [write]
+maestro task-accept --task <id> --json               # [write]
+maestro task-reject --task <id> --file <feedback> --json # [write]
+
+### Done
+maestro feature-complete --json                      # [write]
+maestro memory-promote --name <n> --json             # [write]
+
 ## agentMemory Integration
 
 maestro integrates with **agentMemory** (`~/Code/agentMemory/`), a separate repo that provides a workflow-aware retrieval engine for `.maestro/` memory files.

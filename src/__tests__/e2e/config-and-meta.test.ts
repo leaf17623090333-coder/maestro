@@ -26,7 +26,8 @@ describe('config', () => {
     const getResult = await harness.run('config-get', '--key', 'tasks.backend');
     expect(getResult.exitCode).toBe(0);
     const value = JSON.parse(getResult.stdout);
-    expect(value).toBe('fs');
+    expect(value.key).toBe('tasks.backend');
+    expect(value.value).toBe('fs');
   });
 
   test('config-set with boolean value', async () => {
@@ -37,7 +38,8 @@ describe('config', () => {
     const result = await harness.run('config-get', '--key', 'dcp.enabled');
     expect(result.exitCode).toBe(0);
     const value = JSON.parse(result.stdout);
-    expect(value).toBe(true);
+    expect(value.key).toBe('dcp.enabled');
+    expect(value.value).toBe(true);
   });
 
   test('config-set with numeric value', async () => {
@@ -48,7 +50,8 @@ describe('config', () => {
     const result = await harness.run('config-get', '--key', 'tasks.claimExpiresMinutes');
     expect(result.exitCode).toBe(0);
     const value = JSON.parse(result.stdout);
-    expect(value).toBe(60);
+    expect(value.key).toBe('tasks.claimExpiresMinutes');
+    expect(value.value).toBe(60);
   });
 
   test('config-get for nonexistent key fails', async () => {

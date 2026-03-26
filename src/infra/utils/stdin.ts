@@ -5,7 +5,7 @@
 export async function readStdinText(): Promise<string> {
   return new Promise((resolve, reject) => {
     if (process.stdin.isTTY) {
-      return reject(new Error('No stdin input (terminal is interactive). Pipe content or use --content instead.'));
+      return reject(new Error('No stdin input (terminal is interactive). Use --file <path> or pipe content via stdin.'));
     }
     let data = '';
     process.stdin.setEncoding('utf-8');

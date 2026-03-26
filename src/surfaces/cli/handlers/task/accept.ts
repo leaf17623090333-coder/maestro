@@ -30,8 +30,15 @@ export default defineCommand({
       ]);
 
       const existing = await services.taskPort.get(featureName, args.task);
-      if (!existing || existing.status !== 'review') {
-        throw new Error(`Task '${args.task}' is not in review state (current: ${existing?.status ?? 'not found'})`);
+      if (!existing) {
+        throw new Error(`Task '${args.task}' not found`);
+      }
+      if (existing.status === 'done') {
+        output(existing, () => `[ok] task '${args.task}' already accepted (done)`);
+        return;
+      }
+      if (existing.status !== 'review') {
+        throw new Error(`Task '${args.task}' is not in review state (current: ${existing.status})`);
       }
       const summary = existing.summary ?? '';
       let report = null;
