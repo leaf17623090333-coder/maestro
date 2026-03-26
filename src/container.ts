@@ -32,6 +32,7 @@ import type { DoctrinePort } from './domain/ports/doctrine.ts';
 import type { HostBackend } from './domain/ports/host.ts';
 import { createHostBackend } from './infra/adapters/host/factory.ts';
 import { detectHost } from './infra/utils/host-detect.ts';
+import type { AgentMemoryRetriever } from './infra/toolbox/tools/external/agent-memory/adapter.ts';
 
 export interface MaestroContainer {
   readonly taskPort: TaskPort;
@@ -51,6 +52,7 @@ export interface MaestroContainer {
   readonly workflowRegistry?: import('./app/workflow/registry.ts').WorkflowRegistry;
   readonly taskBackend: 'fs' | 'br';
   readonly hostBackend?: HostBackend;
+  readonly agentMemoryRetriever?: AgentMemoryRetriever;
 }
 
 function buildContext(
@@ -123,6 +125,17 @@ export function createContainer(
   });
   const handoffPort = resolveOptionalPort<HandoffPort>(tb, 'handoff', makeCtxWithPorts);
 
+  // agentMemory: optional retrieval engine (read-only, enhances DCP)
+  let agentMemoryRetriever: AgentMemoryRetriever | undefined;
+  if (tb.isAvailable('agent-memory')) {
+    const amFactory = getAdapterFactory('agent-memory');
+    if (amFactory) {
+      try {
+        agentMemoryRetriever = amFactory(makeCtx('agent-memory')) as AgentMemoryRetriever;
+      } catch { /* graceful: fall back to standard DCP */ }
+    }
+  }
+
   return Object.freeze({
     taskPort,
     taskBackend,
@@ -140,5 +153,6 @@ export function createContainer(
     settingsPort: settingsAdapter,
     agentToolsRegistry: buildAgentToolsRegistry(settings.agentTools),
     hostBackend: createHostBackend(detectHost(), directory) ?? undefined,
+    agentMemoryRetriever,
   });
 }

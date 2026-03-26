@@ -29,6 +29,7 @@ export interface TaskBriefParams {
   directory: string;
   graphPort?: GraphPort;
   doctrinePort?: DoctrinePort;
+  agentMemoryRetriever?: import('../../infra/toolbox/tools/external/agent-memory/adapter.ts').AgentMemoryRetriever;
 }
 
 export interface TaskBriefResult {
@@ -141,22 +142,47 @@ export async function taskBrief(
     ? allTasksResult.value.map(t => ({ id: t.id, folder: t.folder, status: t.status, dependsOn: t.dependsOn }))
     : [];
 
-  const rawMemories = memoryAdapter.listWithMeta(feature);
-  const planSection = task.planTitle ?? null;
-  const selected: SelectedContext = selectMemories(
-    rawMemories, task, planSection,
-    dcpConfig.memoryBudgetTokens, dcpConfig.relevanceThreshold,
-    featureCreatedAt, allTasks,
-  );
+  // Memory selection: use agentMemory hybrid retrieval when available, else standard DCP
+  let memories: Array<{ name: string; content: string; score: number; tags: string[]; category: string }>;
+  let dcpMetrics: { totalTokens: number; includedCount: number; droppedCount: number; scores: Array<{ name: string; score: number; included: boolean }> };
 
-  const scoreMap = new Map(selected.scores.map(s => [s.name, s.score]));
-  const memories = selected.memories.map(m => ({
-    name: m.name,
-    content: m.bodyContent ?? m.content,
-    score: Math.round((scoreMap.get(m.name) ?? 0) * 1000) / 1000,
-    tags: m.metadata?.tags ?? [],
-    category: m.metadata?.category ?? 'unknown',
-  }));
+  if (params.agentMemoryRetriever) {
+    try {
+      const compiled = await params.agentMemoryRetriever.compile(taskFolder, {
+        stage: task.status === 'claimed' ? 'execution' : undefined,
+        feature,
+        budgetTokens: dcpConfig.memoryBudgetTokens,
+      });
+      // Parse compiled sections back into structured memory entries
+      const sections = compiled.compiled.split('\n\n---\n\n').filter(Boolean);
+      memories = sections.map(section => {
+        const nameMatch = section.match(/^## (.+)\n/);
+        const name = nameMatch?.[1] ?? 'unknown';
+        const content = section.replace(/^## .+\n\n/, '');
+        return { name, content, score: 0, tags: [], category: 'unknown' };
+      });
+      dcpMetrics = {
+        totalTokens: compiled.tokensUsed,
+        includedCount: compiled.memoriesUsed,
+        droppedCount: 0,
+        scores: memories.map(m => ({ name: m.name, score: 0, included: true })),
+      };
+    } catch {
+      // Fallback to standard DCP on any error
+      const rawMemories = memoryAdapter.listWithMeta(feature);
+      const selected = selectMemories(rawMemories, task, task.planTitle ?? null, dcpConfig.memoryBudgetTokens, dcpConfig.relevanceThreshold, featureCreatedAt, allTasks);
+      const scoreMap = new Map(selected.scores.map(s => [s.name, s.score]));
+      memories = selected.memories.map(m => ({ name: m.name, content: m.bodyContent ?? m.content, score: Math.round((scoreMap.get(m.name) ?? 0) * 1000) / 1000, tags: m.metadata?.tags ?? [], category: m.metadata?.category ?? 'unknown' }));
+      dcpMetrics = { totalTokens: selected.totalTokens, includedCount: selected.includedCount, droppedCount: selected.droppedCount, scores: selected.scores };
+    }
+  } else {
+    const rawMemories = memoryAdapter.listWithMeta(feature);
+    const planSection = task.planTitle ?? null;
+    const selected: SelectedContext = selectMemories(rawMemories, task, planSection, dcpConfig.memoryBudgetTokens, dcpConfig.relevanceThreshold, featureCreatedAt, allTasks);
+    const scoreMap = new Map(selected.scores.map(s => [s.name, s.score]));
+    memories = selected.memories.map(m => ({ name: m.name, content: m.bodyContent ?? m.content, score: Math.round((scoreMap.get(m.name) ?? 0) * 1000) / 1000, tags: m.metadata?.tags ?? [], category: m.metadata?.category ?? 'unknown' }));
+    dcpMetrics = { totalTokens: selected.totalTokens, includedCount: selected.includedCount, droppedCount: selected.droppedCount, scores: selected.scores };
+  }
 
   // 9. Completed tasks (newest-first, budget-capped)
   const completedTasks: Array<{ id: string; name: string; summary: string }> = [];
@@ -215,11 +241,11 @@ export async function taskBrief(
     richFields,
     workerRules: WORKER_RULES,
     dcp: {
-      totalTokens: selected.totalTokens,
-      totalBytes: selected.totalBytes,
-      memoriesIncluded: selected.includedCount,
-      memoriesDropped: selected.droppedCount,
-      scores: selected.scores.map(s => ({
+      totalTokens: dcpMetrics.totalTokens,
+      totalBytes: dcpMetrics.totalTokens * 4,
+      memoriesIncluded: dcpMetrics.includedCount,
+      memoriesDropped: dcpMetrics.droppedCount,
+      scores: dcpMetrics.scores.map(s => ({
         name: s.name,
         score: Math.round(s.score * 1000) / 1000,
         included: s.included,

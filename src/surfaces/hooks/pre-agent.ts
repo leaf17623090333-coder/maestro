@@ -165,6 +165,7 @@ async function main(): Promise<void> {
       directory: projectDir,
       graphPort: services.graphPort,
       doctrinePort: services.doctrinePort,
+      agentMemoryRetriever: services.agentMemoryRetriever,
     }, featureName, taskId);
 
     const agentGuidance = services.agentToolsRegistry.assembleProtocol('code-intelligence');
