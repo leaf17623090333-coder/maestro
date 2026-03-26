@@ -6,6 +6,7 @@
  */
 
 import type { MemoryFileWithMeta } from '../../domain/types.ts';
+import { MEMORY_PREVIEW_CHARS } from '../../domain/constants.ts';
 import { extractKeywords, scorePriority } from '../dcp/relevance.ts';
 
 export interface ScoredMemory {
@@ -92,7 +93,7 @@ function scoreKeywordOverlap(
 ): number {
   if (goalKeywords.size === 0) return 0;
 
-  const memText = memory.bodyContent.slice(0, 500) + ' ' + memory.name;
+  const memText = memory.bodyContent.slice(0, MEMORY_PREVIEW_CHARS) + ' ' + memory.name;
   const memKeywords = extractKeywords(memText);
   if (memKeywords.size === 0) return 0;
 

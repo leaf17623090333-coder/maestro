@@ -6,6 +6,7 @@
 
 import type { HandoffDocument } from '../../../domain/ports/handoff.ts';
 import { execFileSync } from 'node:child_process';
+import { DETECT_TIMEOUT_MS } from '../../../domain/constants.ts';
 
 /** Get list of modified files from git diff in the given project root. */
 export function getModifiedFiles(projectRoot: string): string[] {
@@ -13,7 +14,7 @@ export function getModifiedFiles(projectRoot: string): string[] {
     const stdout = execFileSync('git', ['diff', '--name-only'], {
       cwd: projectRoot,
       encoding: 'utf-8',
-      timeout: 5000,
+      timeout: DETECT_TIMEOUT_MS,
     });
     return stdout.trim().split('\n').filter(Boolean);
   } catch {

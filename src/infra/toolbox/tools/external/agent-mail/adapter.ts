@@ -16,6 +16,7 @@ import { resolveDcpConfig } from '../../../../../app/dcp/config.ts';
 import { getHandoffPath, getHandoffsPath } from '../../../../utils/paths.ts';
 import { ensureDir, writeText, readText } from '../../../../utils/fs-io.ts';
 import { getModifiedFiles, extractTitle, formatHandoffMessage } from '../../../../adapters/handoff/shared.ts';
+import { MEMORY_PREVIEW_CHARS } from '../../../../../domain/constants.ts';
 import { HttpTransport } from '../../../sdk/http-transport.ts';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -114,7 +115,7 @@ export class AgentMailHandoffAdapter implements HandoffPort {
       const scored = scoreByGoal(allMemories, goal);
       decisions = scored.map(s => ({
         key: s.name,
-        value: s.memory.bodyContent.slice(0, 500),
+        value: s.memory.bodyContent.slice(0, MEMORY_PREVIEW_CHARS),
       }));
     } else if (cfg.enabled && task) {
       // DCP task-based scoring (default when no goal)
@@ -125,13 +126,13 @@ export class AgentMailHandoffAdapter implements HandoffPort {
       );
       decisions = selected.memories.map(m => ({
         key: m.name,
-        value: m.bodyContent.slice(0, 500),
+        value: m.bodyContent.slice(0, MEMORY_PREVIEW_CHARS),
       }));
     } else {
       const memories = this.memoryAdapter.list(feature);
       decisions = memories.map(mf => ({
         key: mf.name,
-        value: mf.content.slice(0, 500),
+        value: mf.content.slice(0, MEMORY_PREVIEW_CHARS),
       }));
     }
 

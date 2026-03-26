@@ -10,6 +10,7 @@ import { handleCommandError } from '../../../../domain/errors.ts';
 import { loadManifest, inferTransport } from '../../../../infra/toolbox/loader.ts';
 import { sanitizeDetectCommand } from '../../../../infra/utils/cli-detect.ts';
 import { execFileSync } from 'node:child_process';
+import { DETECT_TIMEOUT_MS } from '../../../../domain/constants.ts';
 
 interface CheckResult {
   check: string;
@@ -64,7 +65,7 @@ export default defineCommand({
           const safeCmd = sanitizeDetectCommand(manifest.detect);
           const version = execFileSync('sh', ['-c', safeCmd], {
             stdio: ['pipe', 'pipe', 'pipe'],
-            timeout: 5000,
+            timeout: DETECT_TIMEOUT_MS,
           }).toString().trim().split('\n')[0];
           checks.push({ check: 'detect', status: 'pass', message: version || 'detected' });
         } catch (e) {

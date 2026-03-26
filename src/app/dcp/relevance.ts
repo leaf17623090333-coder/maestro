@@ -4,6 +4,7 @@
  */
 
 import type { MemoryFileWithMeta, TaskInfo } from '../../domain/types.ts';
+import { MEMORY_PREVIEW_CHARS } from '../../domain/constants.ts';
 import { extractSourceTask, scoreDependencyProximity } from '../tasks/graph/proximity.ts';
 
 const STOPWORDS = new Set([
@@ -117,7 +118,7 @@ function scoreKeywordOverlap(
   fileName: string,
   taskKeywords: Set<string>,
 ): number {
-  const memoryText = bodyContent.slice(0, 500) + ' ' + fileName;
+  const memoryText = bodyContent.slice(0, MEMORY_PREVIEW_CHARS) + ' ' + fileName;
   const memoryWords = extractKeywords(memoryText);
   if (memoryWords.size === 0) return 0;
 

@@ -3,6 +3,7 @@
  */
 
 import { execFileSync } from 'node:child_process';
+import { DETECT_TIMEOUT_MS } from '../../../domain/constants.ts';
 import type { AgentToolManifest, AgentToolStatus } from './types.ts';
 import { AGENT_TOOL_MANIFESTS } from './agent-data.generated.ts';
 
@@ -27,7 +28,7 @@ export function detectAgentTool(manifest: AgentToolManifest): AgentToolStatus {
   try {
     const output = execFileSync('sh', ['-c', manifest.detect], {
       stdio: ['pipe', 'pipe', 'pipe'],
-      timeout: 5000,
+      timeout: DETECT_TIMEOUT_MS,
     });
     const version = output.toString().trim().split('\n')[0] || undefined;
     detectCache.set(manifest.name, { installed: true, version });

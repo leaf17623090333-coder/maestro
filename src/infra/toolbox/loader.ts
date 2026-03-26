@@ -10,6 +10,7 @@ import type { ToolManifest, ToolStatus } from './types.ts';
 import type { TransportType } from './sdk/types.ts';
 import { BUILT_IN_MANIFESTS } from './manifests.generated.ts';
 import { sanitizeDetectCommand } from '../utils/cli-detect.ts';
+import { DETECT_TIMEOUT_MS } from '../../domain/constants.ts';
 
 // ============================================================================
 // Manifest Loading
@@ -100,11 +101,11 @@ export function detectTool(
     const output = detectCmd
       ? execFileSync('sh', ['-c', detectCmd], {
           stdio: ['pipe', 'pipe', 'pipe'],
-          timeout: 5000,
+          timeout: DETECT_TIMEOUT_MS,
         })
       : execFileSync('/bin/sh', ['-c', 'command -v -- "$1"', '--', manifest.binary!], {
           stdio: ['pipe', 'pipe', 'pipe'],
-          timeout: 5000,
+          timeout: DETECT_TIMEOUT_MS,
         });
     const version = output.toString().trim().split('\n')[0] || undefined;
     detectCache.set(cacheKey, { installed: true, version });

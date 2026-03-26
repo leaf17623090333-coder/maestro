@@ -10,6 +10,7 @@ import type { MemoryPort } from '../../../domain/ports/memory.ts';
 import { getHandoffPath, getHandoffsPath } from '../../utils/paths.ts';
 import { ensureDir, writeText, readText, fileExists } from '../../utils/fs-io.ts';
 import { getModifiedFiles, extractTitle, formatHandoffMessage } from './shared.ts';
+import { MEMORY_PREVIEW_CHARS } from '../../../domain/constants.ts';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
@@ -26,7 +27,7 @@ export class FsHandoffAdapter implements HandoffPort {
     const memories = this.memoryAdapter.list(feature);
     const decisions = memories.map(mf => ({
       key: mf.name,
-      value: mf.content.slice(0, 500),
+      value: mf.content.slice(0, MEMORY_PREVIEW_CHARS),
     }));
 
     const modifiedFiles = getModifiedFiles(this.projectRoot);
