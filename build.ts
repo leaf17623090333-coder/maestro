@@ -31,6 +31,9 @@ async function build() {
   console.log('[build] Generating tool manifests...');
   await $`bun src/infra/toolbox/generate-manifests.ts`;
 
+  console.log('[build] Generating agent tool data...');
+  await $`bun src/infra/toolbox/agents/generate-agent-data.ts`;
+
   // Step 1: Server bundle (Node target, ESM)
   console.log('[build] Bundling MCP server...');
   checkBuild(await Bun.build({

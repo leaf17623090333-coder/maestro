@@ -2,12 +2,11 @@
  * AgentToolsRegistry -- detects agent tools, loads guidance, assembles protocols.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
 import { isToolAllowed } from '../../../domain/ports/settings.ts';
 import type { AgentToolsSettings } from '../../../domain/ports/settings.ts';
 import { scanAgentTools, detectAgentTool } from './loader.ts';
 import type { AgentToolManifest, AgentToolStatus } from './types.ts';
+import { AGENT_GUIDANCE, AGENT_PROTOCOLS } from './agent-data.generated.ts';
 
 export class AgentToolsRegistry {
   private statuses: AgentToolStatus[];
@@ -41,26 +40,17 @@ export class AgentToolsRegistry {
 
   /** Load guidance.md content for a tool. Returns null if not found. */
   getGuidance(name: string): string | null {
-    const builtInPath = path.join(import.meta.dir, 'built-in', name, 'guidance.md');
-    try {
-      return fs.readFileSync(builtInPath, 'utf-8');
-    } catch {
-      return null;
-    }
+    return AGENT_GUIDANCE[name] ?? null;
   }
 
   /**
    * Assemble a protocol document with sections adapted to installed tools.
-   * Reads from protocols/<name>.md and filters conditional sections.
+   * Filters conditional sections based on installed tools.
    */
   assembleProtocol(protocolName: string): string | null {
-    const protocolPath = path.join(import.meta.dir, 'protocols', `${protocolName}.md`);
-    try {
-      const raw = fs.readFileSync(protocolPath, 'utf-8');
-      return this.filterConditionalSections(raw);
-    } catch {
-      return null;
-    }
+    const raw = AGENT_PROTOCOLS[protocolName];
+    if (!raw) return null;
+    return this.filterConditionalSections(raw);
   }
 
   /**

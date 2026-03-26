@@ -2,36 +2,15 @@
  * Agent tool manifest loader and detection.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
 import { execFileSync } from 'node:child_process';
 import type { AgentToolManifest, AgentToolStatus } from './types.ts';
+import { AGENT_TOOL_MANIFESTS } from './agent-data.generated.ts';
 
 /**
- * Scan for agent tool manifests in the built-in directory.
+ * Return agent tool manifests embedded at build time.
  */
 export function scanAgentTools(): AgentToolManifest[] {
-  const manifests: AgentToolManifest[] = [];
-  const builtInDir = path.join(import.meta.dir, 'built-in');
-
-  if (!fs.existsSync(builtInDir)) return manifests;
-
-  const entries = fs.readdirSync(builtInDir, { withFileTypes: true });
-  for (const entry of entries) {
-    if (!entry.isDirectory()) continue;
-    const manifestPath = path.join(builtInDir, entry.name, 'manifest.json');
-    try {
-      const raw = fs.readFileSync(manifestPath, 'utf-8');
-      const parsed = JSON.parse(raw);
-      if (parsed.name && parsed.binary && parsed.detect) {
-        manifests.push(parsed as AgentToolManifest);
-      }
-    } catch {
-      // Skip malformed manifests
-    }
-  }
-
-  return manifests;
+  return AGENT_TOOL_MANIFESTS;
 }
 
 const detectCache = new Map<string, { installed: boolean; version?: string; error?: string }>();
