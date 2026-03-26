@@ -18,19 +18,27 @@ import cmdFeatureComplete from './handlers/feature/complete.ts';
 import cmdFeatureCreate from './handlers/feature/create.ts';
 import cmdFeatureInfo from './handlers/feature/info.ts';
 import cmdFeatureList from './handlers/feature/list.ts';
+import cmdGraphDiscovery from './handlers/graph/discovery.ts';
 import cmdGraphInsights from './handlers/graph/graph.ts';
 import cmdGraphNext from './handlers/graph/next.ts';
 import cmdGraphPlan from './handlers/graph/plan.ts';
+import cmdGraphReserve from './handlers/graph/reserve.ts';
 import cmdHandoffAck from './handlers/handoff/handoff.ts';
+import cmdHandoffList from './handlers/handoff/list.ts';
+import cmdHandoffRead from './handlers/handoff/read.ts';
 import cmdHandoffReceive from './handlers/handoff/receive.ts';
 import cmdHandoffSend from './handlers/handoff/send.ts';
+import cmdHandoffStatus from './handlers/handoff/status.ts';
 import cmdHistory from './handlers/history.ts';
 import cmdInit from './handlers/init.ts';
 import cmdInstall from './handlers/install.ts';
 import cmdMemoryArchive from './handlers/memory/memory.ts';
 import cmdMemoryCompile from './handlers/memory/compile.ts';
+import cmdMemoryCompress from './handlers/memory/compress.ts';
+import cmdMemoryConnect from './handlers/memory/connect.ts';
 import cmdMemoryConsolidate from './handlers/memory/consolidate.ts';
 import cmdMemoryDelete from './handlers/memory/delete.ts';
+import cmdMemoryInsights from './handlers/memory/insights.ts';
 import cmdMemoryList from './handlers/memory/list.ts';
 import cmdMemoryPromote from './handlers/memory/promote.ts';
 import cmdMemoryRead from './handlers/memory/read.ts';
@@ -45,16 +53,27 @@ import cmdPlanRevoke from './handlers/plan/revoke.ts';
 import cmdPlanWrite from './handlers/plan/write.ts';
 import cmdSearchRelated from './handlers/search/search.ts';
 import cmdSearchSessions from './handlers/search/sessions.ts';
+import cmdSearchSimilar from './handlers/search/similar.ts';
 import cmdSelfUpdate from './handlers/update/self.ts';
 import cmdSkill from './handlers/skill/load.ts';
+import cmdSkillCreate from './handlers/skill/create.ts';
+import cmdSkillInstall from './handlers/skill/install.ts';
 import cmdSkillList from './handlers/skill/skill.ts';
+import cmdSkillRemove from './handlers/skill/remove.ts';
+import cmdSkillSync from './handlers/skill/sync.ts';
+import cmdStageBack from './handlers/stage/back.ts';
+import cmdStageJump from './handlers/stage/jump.ts';
+import cmdStageSkip from './handlers/stage/skip.ts';
 import cmdStatus from './handlers/status.ts';
+import cmdTaskAccept from './handlers/task/accept.ts';
 import cmdTaskBlock from './handlers/task/task.ts';
+import cmdTaskBrief from './handlers/task/brief.ts';
 import cmdTaskClaim from './handlers/task/claim.ts';
 import cmdTaskDone from './handlers/task/done.ts';
 import cmdTaskInfo from './handlers/task/info.ts';
 import cmdTaskList from './handlers/task/list.ts';
 import cmdTaskNext from './handlers/task/next.ts';
+import cmdTaskReject from './handlers/task/reject.ts';
 import cmdTaskReportRead from './handlers/task/report-read.ts';
 import cmdTaskReportWrite from './handlers/task/report-write.ts';
 import cmdTaskSpecRead from './handlers/task/spec-read.ts';
@@ -90,19 +109,27 @@ export const subCommands = {
   'feature-create': cmdFeatureCreate,
   'feature-info': cmdFeatureInfo,
   'feature-list': cmdFeatureList,
+  'graph-discovery': cmdGraphDiscovery,
   'graph-insights': cmdGraphInsights,
   'graph-next': cmdGraphNext,
   'graph-plan': cmdGraphPlan,
+  'graph-reserve': cmdGraphReserve,
   'handoff-ack': cmdHandoffAck,
+  'handoff-list': cmdHandoffList,
+  'handoff-read': cmdHandoffRead,
   'handoff-receive': cmdHandoffReceive,
   'handoff-send': cmdHandoffSend,
+  'handoff-status': cmdHandoffStatus,
   'history': cmdHistory,
   'init': cmdInit,
   'install': cmdInstall,
   'memory-archive': cmdMemoryArchive,
   'memory-compile': cmdMemoryCompile,
+  'memory-compress': cmdMemoryCompress,
+  'memory-connect': cmdMemoryConnect,
   'memory-consolidate': cmdMemoryConsolidate,
   'memory-delete': cmdMemoryDelete,
+  'memory-insights': cmdMemoryInsights,
   'memory-list': cmdMemoryList,
   'memory-promote': cmdMemoryPromote,
   'memory-read': cmdMemoryRead,
@@ -117,16 +144,27 @@ export const subCommands = {
   'plan-write': cmdPlanWrite,
   'search-related': cmdSearchRelated,
   'search-sessions': cmdSearchSessions,
+  'search-similar': cmdSearchSimilar,
   'self-update': cmdSelfUpdate,
   'skill': cmdSkill,
+  'skill-create': cmdSkillCreate,
+  'skill-install': cmdSkillInstall,
   'skill-list': cmdSkillList,
+  'skill-remove': cmdSkillRemove,
+  'skill-sync': cmdSkillSync,
+  'stage-back': cmdStageBack,
+  'stage-jump': cmdStageJump,
+  'stage-skip': cmdStageSkip,
   'status': cmdStatus,
+  'task-accept': cmdTaskAccept,
   'task-block': cmdTaskBlock,
+  'task-brief': cmdTaskBrief,
   'task-claim': cmdTaskClaim,
   'task-done': cmdTaskDone,
   'task-info': cmdTaskInfo,
   'task-list': cmdTaskList,
   'task-next': cmdTaskNext,
+  'task-reject': cmdTaskReject,
   'task-report-read': cmdTaskReportRead,
   'task-report-write': cmdTaskReportWrite,
   'task-spec-read': cmdTaskSpecRead,

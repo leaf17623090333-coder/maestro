@@ -5,10 +5,12 @@
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
 import { output } from '../../../../infra/utils/output.ts';
-import { handleCommandError } from '../../../../domain/errors.ts';
+import { handleCommandError, MaestroError } from '../../../../domain/errors.ts';
+import { readStdinText } from '../../../../infra/utils/stdin.ts';
+import * as fs from 'fs';
 
 export default defineCommand({
-  meta: { name: 'plan-comment', description: 'Add comment to feature plan\n\nExamples:\n  maestro plan-comment --feature my-feat --body "Consider edge case X"\n  maestro plan-comment --feature my-feat --body "Needs auth" --line 42' },
+  meta: { name: 'plan-comment', description: 'Add comment to feature plan\n\nExamples:\n  maestro plan-comment --feature my-feat --body "Consider edge case X"\n  maestro plan-comment --feature my-feat --file comment.md --line 42\n  maestro plan-comment --feature my-feat --body "Needs auth" --line 42' },
   args: {
     feature: {
       type: 'string',
@@ -17,8 +19,16 @@ export default defineCommand({
     },
     body: {
       type: 'string',
-      description: 'Comment body',
-      required: true,
+      description: 'Comment body (or use --file / --stdin)',
+    },
+    file: {
+      type: 'string',
+      description: 'Read comment body from file',
+    },
+    stdin: {
+      type: 'boolean',
+      description: 'Read comment body from stdin',
+      default: false,
     },
     line: {
       type: 'string',
@@ -32,8 +42,22 @@ export default defineCommand({
   async run({ args }) {
     try {
       const { planAdapter } = getServices();
+
+      let body = args.body;
+      if (!body && args.file) {
+        body = fs.readFileSync(args.file, 'utf-8');
+      }
+      if (!body && args.stdin) {
+        body = await readStdinText();
+      }
+      if (!body) {
+        throw new MaestroError('No comment body provided', [
+          'Pass --body "..." or --file path/to/comment.md or --stdin',
+        ]);
+      }
+
       const result = planAdapter.addComment(args.feature, {
-        body: args.body,
+        body,
         author: args.author ?? 'cli',
         line: args.line ? Number(args.line) : 0,
       });

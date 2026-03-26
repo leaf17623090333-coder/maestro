@@ -7,6 +7,7 @@ import { getServices } from '../../../services.ts';
 import { output, renderStatusLine } from '../../../infra/utils/output.ts';
 import { MaestroError, handleCommandError } from '../../../domain/errors.ts';
 import { readStdinText } from '../../../infra/utils/stdin.ts';
+import * as fs from 'fs';
 import type { TaskInfo } from '../../../domain/types.ts';
 
 export function makeInfoCommand() {
@@ -67,23 +68,27 @@ export function makeDocReadCommand(docType: 'spec' | 'report') {
 export function makeDocWriteCommand(docType: 'spec' | 'report') {
   const portMethod = docType === 'spec' ? 'writeSpec' as const : 'writeReport' as const;
   return defineCommand({
-    meta: { name: `task-${docType}-write`, description: `Write task ${docType}\n\nExamples:\n  maestro task-${docType}-write --feature my-feat --task 01-setup --content "..."\n  echo "content" | maestro task-${docType}-write --feature my-feat --task 01-setup --stdin` },
+    meta: { name: `task-${docType}-write`, description: `Write task ${docType}\n\nExamples:\n  maestro task-${docType}-write --feature my-feat --task 01-setup --content "..."\n  maestro task-${docType}-write --feature my-feat --task 01-setup --file ${docType}.md\n  echo "content" | maestro task-${docType}-write --feature my-feat --task 01-setup --stdin` },
     args: {
       feature: { type: 'string' as const, description: 'Feature name', required: true },
       task: { type: 'string' as const, description: 'Task ID', required: true },
-      content: { type: 'string' as const, description: `Task ${docType} content (or use --stdin)` },
+      content: { type: 'string' as const, description: `Task ${docType} content (or use --file / --stdin)` },
+      file: { type: 'string' as const, description: `Read ${docType} content from file` },
       stdin: { type: 'boolean' as const, description: 'Read content from stdin', default: false },
     },
     async run({ args }) {
       try {
         const { taskPort } = getServices();
         let rawContent = args.content;
+        if (!rawContent && args.file) {
+          rawContent = fs.readFileSync(args.file, 'utf-8');
+        }
         if (!rawContent && args.stdin) {
           rawContent = await readStdinText();
         }
         if (!rawContent) {
           throw new MaestroError(`No ${docType} content provided`, [
-            `Pass --content "..." or --stdin`,
+            `Pass --content "..." or --file path/to/${docType}.md or --stdin`,
           ]);
         }
         // Unescape literal \n from CLI args to actual newlines

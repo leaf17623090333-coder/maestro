@@ -7,6 +7,7 @@ import { getServices } from '../../../../services.ts';
 import { output } from '../../../../infra/utils/output.ts';
 import { handleCommandError, MaestroError } from '../../../../domain/errors.ts';
 import { readStdinText } from '../../../../infra/utils/stdin.ts';
+import * as fs from 'fs';
 import { requireDoctrinePort, parseTags } from '../../../../infra/utils/resolve.ts';
 import { buildDoctrineItem } from '../../../../app/doctrine/factory.ts';
 import type { DoctrineStatus } from '../../../../domain/ports/doctrine.ts';
@@ -14,10 +15,11 @@ import type { DoctrineStatus } from '../../../../domain/ports/doctrine.ts';
 const VALID_STATUSES = new Set<DoctrineStatus>(['active', 'deprecated', 'proposed']);
 
 export default defineCommand({
-  meta: { name: 'doctrine-write', description: 'Create or update a doctrine item\n\nExamples:\n  maestro doctrine-write --name no-mocks --rule "Never mock internal modules" --rationale "Mocks hide integration bugs"\n  maestro doctrine-write --name no-mocks --stdin --rationale "Mocks hide integration bugs"' },
+  meta: { name: 'doctrine-write', description: 'Create or update a doctrine item\n\nExamples:\n  maestro doctrine-write --name no-mocks --rule "Never mock internal modules" --rationale "Mocks hide integration bugs"\n  maestro doctrine-write --name no-mocks --file rule.md --rationale "Mocks hide integration bugs"\n  maestro doctrine-write --name no-mocks --stdin --rationale "Mocks hide integration bugs"' },
   args: {
     name: { type: 'string', description: 'Doctrine item name (kebab-case)', required: true },
-    rule: { type: 'string', description: 'The operating rule (or use --stdin)' },
+    rule: { type: 'string', description: 'The operating rule (or use --file / --stdin)' },
+    file: { type: 'string', description: 'Read rule text from file' },
     rationale: { type: 'string', description: 'Why this rule exists', required: true },
     stdin: { type: 'boolean', description: 'Read rule text from stdin', default: false },
     tags: { type: 'string', description: 'Comma-separated tags' },
@@ -29,12 +31,15 @@ export default defineCommand({
       const doctrinePort = requireDoctrinePort(services);
 
       let rule = args.rule;
+      if (!rule && args.file) {
+        rule = fs.readFileSync(args.file, 'utf-8');
+      }
       if (!rule && args.stdin) {
         rule = await readStdinText();
       }
       if (!rule) {
         throw new MaestroError('No rule provided', [
-          'Pass --rule "..." or --stdin',
+          'Pass --rule "..." or --file path/to/rule.md or --stdin',
         ]);
       }
 

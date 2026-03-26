@@ -7,12 +7,13 @@ import { getServices } from '../../../../services.ts';
 import { output } from '../../../../infra/utils/output.ts';
 import { handleCommandError, MaestroError } from '../../../../domain/errors.ts';
 import { readStdinText } from '../../../../infra/utils/stdin.ts';
+import * as fs from 'fs';
 import { parseTags } from '../../../../infra/utils/resolve.ts';
 import { prependMetadataFrontmatter } from '../../../../infra/utils/frontmatter.ts';
 import { MEMORY_CATEGORIES } from '../../../../domain/types.ts';
 
 export default defineCommand({
-  meta: { name: 'memory-write', description: 'Write a memory file\n\nExamples:\n  maestro memory-write --feature my-feat --name finding --content "Auth requires OAuth2"\n  maestro memory-write --feature my-feat --name api-notes --stdin' },
+  meta: { name: 'memory-write', description: 'Write a memory file\n\nExamples:\n  maestro memory-write --feature my-feat --name finding --content "Auth requires OAuth2"\n  maestro memory-write --feature my-feat --name api-notes --file notes.md\n  maestro memory-write --feature my-feat --name api-notes --stdin' },
   args: {
     feature: {
       type: 'string',
@@ -26,7 +27,11 @@ export default defineCommand({
     },
     content: {
       type: 'string',
-      description: 'Content to write (or use --stdin)',
+      description: 'Content to write (or use --file / --stdin)',
+    },
+    file: {
+      type: 'string',
+      description: 'Read content from file',
     },
     stdin: {
       type: 'boolean',
@@ -56,12 +61,15 @@ export default defineCommand({
       const { memoryAdapter } = getServices();
 
       let content = args.content;
+      if (!content && args.file) {
+        content = fs.readFileSync(args.file, 'utf-8');
+      }
       if (!content && args.stdin) {
         content = await readStdinText();
       }
       if (!content) {
         throw new MaestroError('No content provided', [
-          'Pass --content "..." or --stdin',
+          'Pass --content "..." or --file path/to/file.md or --stdin',
         ]);
       }
 
