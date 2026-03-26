@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ServicesThunk } from '../services-thunk.ts';
-import { respond, withErrorHandling } from '../respond.ts';
+import { respond, errorResponse, withErrorHandling } from '../respond.ts';
 import { ANNOTATIONS_MUTATING, ANNOTATIONS_DESTRUCTIVE, ANNOTATIONS_READONLY } from '../annotations.ts';
 import { requireFeature } from '../../../infra/utils/resolve.ts';
 import { featureParam } from '../params.ts';
@@ -42,8 +42,8 @@ export function registerMemoryTools(server: McpServer, thunk: ServicesThunk): vo
 
       switch (input.action) {
         case 'write': {
-          if (!input.name) return respond({ error: 'name is required for action: write' });
-          if (!input.content) return respond({ error: 'content is required for action: write' });
+          if (!input.name) return errorResponse({ terminal: false, reason: 'validation', error: 'name is required for action: write', suggestions: ['Provide a name param to identify this memory.'] });
+          if (!input.content) return errorResponse({ terminal: false, reason: 'validation', error: 'content is required for action: write', suggestions: ['Provide a content param with the memory text.'] });
           const finalContent = prependMetadataFrontmatter(input.content, {
             tags: input.tags, priority: input.priority, category: input.category,
           });
@@ -56,7 +56,7 @@ export function registerMemoryTools(server: McpServer, thunk: ServicesThunk): vo
           return respond({ feature, name: input.name, path });
         }
         case 'delete': {
-          if (!input.name) return respond({ error: 'name is required for action: delete' });
+          if (!input.name) return errorResponse({ terminal: false, reason: 'validation', error: 'name is required for action: delete', suggestions: ['Provide a name param to identify the memory to delete.'] });
           const validation = validateName(input.name, 'memory name');
           if (!validation.ok) {
             throw new MaestroError(validation.error, ['Provide a valid memory file name']);
@@ -80,17 +80,17 @@ export function registerMemoryTools(server: McpServer, thunk: ServicesThunk): vo
           return respond({ feature, name: validation.name, deleted: true });
         }
         case 'promote': {
-          if (!input.name) return respond({ error: 'name is required for action: promote' });
+          if (!input.name) return errorResponse({ terminal: false, reason: 'validation', error: 'name is required for action: promote', suggestions: ['Provide a name param to identify the memory to promote.'] });
           const feature = requireFeature(services, input.feature);
           const content = services.memoryAdapter.read(feature, input.name);
           if (!content) {
-            return respond({ success: false, error: `Memory '${input.name}' not found in feature '${feature}'` });
+            return errorResponse({ terminal: false, reason: 'not_found', error: `Memory '${input.name}' not found in feature '${feature}'`, suggestions: ['Use maestro_memory_read(what: list) to see available memories.'] });
           }
           const path = services.memoryAdapter.writeGlobal(input.name, content);
           return respond({ feature, name: input.name, promotedTo: path });
         }
         case 'compress': {
-          if (!input.name) return respond({ error: 'name is required for action: compress' });
+          if (!input.name) return errorResponse({ terminal: false, reason: 'validation', error: 'name is required for action: compress', suggestions: ['Provide a name param to identify the memory to compress.'] });
           const feature = requireFeature(services, input.feature);
           const success = services.memoryAdapter.compress(feature, input.name);
           if (!success) {
@@ -107,9 +107,9 @@ export function registerMemoryTools(server: McpServer, thunk: ServicesThunk): vo
           return respond({ feature, ...result });
         }
         case 'connect': {
-          if (!input.name) return respond({ error: 'name is required for action: connect' });
-          if (!input.target) return respond({ error: 'target is required for action: connect' });
-          if (!input.relation) return respond({ error: 'relation is required for action: connect' });
+          if (!input.name) return errorResponse({ terminal: false, reason: 'validation', error: 'name is required for action: connect', suggestions: ['Provide a name param for the source memory.'] });
+          if (!input.target) return errorResponse({ terminal: false, reason: 'validation', error: 'target is required for action: connect', suggestions: ['Provide a target param for the destination memory.'] });
+          if (!input.relation) return errorResponse({ terminal: false, reason: 'validation', error: 'relation is required for action: connect', suggestions: ['Provide a relation param: related, supersedes, contradicts, or extends.'] });
           const feature = requireFeature(services, input.feature);
           services.memoryAdapter.connect(feature, input.name, input.target, input.relation as MemoryRelation);
           return respond({ feature, source: input.name, target: input.target, relation: input.relation });
@@ -120,7 +120,7 @@ export function registerMemoryTools(server: McpServer, thunk: ServicesThunk): vo
           return respond({ feature, ...result });
         }
         default:
-          return respond({ error: `Unknown action: ${(input as { action: string }).action}` });
+          return errorResponse({ terminal: true, reason: 'unknown_action', error: `Unknown action: ${(input as { action: string }).action}` });
       }
     }),
   );
@@ -147,7 +147,7 @@ export function registerMemoryTools(server: McpServer, thunk: ServicesThunk): vo
 
       switch (input.what) {
         case 'read': {
-          if (!input.name) return respond({ error: 'name is required for what: read' });
+          if (!input.name) return errorResponse({ terminal: false, reason: 'validation', error: 'name is required for what: read', suggestions: ['Provide a name param to identify the memory to read.'] });
           try {
             const feature = requireFeature(services, input.feature);
             const content = services.memoryAdapter.read(feature, input.name);
@@ -176,7 +176,7 @@ export function registerMemoryTools(server: McpServer, thunk: ServicesThunk): vo
           if (input.task) {
             const task = await services.taskPort.get(feature, input.task);
             if (!task) {
-              return respond({ error: `Task '${input.task}' not found in feature '${feature}'` });
+              return errorResponse({ terminal: false, reason: 'not_found', error: `Task '${input.task}' not found in feature '${feature}'`, suggestions: ['Use maestro_task_read(what: list) to see available tasks.'] });
             }
             const cfg = resolveDcpConfig(services.settingsPort.get().dcp);
             const budget = input.budget ?? cfg.memoryBudgetTokens;
@@ -228,7 +228,7 @@ export function registerMemoryTools(server: McpServer, thunk: ServicesThunk): vo
           return respond({ feature, compiled });
         }
         default:
-          return respond({ error: `Unknown what: ${(input as { what: string }).what}` });
+          return errorResponse({ terminal: true, reason: 'unknown_action', error: `Unknown what: ${(input as { what: string }).what}` });
       }
     }),
   );

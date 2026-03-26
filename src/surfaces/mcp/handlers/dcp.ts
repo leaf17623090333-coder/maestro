@@ -7,7 +7,7 @@ import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { MaestroServices } from '../../../services.ts';
 import type { ServicesThunk } from '../services-thunk.ts';
-import { respond, withErrorHandling } from '../respond.ts';
+import { respond, errorResponse, withErrorHandling } from '../respond.ts';
 import { ANNOTATIONS_READONLY } from '../annotations.ts';
 import { requireFeature } from '../../../infra/utils/resolve.ts';
 import { featureParam, taskParam } from '../params.ts';
@@ -62,9 +62,9 @@ export function registerDcpTools(server: McpServer, thunk: ServicesThunk): void 
 
       switch (input.action) {
         case 'preview': {
-          if (!input.task) return respond({ error: 'task is required for action: preview' });
+          if (!input.task) return errorResponse({ terminal: false, reason: 'validation', error: 'task is required for action: preview', suggestions: ['Provide the task parameter.'] });
           const ctx = await prepareDcpContext(services, input.feature, input.task);
-          if (!ctx) return respond({ error: `Task '${input.task}' not found in feature '${requireFeature(services, input.feature)}'` });
+          if (!ctx) return errorResponse({ terminal: false, reason: 'not_found', error: `Task '${input.task}' not found in feature '${requireFeature(services, input.feature)}'`, suggestions: ['Use maestro_task_read(what: list) to see available tasks.'] });
           const { feature, task, memories, resolvedDcp, featureCreatedAt, allTasks } = ctx;
           const taskDeps = allTasks.map(t => ({ id: t.id, folder: t.folder, status: t.status, dependsOn: t.dependsOn }));
           const { metrics } = pruneContext({
@@ -94,9 +94,9 @@ export function registerDcpTools(server: McpServer, thunk: ServicesThunk): void 
           });
         }
         case 'stats': {
-          if (!input.task) return respond({ error: 'task is required for action: stats' });
+          if (!input.task) return errorResponse({ terminal: false, reason: 'validation', error: 'task is required for action: stats', suggestions: ['Provide the task parameter.'] });
           const ctx = await prepareDcpContext(services, input.feature, input.task);
-          if (!ctx) return respond({ error: `Task '${input.task}' not found` });
+          if (!ctx) return errorResponse({ terminal: false, reason: 'not_found', error: `Task '${input.task}' not found`, suggestions: ['Use maestro_task_read(what: list) to see available tasks.'] });
           const { feature, task, spec, memories, resolvedDcp, allTasks } = ctx;
           const taskDeps = allTasks.map(t => ({ folder: t.folder, id: t.id, status: t.status, dependsOn: t.dependsOn }));
           const result = pruneContext({
@@ -128,7 +128,7 @@ export function registerDcpTools(server: McpServer, thunk: ServicesThunk): void 
           });
         }
         default:
-          return respond({ error: `Unknown action: ${(input as { action: string }).action}` });
+          return errorResponse({ terminal: true, reason: 'unknown_action', error: `Unknown action: ${(input as { action: string }).action}` });
       }
     }),
   );

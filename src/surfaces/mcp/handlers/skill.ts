@@ -3,7 +3,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ServicesThunk } from '../services-thunk.ts';
-import { respond, textResponse, withErrorHandling } from '../respond.ts';
+import { respond, textResponse, errorResponse, withErrorHandling } from '../respond.ts';
 import { ANNOTATIONS_MUTATING } from '../annotations.ts';
 import { loadSkill, loadSkillReference, listSkills } from '../../../app/skills/registry.ts';
 import { MaestroError } from '../../../domain/errors.ts';
@@ -33,7 +33,7 @@ export function registerSkillTools(server: McpServer, _thunk: ServicesThunk, dir
     withErrorHandling(async (input) => {
       switch (input.action) {
         case 'load': {
-          if (!input.name) return respond({ error: 'name is required for action: load' });
+          if (!input.name) return errorResponse({ terminal: false, reason: 'validation', error: 'name is required for action: load', suggestions: ['Provide the name parameter.'] });
           const result = input.reference
             ? await loadSkillReference(input.name, input.reference, directory)
             : await loadSkill(input.name, directory);
@@ -57,19 +57,19 @@ export function registerSkillTools(server: McpServer, _thunk: ServicesThunk, dir
           });
         }
         case 'install': {
-          if (!input.source) return respond({ error: 'source is required for action: install' });
+          if (!input.source) return errorResponse({ terminal: false, reason: 'validation', error: 'source is required for action: install', suggestions: ['Provide the source parameter.'] });
           const projectRoot = directory ?? process.cwd();
           const result = installSkill(input.source, projectRoot);
           return respond({ installed: result.name, path: result.path });
         }
         case 'create': {
-          if (!input.name) return respond({ error: 'name is required for action: create' });
+          if (!input.name) return errorResponse({ terminal: false, reason: 'validation', error: 'name is required for action: create', suggestions: ['Provide the name parameter.'] });
           const projectRoot = directory ?? process.cwd();
           const result = createSkill(input.name, projectRoot, input.stage);
           return respond({ created: result.name, path: result.path });
         }
         case 'remove': {
-          if (!input.name) return respond({ error: 'name is required for action: remove' });
+          if (!input.name) return errorResponse({ terminal: false, reason: 'validation', error: 'name is required for action: remove', suggestions: ['Provide the name parameter.'] });
           const projectRoot = directory ?? process.cwd();
           const slug = input.name.toLowerCase().replace(/[^a-z0-9-:]/g, '-').replace(/-+/g, '-');
           const skillDir = path.join(projectRoot, '.maestro', 'skills', slug);
@@ -85,7 +85,7 @@ export function registerSkillTools(server: McpServer, _thunk: ServicesThunk, dir
           return respond(result as unknown as Record<string, unknown>);
         }
         default:
-          return respond({ error: `Unknown action: ${(input as { action: string }).action}` });
+          return errorResponse({ terminal: true, reason: 'unknown_action', error: `Unknown action: ${(input as { action: string }).action}` });
       }
     }),
   );

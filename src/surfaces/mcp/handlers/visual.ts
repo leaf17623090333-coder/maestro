@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ServicesThunk } from '../services-thunk.ts';
-import { respond, withErrorHandling } from '../respond.ts';
+import { respond, errorResponse, withErrorHandling } from '../respond.ts';
 import { ANNOTATIONS_MUTATING } from '../annotations.ts';
 import { requireFeature } from '../../../infra/utils/resolve.ts';
 import { featureParam } from '../params.ts';
@@ -35,7 +35,7 @@ export function registerVisualTools(server: McpServer, thunk: ServicesThunk): vo
       const debugTypes = ['component-tree', 'state-flow', 'error-cascade', 'network-waterfall', 'dom-diff', 'console-timeline'];
 
       if (debugTypes.includes(input.type)) {
-        if (!input.data) return respond({ error: 'data is required for debug visualization types' });
+        if (!input.data) return errorResponse({ terminal: false, reason: 'validation', error: 'data is required for debug visualization types', suggestions: ['Provide the data parameter.'] });
         const result = await debugVisualize(
           input.type as 'component-tree' | 'state-flow' | 'error-cascade' | 'network-waterfall' | 'dom-diff' | 'console-timeline',
           input.data, input.title, input.autoOpen,

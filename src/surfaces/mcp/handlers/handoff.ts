@@ -7,7 +7,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ServicesThunk } from '../services-thunk.ts';
-import { respond, withErrorHandling } from '../respond.ts';
+import { respond, errorResponse, withErrorHandling } from '../respond.ts';
 import { ANNOTATIONS_READONLY, ANNOTATIONS_MUTATING } from '../annotations.ts';
 import { requireFeature, resolveFeature, requireHandoffPort } from '../../../infra/utils/resolve.ts';
 import { featureParam } from '../params.ts';
@@ -36,7 +36,7 @@ export function registerHandoffTools(server: McpServer, thunk: ServicesThunk): v
     withErrorHandling(async (input) => {
       switch (input.action) {
         case 'send': {
-          if (!input.task) return respond({ error: 'task is required for action: send' });
+          if (!input.task) return errorResponse({ terminal: false, reason: 'validation', error: 'task is required for action: send', suggestions: ['Provide the task parameter.'] });
           const port = requireHandoffPort(thunk.get());
           const services = thunk.get();
           const feature = requireFeature(services, input.feature);
@@ -47,13 +47,13 @@ export function registerHandoffTools(server: McpServer, thunk: ServicesThunk): v
           return respond({ feature, task: input.task, ...result });
         }
         case 'ack': {
-          if (!input.thread_id) return respond({ error: 'thread_id is required for action: ack' });
+          if (!input.thread_id) return errorResponse({ terminal: false, reason: 'validation', error: 'thread_id is required for action: ack', suggestions: ['Provide the thread_id parameter.'] });
           const port = requireHandoffPort(thunk.get());
           await port.acknowledgeHandoff(input.thread_id);
           return respond({ threadId: input.thread_id });
         }
         default:
-          return respond({ error: `Unknown action: ${(input as { action: string }).action}` });
+          return errorResponse({ terminal: true, reason: 'unknown_action', error: `Unknown action: ${(input as { action: string }).action}` });
       }
     }),
   );
@@ -76,7 +76,7 @@ export function registerHandoffTools(server: McpServer, thunk: ServicesThunk): v
     withErrorHandling(async (input) => {
       switch (input.what) {
         case 'read': {
-          if (!input.id) return respond({ error: 'id is required for what: read' });
+          if (!input.id) return errorResponse({ terminal: false, reason: 'validation', error: 'id is required for what: read', suggestions: ['Provide the id parameter.'] });
           const services = thunk.get();
           const feature = requireFeature(services, input.feature);
           const filePath = getHandoffPath(services.directory, feature, input.id);
@@ -111,7 +111,7 @@ export function registerHandoffTools(server: McpServer, thunk: ServicesThunk): v
           return respond({ feature, handoffs: entries, count: entries.length });
         }
         case 'status': {
-          if (!input.id) return respond({ error: 'id is required for what: status' });
+          if (!input.id) return errorResponse({ terminal: false, reason: 'validation', error: 'id is required for what: status', suggestions: ['Provide the id parameter.'] });
           const services = thunk.get();
           const feature = requireFeature(services, input.feature);
           const filePath = getHandoffPath(services.directory, feature, input.id);
@@ -126,7 +126,7 @@ export function registerHandoffTools(server: McpServer, thunk: ServicesThunk): v
           return respond({ feature, id: input.id, exists, acknowledged, filePath, createdAt });
         }
         case 'receive': {
-          if (!input.agent_id) return respond({ error: 'agent_id is required for what: receive' });
+          if (!input.agent_id) return errorResponse({ terminal: false, reason: 'validation', error: 'agent_id is required for what: receive', suggestions: ['Provide the agent_id parameter.'] });
           const port = requireHandoffPort(thunk.get());
           const services = thunk.get();
           const feature = resolveFeature(services, input.feature);
@@ -134,7 +134,7 @@ export function registerHandoffTools(server: McpServer, thunk: ServicesThunk): v
           return respond({ handoffs });
         }
         default:
-          return respond({ error: `Unknown what: ${(input as { what: string }).what}` });
+          return errorResponse({ terminal: true, reason: 'unknown_action', error: `Unknown what: ${(input as { what: string }).what}` });
       }
     }),
   );

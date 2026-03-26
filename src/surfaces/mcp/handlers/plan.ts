@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ServicesThunk } from '../services-thunk.ts';
-import { respond, withErrorHandling } from '../respond.ts';
+import { respond, errorResponse, withErrorHandling } from '../respond.ts';
 import { ANNOTATIONS_READONLY, ANNOTATIONS_MUTATING } from '../annotations.ts';
 import { requireFeature } from '../../../infra/utils/resolve.ts';
 import { featureParam } from '../params.ts';
@@ -63,7 +63,7 @@ export function registerPlanTools(server: McpServer, thunk: ServicesThunk): void
           return respond(result);
         }
         case 'comment': {
-          if (!input.body) return respond({ error: 'body is required for action: comment' });
+          if (!input.body) return errorResponse({ terminal: false, reason: 'validation', error: 'body is required for action: comment', suggestions: ['Provide the body parameter.'] });
           const services = thunk.get();
           const feature = requireFeature(services, input.feature);
           const comment = services.planAdapter.addComment(feature, {
@@ -80,7 +80,7 @@ export function registerPlanTools(server: McpServer, thunk: ServicesThunk): void
           return respond({ feature, cleared: true });
         }
         default:
-          return respond({ error: `Unknown action: ${(input as { action: string }).action}` });
+          return errorResponse({ terminal: true, reason: 'unknown_action', error: `Unknown action: ${(input as { action: string }).action}` });
       }
     }),
   );

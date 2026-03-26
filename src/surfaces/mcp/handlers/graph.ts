@@ -7,7 +7,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ServicesThunk } from '../services-thunk.ts';
-import { respond, withErrorHandling } from '../respond.ts';
+import { respond, errorResponse, withErrorHandling } from '../respond.ts';
 import { ANNOTATIONS_READONLY, ANNOTATIONS_MUTATING } from '../annotations.ts';
 import { requireGraphPort, requireFeature } from '../../../infra/utils/resolve.ts';
 import { featureParam } from '../params.ts';
@@ -65,7 +65,7 @@ export function registerGraphTools(server: McpServer, thunk: ServicesThunk): voi
           return respond({ feature, count: tasks.length, tasks });
         }
         case 'reserve': {
-          if (!input.tasks || input.tasks.length === 0) return respond({ error: 'tasks array is required for action: reserve' });
+          if (!input.tasks || input.tasks.length === 0) return errorResponse({ terminal: false, reason: 'validation', error: 'tasks array is required for action: reserve', suggestions: ['Provide the tasks parameter.'] });
           const services = thunk.get();
           const feature = requireFeature(services, input.feature);
           const claimed: string[] = [];
@@ -81,7 +81,7 @@ export function registerGraphTools(server: McpServer, thunk: ServicesThunk): voi
           return respond({ feature, claimed, failed });
         }
         default:
-          return respond({ error: `Unknown action: ${(input as { action: string }).action}` });
+          return errorResponse({ terminal: true, reason: 'unknown_action', error: `Unknown action: ${(input as { action: string }).action}` });
       }
     }),
   );

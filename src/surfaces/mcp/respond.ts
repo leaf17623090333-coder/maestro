@@ -46,7 +46,7 @@ function stripNulls(obj: unknown): unknown {
 export function respond(payload: Record<string, unknown>): { content: Array<{ type: 'text'; text: string }> } {
   let text: string;
   try {
-    text = JSON.stringify(stripNulls(payload));
+    text = JSON.stringify(stripNulls({ success: true, ...payload }));
   } catch (err) {
     text = JSON.stringify({
       success: false,

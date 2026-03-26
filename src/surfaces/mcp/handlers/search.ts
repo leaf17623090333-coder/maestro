@@ -5,7 +5,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ServicesThunk } from '../services-thunk.ts';
-import { respond, withErrorHandling } from '../respond.ts';
+import { respond, errorResponse, withErrorHandling } from '../respond.ts';
 import { ANNOTATIONS_READONLY } from '../annotations.ts';
 import { limitParam } from '../params.ts';
 import { requireSearchPort } from '../../../infra/utils/resolve.ts';
@@ -32,7 +32,7 @@ export function registerSearchTools(server: McpServer, thunk: ServicesThunk): vo
       const port = requireSearchPort(thunk.get());
       switch (input.action) {
         case 'sessions': {
-          if (!input.query) return respond({ error: 'query is required for action: sessions' });
+          if (!input.query) return errorResponse({ terminal: false, reason: 'validation', error: 'query is required for action: sessions', suggestions: ['Provide the query parameter.'] });
           const results = await port.searchSessions(input.query, {
             agent: input.agent,
             limit: input.limit,
@@ -41,17 +41,17 @@ export function registerSearchTools(server: McpServer, thunk: ServicesThunk): vo
           return respond({ results });
         }
         case 'related': {
-          if (!input.file_path) return respond({ error: 'file_path is required for action: related' });
+          if (!input.file_path) return errorResponse({ terminal: false, reason: 'validation', error: 'file_path is required for action: related', suggestions: ['Provide the file_path parameter.'] });
           const results = await port.findRelatedSessions(input.file_path, input.limit);
           return respond({ results });
         }
         case 'similar': {
-          if (!input.content) return respond({ error: 'content is required for action: similar' });
+          if (!input.content) return errorResponse({ terminal: false, reason: 'validation', error: 'content is required for action: similar', suggestions: ['Provide the content parameter.'] });
           const results = await port.searchSimilar(input.content, { limit: input.limit });
           return respond({ results });
         }
         default:
-          return respond({ error: `Unknown action: ${(input as { action: string }).action}` });
+          return errorResponse({ terminal: true, reason: 'unknown_action', error: `Unknown action: ${(input as { action: string }).action}` });
       }
     }),
   );

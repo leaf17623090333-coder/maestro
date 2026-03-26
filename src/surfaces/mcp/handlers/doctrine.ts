@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ServicesThunk } from '../services-thunk.ts';
-import { respond, withErrorHandling } from '../respond.ts';
+import { respond, errorResponse, withErrorHandling } from '../respond.ts';
 import { ANNOTATIONS_READONLY, ANNOTATIONS_MUTATING } from '../annotations.ts';
 import { requireDoctrinePort } from '../../../infra/utils/resolve.ts';
 import { buildDoctrineItem } from '../../../app/doctrine/factory.ts';
@@ -33,9 +33,9 @@ export function registerDoctrineTools(server: McpServer, thunk: ServicesThunk): 
     withErrorHandling(async (input) => {
       switch (input.action) {
         case 'write': {
-          if (!input.name) return respond({ error: 'name is required for action: write' });
-          if (!input.rule) return respond({ error: 'rule is required for action: write' });
-          if (!input.rationale) return respond({ error: 'rationale is required for action: write' });
+          if (!input.name) return errorResponse({ terminal: false, reason: 'validation', error: 'name is required for action: write', suggestions: ['Provide the name parameter.'] });
+          if (!input.rule) return errorResponse({ terminal: false, reason: 'validation', error: 'rule is required for action: write', suggestions: ['Provide the rule parameter.'] });
+          if (!input.rationale) return errorResponse({ terminal: false, reason: 'validation', error: 'rationale is required for action: write', suggestions: ['Provide the rationale parameter.'] });
           const port = requireDoctrinePort(thunk.get());
           const existing = port.read(input.name) ?? undefined;
           const item = buildDoctrineItem({
@@ -54,9 +54,9 @@ export function registerDoctrineTools(server: McpServer, thunk: ServicesThunk): 
           return respond({ name: item.name, path, created: !existing });
         }
         case 'approve': {
-          if (!input.name) return respond({ error: 'name is required for action: approve' });
-          if (!input.rule) return respond({ error: 'rule is required for action: approve' });
-          if (!input.rationale) return respond({ error: 'rationale is required for action: approve' });
+          if (!input.name) return errorResponse({ terminal: false, reason: 'validation', error: 'name is required for action: approve', suggestions: ['Provide the name parameter.'] });
+          if (!input.rule) return errorResponse({ terminal: false, reason: 'validation', error: 'rule is required for action: approve', suggestions: ['Provide the rule parameter.'] });
+          if (!input.rationale) return errorResponse({ terminal: false, reason: 'validation', error: 'rationale is required for action: approve', suggestions: ['Provide the rationale parameter.'] });
           const port = requireDoctrinePort(thunk.get());
           const item = buildDoctrineItem({
             name: input.name,
@@ -79,13 +79,13 @@ export function registerDoctrineTools(server: McpServer, thunk: ServicesThunk): 
           return respond(result as unknown as Record<string, unknown>);
         }
         case 'deprecate': {
-          if (!input.name) return respond({ error: 'name is required for action: deprecate' });
+          if (!input.name) return errorResponse({ terminal: false, reason: 'validation', error: 'name is required for action: deprecate', suggestions: ['Provide the name parameter.'] });
           const port = requireDoctrinePort(thunk.get());
           const item = port.deprecate(input.name);
           return respond({ name: item.name, status: item.status });
         }
         default:
-          return respond({ error: `Unknown action: ${(input as { action: string }).action}` });
+          return errorResponse({ terminal: true, reason: 'unknown_action', error: `Unknown action: ${(input as { action: string }).action}` });
       }
     }),
   );
@@ -119,7 +119,7 @@ export function registerDoctrineTools(server: McpServer, thunk: ServicesThunk): 
           });
         }
         case 'read': {
-          if (!input.name) return respond({ error: 'name is required for what: read' });
+          if (!input.name) return errorResponse({ terminal: false, reason: 'validation', error: 'name is required for what: read', suggestions: ['Provide the name parameter.'] });
           const item = port.read(input.name);
           if (!item) {
             throw new MaestroError(`Doctrine item '${input.name}' not found`, ['Use maestro_doctrine_read with what: list to see available items']);
@@ -127,7 +127,7 @@ export function registerDoctrineTools(server: McpServer, thunk: ServicesThunk): 
           return respond(item as unknown as Record<string, unknown>);
         }
         default:
-          return respond({ error: `Unknown what: ${(input as { what: string }).what}` });
+          return errorResponse({ terminal: true, reason: 'unknown_action', error: `Unknown what: ${(input as { what: string }).what}` });
       }
     }),
   );

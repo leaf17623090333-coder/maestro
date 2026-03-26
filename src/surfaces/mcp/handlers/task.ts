@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ServicesThunk } from '../services-thunk.ts';
-import { respond, withErrorHandling } from '../respond.ts';
+import { respond, errorResponse, withErrorHandling } from '../respond.ts';
 import { ANNOTATIONS_READONLY, ANNOTATIONS_MUTATING } from '../annotations.ts';
 import { requireFeature } from '../../../infra/utils/resolve.ts';
 import { featureParam, taskParam } from '../params.ts';
@@ -60,14 +60,14 @@ export function registerTaskTools(server: McpServer, thunk: ServicesThunk): void
           return respond({ ...result, ...(hint && { transition: hint }) });
         }
         case 'claim': {
-          if (!input.task) return respond({ error: 'task is required for action: claim' });
-          if (!input.agent_id) return respond({ error: 'agent_id is required for action: claim' });
+          if (!input.task) return errorResponse({ terminal: false, reason: 'validation', error: 'task is required for action: claim', suggestions: ['Provide the task parameter. Use maestro_task_read(what: list) to see available tasks.'] });
+          if (!input.agent_id) return errorResponse({ terminal: false, reason: 'validation', error: 'agent_id is required for action: claim', suggestions: ['Provide the agent_id parameter.'] });
           const task = await services.taskPort.claim(feature, input.task, input.agent_id);
           return respond({ feature, task });
         }
         case 'done': {
-          if (!input.task) return respond({ error: 'task is required for action: done' });
-          if (!input.summary) return respond({ error: 'summary is required for action: done' });
+          if (!input.task) return errorResponse({ terminal: false, reason: 'validation', error: 'task is required for action: done', suggestions: ['Provide the task parameter. Use maestro_task_read(what: list) to see available tasks.'] });
+          if (!input.summary) return errorResponse({ terminal: false, reason: 'validation', error: 'summary is required for action: done', suggestions: ['Provide the summary parameter.'] });
           const vConfig = resolveVerificationConfig(services.settingsPort.get().verification);
           const result = await verifyTask({
             taskPort: services.taskPort,
@@ -118,7 +118,7 @@ export function registerTaskTools(server: McpServer, thunk: ServicesThunk): void
           });
         }
         case 'accept': {
-          if (!input.task) return respond({ error: 'task is required for action: accept' });
+          if (!input.task) return errorResponse({ terminal: false, reason: 'validation', error: 'task is required for action: accept', suggestions: ['Provide the task parameter. Use maestro_task_read(what: list) to see available tasks.'] });
           const existing = await services.taskPort.get(feature, input.task);
           if (!existing || existing.status !== 'review') {
             throw new Error(`Task '${input.task}' is not in review state (current: ${existing?.status ?? 'not found'})`);
@@ -136,8 +136,8 @@ export function registerTaskTools(server: McpServer, thunk: ServicesThunk): void
           return respond({ feature, task, message: 'Task accepted (verification override)', ...(hint && { transition: hint }) });
         }
         case 'reject': {
-          if (!input.task) return respond({ error: 'task is required for action: reject' });
-          if (!input.feedback) return respond({ error: 'feedback is required for action: reject' });
+          if (!input.task) return errorResponse({ terminal: false, reason: 'validation', error: 'task is required for action: reject', suggestions: ['Provide the task parameter. Use maestro_task_read(what: list) to see available tasks.'] });
+          if (!input.feedback) return errorResponse({ terminal: false, reason: 'validation', error: 'feedback is required for action: reject', suggestions: ['Provide the feedback parameter.'] });
           const existing = await services.taskPort.get(feature, input.task);
           if (!existing || existing.status !== 'review') {
             throw new Error(`Task '${input.task}' is not in review state (current: ${existing?.status ?? 'not found'})`);
@@ -147,31 +147,31 @@ export function registerTaskTools(server: McpServer, thunk: ServicesThunk): void
           return respond({ feature, task, message: `Task sent for revision (attempt ${revisionCount})` });
         }
         case 'block': {
-          if (!input.task) return respond({ error: 'task is required for action: block' });
-          if (!input.reason) return respond({ error: 'reason is required for action: block' });
+          if (!input.task) return errorResponse({ terminal: false, reason: 'validation', error: 'task is required for action: block', suggestions: ['Provide the task parameter. Use maestro_task_read(what: list) to see available tasks.'] });
+          if (!input.reason) return errorResponse({ terminal: false, reason: 'validation', error: 'reason is required for action: block', suggestions: ['Provide the reason parameter.'] });
           const task = await services.taskPort.block(feature, input.task, input.reason);
           return respond({ feature, task });
         }
         case 'unblock': {
-          if (!input.task) return respond({ error: 'task is required for action: unblock' });
-          if (!input.decision) return respond({ error: 'decision is required for action: unblock' });
+          if (!input.task) return errorResponse({ terminal: false, reason: 'validation', error: 'task is required for action: unblock', suggestions: ['Provide the task parameter. Use maestro_task_read(what: list) to see available tasks.'] });
+          if (!input.decision) return errorResponse({ terminal: false, reason: 'validation', error: 'decision is required for action: unblock', suggestions: ['Provide the decision parameter.'] });
           const task = await services.taskPort.unblock(feature, input.task, input.decision);
           return respond({ feature, task });
         }
         case 'spec_write': {
-          if (!input.task) return respond({ error: 'task is required for action: spec_write' });
-          if (!input.content) return respond({ error: 'content is required for action: spec_write' });
+          if (!input.task) return errorResponse({ terminal: false, reason: 'validation', error: 'task is required for action: spec_write', suggestions: ['Provide the task parameter. Use maestro_task_read(what: list) to see available tasks.'] });
+          if (!input.content) return errorResponse({ terminal: false, reason: 'validation', error: 'content is required for action: spec_write', suggestions: ['Provide the content parameter.'] });
           await services.taskPort.writeSpec(feature, input.task, input.content);
           return respond({ feature, task: input.task, written: true });
         }
         case 'report_write': {
-          if (!input.task) return respond({ error: 'task is required for action: report_write' });
-          if (!input.content) return respond({ error: 'content is required for action: report_write' });
+          if (!input.task) return errorResponse({ terminal: false, reason: 'validation', error: 'task is required for action: report_write', suggestions: ['Provide the task parameter. Use maestro_task_read(what: list) to see available tasks.'] });
+          if (!input.content) return errorResponse({ terminal: false, reason: 'validation', error: 'content is required for action: report_write', suggestions: ['Provide the content parameter.'] });
           await services.taskPort.writeReport(feature, input.task, input.content);
           return respond({ feature, task: input.task, written: true });
         }
         default:
-          return respond({ error: `Unknown action: ${(input as { action: string }).action}` });
+          return errorResponse({ terminal: true, reason: 'unknown_action', error: `Unknown action: ${(input as { action: string }).action}` });
       }
     }),
   );
@@ -217,20 +217,20 @@ export function registerTaskTools(server: McpServer, thunk: ServicesThunk): void
           return respond({ feature, tasks });
         }
         case 'info': {
-          if (!input.task) return respond({ error: 'task is required for what: info' });
+          if (!input.task) return errorResponse({ terminal: false, reason: 'validation', error: 'task is required for what: info', suggestions: ['Provide the task parameter. Use maestro_task_read(what: list) to see available tasks.'] });
           const task = await services.taskPort.get(feature, input.task);
           if (!task) {
-            return respond({ error: `Task '${input.task}' not found in feature '${feature}'` });
+            return errorResponse({ terminal: false, reason: 'not_found', error: `Task '${input.task}' not found in feature '${feature}'`, suggestions: ['Use maestro_task_read(what: list) to see available tasks.'] });
           }
           return respond({ feature, task });
         }
         case 'spec': {
-          if (!input.task) return respond({ error: 'task is required for what: spec' });
+          if (!input.task) return errorResponse({ terminal: false, reason: 'validation', error: 'task is required for what: spec', suggestions: ['Provide the task parameter. Use maestro_task_read(what: list) to see available tasks.'] });
           const spec = await services.taskPort.readSpec(feature, input.task);
           return respond({ feature, task: input.task, spec: spec ?? null });
         }
         case 'report': {
-          if (!input.task) return respond({ error: 'task is required for what: report' });
+          if (!input.task) return errorResponse({ terminal: false, reason: 'validation', error: 'task is required for what: report', suggestions: ['Provide the task parameter. Use maestro_task_read(what: list) to see available tasks.'] });
           const report = await services.taskPort.readReport(feature, input.task);
           return respond({ feature, task: input.task, report: report ?? null });
         }
@@ -243,7 +243,7 @@ export function registerTaskTools(server: McpServer, thunk: ServicesThunk): void
           return respond({ feature, tasks, ...(recommendedSpec !== undefined && { recommendedSpec }) });
         }
         case 'brief': {
-          if (!input.task) return respond({ error: 'task is required for what: brief' });
+          if (!input.task) return errorResponse({ terminal: false, reason: 'validation', error: 'task is required for what: brief', suggestions: ['Provide the task parameter. Use maestro_task_read(what: list) to see available tasks.'] });
           const result = await taskBrief({
             taskPort: services.taskPort,
             featureAdapter: services.featureAdapter,
@@ -257,7 +257,7 @@ export function registerTaskTools(server: McpServer, thunk: ServicesThunk): void
           return respond({ ...result, agentToolsGuidance: guidance });
         }
         default:
-          return respond({ error: `Unknown what: ${(input as { what: string }).what}` });
+          return errorResponse({ terminal: true, reason: 'unknown_action', error: `Unknown what: ${(input as { what: string }).what}` });
       }
     }),
   );

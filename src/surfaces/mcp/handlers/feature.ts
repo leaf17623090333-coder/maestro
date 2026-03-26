@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ServicesThunk } from '../services-thunk.ts';
-import { respond, withErrorHandling } from '../respond.ts';
+import { respond, errorResponse, withErrorHandling } from '../respond.ts';
 import { ANNOTATIONS_MUTATING, ANNOTATIONS_READONLY } from '../annotations.ts';
 import { requireFeature } from '../../../infra/utils/resolve.ts';
 import { featureParam } from '../params.ts';
@@ -26,7 +26,7 @@ export function registerFeatureTools(server: McpServer, thunk: ServicesThunk): v
     withErrorHandling(async (input) => {
       switch (input.action) {
         case 'create': {
-          if (!input.name) return respond({ error: 'name is required for action: create' });
+          if (!input.name) return errorResponse({ terminal: false, reason: 'validation', error: 'name is required for action: create', suggestions: ['Provide the name parameter.'] });
           const services = thunk.get();
           const result = services.featureAdapter.create(input.name, input.ticket);
           return respond({ feature: result });
@@ -39,7 +39,7 @@ export function registerFeatureTools(server: McpServer, thunk: ServicesThunk): v
           return respond({ ...result, ...(hint && { transition: hint }) });
         }
         default:
-          return respond({ error: `Unknown action: ${(input as { action: string }).action}` });
+          return errorResponse({ terminal: true, reason: 'unknown_action', error: `Unknown action: ${(input as { action: string }).action}` });
       }
     }),
   );
@@ -80,7 +80,7 @@ export function registerFeatureTools(server: McpServer, thunk: ServicesThunk): v
           return respond({ active: active ?? null });
         }
         default:
-          return respond({ error: `Unknown what: ${(input as { what: string }).what}` });
+          return errorResponse({ terminal: true, reason: 'unknown_action', error: `Unknown what: ${(input as { what: string }).what}` });
       }
     }),
   );
