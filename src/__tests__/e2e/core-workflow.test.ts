@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect, afterEach } from 'bun:test';
-import { createTestHarness, type TestHarness } from '../mocks/test-harness.ts';
+import { createTestHarness, getErrorText, type TestHarness } from '../mocks/test-harness.ts';
 
 let harness: TestHarness;
 
@@ -41,7 +41,7 @@ describe('core workflow', () => {
 
     const result = await harness.run('feature-create', 'test-feature');
     expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain('already exists');
+    expect(getErrorText(result)).toContain('already exists');
   });
 
   test('plan-write validates Discovery section', async () => {
@@ -52,7 +52,7 @@ describe('core workflow', () => {
     // Missing Discovery section
     const result = await harness.run('plan-write', '--feature', 'test-feature', '--content', '# Plan\nSome content');
     expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain('Discovery');
+    expect(getErrorText(result)).toContain('Discovery');
   });
 
   test('plan-write succeeds with valid plan', async () => {

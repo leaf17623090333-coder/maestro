@@ -7,7 +7,7 @@
  */
 
 import { describe, test, expect, afterEach } from 'bun:test';
-import { createTestHarness, type TestHarness } from '../mocks/test-harness.ts';
+import { createTestHarness, getErrorText, type TestHarness } from '../mocks/test-harness.ts';
 
 let harness: TestHarness;
 
@@ -103,7 +103,7 @@ describe('task sync', () => {
     // Plan not approved
     const result = await harness.run('task-sync', '--feature', 'test-feature');
     expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain('approv');
+    expect(getErrorText(result)).toContain('approv');
   });
 });
 
@@ -142,7 +142,7 @@ describe('task list', () => {
 
     const result = await harness.run('task-list', '--feature', 'test-feature', '--status', 'invalid');
     expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain('Invalid status');
+    expect(getErrorText(result)).toContain('Invalid status');
   });
 });
 
@@ -356,7 +356,7 @@ describe('full task lifecycle', () => {
 
     const result = await harness.run('feature-complete', '--feature', 'test-feature');
     expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain('not done');
+    expect(getErrorText(result)).toContain('not done');
   });
 
   test('feature-complete rejects when no tasks exist', async () => {
@@ -366,7 +366,7 @@ describe('full task lifecycle', () => {
 
     const result = await harness.run('feature-complete', '--feature', 'test-feature');
     expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain('no tasks');
+    expect(getErrorText(result)).toContain('no tasks');
   });
 
   test('block-unblock-reclaim flow', async () => {

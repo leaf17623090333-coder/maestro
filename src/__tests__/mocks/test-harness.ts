@@ -20,6 +20,21 @@ export interface RunResult {
   stderr: string;
 }
 
+/**
+ * Extract error message from a failed command result.
+ * In --json mode (default for harness), errors are JSON on stdout.
+ * Falls back to stderr for text mode or non-JSON errors.
+ */
+export function getErrorText(result: RunResult): string {
+  if (result.stdout) {
+    try {
+      const parsed = JSON.parse(result.stdout);
+      if (parsed.error) return parsed.error;
+    } catch { /* not JSON, fall through */ }
+  }
+  return result.stderr;
+}
+
 const CLI_PATH = join(import.meta.dir, '../../surfaces/cli/index.ts');
 
 export async function createTestHarness(): Promise<TestHarness> {

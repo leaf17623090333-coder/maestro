@@ -7,7 +7,7 @@
  */
 
 import { describe, test, expect, afterEach } from 'bun:test';
-import { createTestHarness, type TestHarness } from '../mocks/test-harness.ts';
+import { createTestHarness, getErrorText, type TestHarness } from '../mocks/test-harness.ts';
 
 let harness: TestHarness;
 
@@ -157,7 +157,7 @@ describe('plan write edge cases', () => {
 
     const result = await harness.run('plan-write', '--feature', 'test-feature', '--content', '# Plan\nSome content without discovery');
     expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain('Discovery');
+    expect(getErrorText(result)).toContain('Discovery');
   });
 
   test('rejects plan with too-short Discovery section', async () => {
