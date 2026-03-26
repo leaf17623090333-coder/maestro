@@ -14,10 +14,10 @@ Not "add more tests." The one insight that, once seen, feels inevitable.
 
 Check maestro state and gather context in parallel:
 
-1. **`maestro_status`** -- what features exist, pipeline state, active work
-2. **`maestro_memory_list`** -- what's already been discovered and decided
-3. **`maestro_doctrine_list`** -- what constraints and principles are in play
-4. **`maestro_execution_insights`** -- patterns from past execution (blockers, velocity, pain points)
+1. **`maestro status --json`** -- what features exist, pipeline state, active work
+2. **`maestro memory-list`** -- what's already been discovered and decided
+3. **`maestro doctrine-list`** -- what constraints and principles are in play
+4. **`maestro execution-insights`** -- patterns from past execution (blockers, velocity, pain points)
 5. **Ask the user one question**: "What are you trying to achieve with this project -- what's the vision?"
 
 If they passed an argument (vision or focus area), use that instead of asking. If they've already
@@ -131,28 +131,17 @@ After the user reacts to the recommendation, persist the valuable parts:
 
 ```
 # Save the strategic analysis
-maestro_memory_write({
-  key: "strategic-analysis-<date>",
-  content: "<the full analysis: thesis, leverage points, candidates, winner>",
-  scope: "global"
-})
+maestro memory-write --name "strategic-analysis-<date>" --file <analysis-path> --scope global --json
 
 # If the user wants to pursue it, create the feature
-maestro_feature_create({
-  name: "<feature-name>",
-  description: "<one-line from The Move>"
-})
+maestro feature-create --name "<feature-name>" --description "<one-line from The Move>" --json
 
 # Save the design sketch as discovery context
-maestro_memory_write({
-  key: "next-move-discovery",
-  content: "<The Sketch section + key decisions>",
-  feature: "<feature-name>"
-})
+maestro memory-write --name "next-move-discovery" --file <discovery-path> --feature "<feature-name>" --json
 ```
 
 This feeds directly into `maestro:brainstorming` or `maestro:design` for deeper exploration,
-or into `maestro_plan_write` if the scope is clear enough.
+or into `maestro plan-write` if the scope is clear enough.
 
 ## Chaining Forward
 
@@ -160,7 +149,7 @@ After the user validates the recommendation:
 
 ```
 Is the scope clear and small (1-3 tasks)?
-  --> maestro_plan_write directly
+  --> maestro plan-write directly
 Is it ambitious or multi-component?
   --> maestro:brainstorming (explore the design space)
   --> maestro:design (full discovery + spec)

@@ -14,7 +14,7 @@ For each task, use the maestro task lifecycle: claim, execute, done.
 
 **Loop structure:**
 ```
-for each task from maestro_task_next:
+for each task from maestro task-next:
   6a.1: Claim the task
   6a.2-6a.4: Red-Green-Refactor (TDD) or Implement-Test (ship-fast)
   6a.5-6a.6: Verify coverage and compliance
@@ -29,7 +29,7 @@ Phase Completion Protocol (after last task in a phase)
 
 ### 6a.1: Claim the Task
 
-Call `maestro_task_claim` (MCP) or `maestro task-claim` (CLI) with the task ID returned by `maestro_task_next`. This transitions the task from `pending` to `claimed`.
+Call `maestro task-claim` (MCP) or `maestro task-claim` (CLI) with the task ID returned by `maestro task-next`. This transitions the task from `pending` to `claimed`.
 
 **Deferred context**: If deferred context (memory entries, tech-stack notes) has not been loaded yet, load it now before executing the first task.
 
@@ -37,7 +37,7 @@ If `br_enabled`: see BR Mirror Protocol below.
 
 ### 6a.2: Red Phase -- Write Failing Tests
 
-1. Identify what to test based on the task spec (compiled by `maestro_task_next`)
+1. Identify what to test based on the task spec (compiled by `maestro task-next`)
 2. Create test file if it doesn't exist
 3. Write tests defining expected behavior
 4. Run test suite:
@@ -80,7 +80,7 @@ If the task introduced a new library or technology not established in the projec
 1. STOP implementation
 2. Inform user: "This task uses {new_tech} which isn't in the tech stack."
 3. Ask: Add to tech stack or find an alternative?
-4. If approved: record the decision via `maestro_memory_write`
+4. If approved: record the decision via `maestro memory-write`
 5. Resume
 
 ### 6a.7: Commit Code Changes
@@ -112,37 +112,37 @@ If commit messages: include summary in the commit message body.
 
 If the task produced a non-obvious decision, constraint, or learning during implementation:
 
-1. Write it to memory via `maestro_memory_write` (MCP) or `maestro memory-write` (CLI)
+1. Write it to memory via `maestro memory-write` (MCP) or `maestro memory-write` (CLI)
 2. Format: `[{date}] [{feature-name}:{task_name}] {insight}`
 3. Only capture durable insights -- not routine status. Skip if nothing notable.
 
 ### 6a.9: Mark Task Done
 
-Call `maestro_task_done` (MCP) or `maestro task-done` (CLI) with the task ID and a summary of changes. This transitions the task from `claimed` to `done`.
+Call `maestro task-done` (MCP) or `maestro task-done` (CLI) with the task ID and a summary of changes. This transitions the task from `claimed` to `done`.
 
 Include the commit SHA in the summary for traceability.
 
 If `br_enabled`: see BR Mirror Protocol below.
 
-After marking done, call `maestro_task_next` to get the next runnable task.
+After marking done, call `maestro task-next` to get the next runnable task.
 
 ---
 
 ## Ship-fast Methodology
 
 Same flow but reordered:
-1. Claim the task (`maestro_task_claim`)
+1. Claim the task (`maestro task-claim`)
 2. Implement the feature/fix
 3. Write tests covering the implementation
 4. Run tests, verify passing
-5. Commit, attach summary, mark done (`maestro_task_done`)
+5. Commit, attach summary, mark done (`maestro task-done`)
 
 ---
 
 ## Worked Example: Single-Agent TDD
 
 **Feature**: "Add user email validation"
-**Tasks** (from `maestro_task_next`):
+**Tasks** (from `maestro task-next`):
 - Task 01-create-email-validator: Create email validator module
 - Task 02-integrate-validator: Integrate validator into registration form
 - Task 03-add-error-messages: Add error messages for invalid emails
@@ -151,10 +151,10 @@ Same flow but reordered:
 
 ```
 [ok] Starting Feature: add-user-email-validation (single-agent mode)
-[ok] Called maestro_task_next -- returned task 01-create-email-validator
+[ok] Called maestro task-next -- returned task 01-create-email-validator
 
 --- Task 01: Create email validator module ---
-[ok] maestro_task_claim("01-create-email-validator") -- claimed
+[ok] maestro task-claim --task 01-create-email-validator --json -- claimed
 RED:   Created tests/email-validator.test.ts
        - rejects empty string
        - rejects missing @
@@ -170,12 +170,12 @@ REFACTOR: Extracted regex to named constant. Tests still pass.
 
 COMMIT: git add src/utils/email-validator.ts tests/email-validator.test.ts
         git commit -m "feat(validation): add email validator module"
-[ok] maestro_task_done("01-create-email-validator", summary: "Added email validator (sha: a1b2c3d)")
+[ok] maestro task-done --task 01-create-email-validator --summary "Added email validator (sha: a1b2c3d)"
 
---- maestro_task_next --> task 02-integrate-validator ---
+--- maestro task-next --> task 02-integrate-validator ---
 
 --- Task 02: Integrate validator into registration form ---
-[ok] maestro_task_claim("02-integrate-validator") -- claimed
+[ok] maestro task-claim --task 02-integrate-validator --json -- claimed
 RED:   Added test in tests/registration.test.ts
        - form rejects invalid email on submit
        Run: CI=true bun test tests/registration.test.ts
@@ -186,12 +186,12 @@ GREEN: Imported validator in src/routes/register.ts
        [ok] All tests PASS
 
 COMMIT: git commit -m "feat(registration): integrate email validation"
-[ok] maestro_task_done("02-integrate-validator", summary: "Integrated validation (sha: d4e5f6g)")
+[ok] maestro task-done --task 02-integrate-validator --summary "Integrated validation (sha: d4e5f6g)"
 
---- maestro_task_next --> task 03-add-error-messages ---
+--- maestro task-next --> task 03-add-error-messages ---
 
 --- Task 03: Add error messages for invalid emails ---
-[ok] maestro_task_claim("03-add-error-messages") -- claimed
+[ok] maestro task-claim --task 03-add-error-messages --json -- claimed
 RED:   Added tests for error message rendering
        [ok] Tests FAIL (no error UI exists)
 
@@ -199,9 +199,9 @@ GREEN: Added error display component
        [ok] Tests PASS
 
 COMMIT: git commit -m "feat(registration): add validation error messages"
-[ok] maestro_task_done("03-add-error-messages", summary: "Added error messages (sha: h7i8j9k)")
+[ok] maestro task-done --task 03-add-error-messages --summary "Added error messages (sha: h7i8j9k)"
 
---- maestro_task_next --> no more tasks ---
+--- maestro task-next --> no more tasks ---
 
 --- Phase Completion ---
 [ok] Full test suite: 47 tests, all passing

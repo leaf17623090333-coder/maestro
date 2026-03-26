@@ -8,7 +8,7 @@ Detailed protocols for SHA resolution, reconciliation, execution, task state man
 
 ### 3a: Extract Implementation SHAs
 
-**Task state source**: Call `maestro_task_list` or `maestro_status` to get all tasks with their summaries. Task summaries from `maestro_task_done` include commit SHAs (format: `sha: {7char}` in the summary text).
+**Task state source**: Call `maestro task-list` or `maestro status --json` to get all tasks with their summaries. Task summaries from `maestro task-done` include commit SHAs (format: `sha: {7char}` in the summary text).
 
 **BR-enhanced path**: If `feature.json` has `beads_epic_id`:
 - Use `br list --status closed --parent {epic_id} --all --json` to get all closed issues
@@ -16,7 +16,7 @@ Detailed protocols for SHA resolution, reconciliation, execution, task state man
 - Scope by labels: `--label "phase:{N}"` for phase-level, match task title for task-level
 - Falls back to task summary parsing if BR command fails or returns no results
 
-**Task summary path**: Parse commit SHAs from the task summaries available via `maestro_task_list`:
+**Task summary path**: Parse commit SHAs from the task summaries available via `maestro task-list`:
 - **Feature**: All tasks in `done` state, extract SHAs from summaries
 - **Phase N**: Only `done` tasks belonging to phase N
 - **Task**: Only the specific task's summary

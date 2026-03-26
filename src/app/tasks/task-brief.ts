@@ -1,7 +1,7 @@
 /**
  * Task brief use-case -- assembles full worker context as structured data.
- * Universal replacement for hook-based injection: any MCP-capable agent
- * can call maestro_task_brief and get the same rich context.
+ * Universal replacement for hook-based injection: any agent
+ * can call `maestro task-brief` and get the same rich context.
  */
 
 import type { TaskPort, RichTaskFields } from '../../domain/ports/task.ts';

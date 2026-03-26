@@ -54,14 +54,14 @@ describe('buildTransitionHint', () => {
   test('returns hint for plan_approve', () => {
     const hint = buildTransitionHint('plan_approve');
     expect(hint).toBeDefined();
-    expect(hint!.nextStep).toContain('tasks_sync');
+    expect(hint!.nextStep).toContain('task-sync');
     expect(hint!.loadSkill).toBe('maestro:implement');
   });
 
   test('returns hint for tasks_sync when created > 0', () => {
     const hint = buildTransitionHint('tasks_sync', { created: 3 });
     expect(hint).toBeDefined();
-    expect(hint!.nextStep).toContain('task_next');
+    expect(hint!.nextStep).toContain('task-next');
   });
 
   test('returns undefined for tasks_sync when created === 0', () => {
@@ -71,7 +71,7 @@ describe('buildTransitionHint', () => {
   test('returns hint for task_done when all tasks complete', () => {
     const hint = buildTransitionHint('task_done', { taskDone: 5, taskTotal: 5 });
     expect(hint).toBeDefined();
-    expect(hint!.nextStep).toContain('feature_complete');
+    expect(hint!.nextStep).toContain('feature-complete');
   });
 
   test('returns undefined for task_done when tasks remain', () => {
@@ -81,7 +81,7 @@ describe('buildTransitionHint', () => {
   test('returns hint for task_accept when all tasks complete', () => {
     const hint = buildTransitionHint('task_accept', { taskDone: 4, taskTotal: 4 });
     expect(hint).toBeDefined();
-    expect(hint!.nextStep).toContain('feature_complete');
+    expect(hint!.nextStep).toContain('feature-complete');
   });
 
   test('returns undefined for task_accept when tasks remain', () => {

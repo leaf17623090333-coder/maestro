@@ -9,7 +9,7 @@
       { "matcher": "Agent", "hooks": [{ "type": "command", "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/pre-agent.mjs" }] }
     ],
     "PostToolUse": [
-      { "matcher": "mcp__plugin_maestro_maestro__*", "hooks": [{ "type": "command", "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/posttooluse.mjs" }] }
+      { "matcher": "Bash", "hooks": [{ "type": "command", "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/posttooluse.mjs" }] }
     ],
     "PreCompact": [
       { "matcher": "", "hooks": [{ "type": "command", "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/precompact.mjs" }] }

@@ -104,7 +104,7 @@ maestro memory-write --global --key lang "We're using TypeScript"
 maestro memory-write --global --key blocked "Task 3 is blocked"
 maestro memory-write --global --key size "The codebase is large"
 ```
-"Remember to test" is not a constraint. "We're using TypeScript" is obvious from file extensions. "Task 3 is blocked" is status (use `maestro_task_block`). "The codebase is large" is not actionable.
+"Remember to test" is not a constraint. "We're using TypeScript" is obvious from file extensions. "Task 3 is blocked" is status (use `maestro task-block`). "The codebase is large" is not actionable.
 </Bad>
 
 ## Promoting Feature Memory to Global

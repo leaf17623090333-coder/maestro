@@ -92,7 +92,7 @@ export function pruneContext(params: PruneContextParams): PruneContextResult {
       const truncated = memorySection.slice(0, LEGACY_MEMORY_CAP);
       const lastNewline = truncated.lastIndexOf('\n');
       memorySection = (lastNewline > 0 ? truncated.slice(0, lastNewline) : truncated)
-        + '\n\n[truncated -- use maestro_memory_read for full content]';
+        + '\n\n[truncated -- use `maestro memory-read --name <n> --json` for full content]';
     }
     memoriesIncluded = memories.length;
     memoriesDropped = 0;

@@ -135,31 +135,29 @@ export default defineCommand({
 
 ### 5. Register the MCP Server Tool (`src/server/`)
 
-MCP tools mirror CLI commands but receive input via JSON-RPC instead of CLI args.
+CLI commands are the primary surface. Each command calls a shared use-case function.
 
 ```typescript
-// In src/server/memory.ts (or add to existing file)
-server.registerTool('maestro_memory_write', {
+// In src/surfaces/cli/commands/memory-write.ts
+export const memoryWrite = defineCommand({
+  name: 'memory-write',
   description: 'Write a memory file for a feature',
-  inputSchema: {
-    feature: z.string().describe('Feature name'),
-    name: z.string().describe('Memory file name'),
-    content: z.string().describe('Content to write'),
+  args: {
+    feature: { type: 'string', describe: 'Feature name' },
+    name: { type: 'string', describe: 'Memory file name', required: true },
+    file: { type: 'string', describe: 'Path to content file', required: true },
   },
-  annotations: { destructiveHint: false, readOnlyHint: false, idempotentHint: true },
-}, withErrorHandling(async (input) => {
-  const { memoryAdapter } = getServices();
-  await memoryAdapter.write(input.feature, input.name, input.content);
-  return textResponse(`Wrote memory: ${input.name}`);
-}));
+}, async (args, services) => {
+  const content = readFileSync(args.file, 'utf-8');
+  await services.memoryAdapter.write(args.feature, args.name, content);
+  return { path: `Written: ${args.name}` };
+});
 ```
 
 **Rules:**
-- Tool name: `maestro_{noun}_{verb}` (underscores, not hyphens)
-- Input schema: Zod types with `.describe()` on each field
-- Always wrap handler with `withErrorHandling()`
-- Use `textResponse()` or `jsonResponse()` helpers
-- Set annotations (readOnlyHint, destructiveHint, idempotentHint)
+- Command name: `kebab-case` (hyphens, not underscores)
+- Args use yargs-style type declarations
+- All commands accept `--json` for structured output
 - Share the same use-case logic as the CLI command
 
 ### 6. Add Tests (`src/__tests__/`)

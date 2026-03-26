@@ -35,7 +35,7 @@ This skill uses a step-file architecture. Each step is a self-contained file in 
 - Steps 4-9 include an A/P/C menu -- the user MUST select [C] before you proceed
 
 ### Step 1: Validate Prerequisites
-Check `maestro_status` for initialized project.
+Check `maestro status --json` for initialized project.
 --> Read and follow `reference/steps/step-01-init.md`
 
 ### Step 2: Parse Input & Generate Feature Name
@@ -43,7 +43,7 @@ Extract description, infer type, generate kebab-case feature name.
 --> Read and follow `reference/steps/step-02-parse-input.md`
 
 ### Step 3: Create Feature
-Create feature via `maestro_feature_create` or `maestro feature-create`.
+Create feature via `maestro feature-create` or `maestro feature-create`.
 --> Read and follow `reference/steps/step-03-create-dir.md`
 
 ### Step 4: Project Classification
@@ -79,7 +79,7 @@ Scan codebase for existing patterns relevant to this feature. Feed into plan con
 --> Read and follow `reference/steps/step-11-codebase-scan.md`
 
 ### Step 12: Implementation Plan with Traceability
-Generate plan with FR traceability and coverage matrix. Present for approval. Write plan via `maestro_plan_write`.
+Generate plan with FR traceability and coverage matrix. Present for approval. Write plan via `maestro plan-write`.
 --> Read and follow `reference/steps/step-12-plan.md`
 
 ### Step 13: Detect Relevant Skills
@@ -139,7 +139,7 @@ Design produces `spec.md`. Plan-write consumes it. The bridge between them is ho
 
 ### The plan-write Connection
 
-After design completes, the approved spec feeds directly into `maestro plan-write --feature <name>` (CLI) or `maestro_plan_write` (MCP). The plan-write command expects:
+After design completes, the approved spec feeds directly into `maestro plan-write --feature <name>` (CLI) or `maestro plan-write` (MCP). The plan-write command expects:
 
 1. **A `## Discovery` section** (min 100 chars) -- summarize what design discovered
 2. **FR references** -- plan tasks trace back to spec FRs via `Addresses: FR-N`
@@ -299,7 +299,7 @@ These two files are the complete handoff. The `maestro:implement` skill consumes
 
 **Transition options:**
 
-1. **maestro plan-write** (recommended for hive workflows) -- Run `maestro plan-write --feature <name>` or `maestro_plan_write` with the plan content. This enters the standard hive workflow: plan-approve, tasks-sync, worktree-start.
+1. **maestro plan-write** (recommended for hive workflows) -- Run `maestro plan-write --feature <name>` or `maestro plan-write` with the plan content. This enters the standard hive workflow: plan-approve, tasks-sync, worktree-start.
 
 2. **maestro:implement** (direct execution) -- Open new session with `maestro:implement`. The skill reads spec.md and plan.md, then executes tasks sequentially with checkpoints.
 
@@ -307,7 +307,7 @@ These two files are the complete handoff. The `maestro:implement` skill consumes
 
 **Before handing off**, verify:
 - Readiness gate passed (step 15)
-- All context files saved via `maestro memory-write` or `maestro_memory_write`
+- All context files saved via `maestro memory-write` or `maestro memory-write`
 - Feature metadata committed (step 16)
 
 ---
@@ -315,14 +315,14 @@ These two files are the complete handoff. The `maestro:implement` skill consumes
 ## Relationship to Other Commands
 
 - `maestro init` -- Initialize maestro for the project (run first)
-- `maestro_feature_create` -- Create a feature to work on
+- `maestro feature-create` -- Create a feature to work on
 - `maestro:design` -- **You are here.** Deep discovery for ambitious features
-- `maestro_plan_write` -- Write the plan from design output
-- `maestro_plan_approve` -- Approve the plan for execution
-- `maestro_tasks_sync` -- Generate tasks from approved plan
+- `maestro plan-write` -- Write the plan from design output
+- `maestro plan-approve` -- Approve the plan for execution
+- `maestro task-sync` -- Generate tasks from approved plan
 - `maestro:implement` -- Execute the implementation plan
 - `maestro:review` -- Verify implementation against spec
-- `maestro_status` -- Check progress across all features
-- `maestro_feature_complete` -- Mark feature done
+- `maestro status --json` -- Check progress across all features
+- `maestro feature-complete` -- Mark feature done
 
 A feature created here produces `spec.md` and `plan.md` that `maestro:implement` or `maestro plan-write` consumes. The enriched spec serves as the baseline for `maestro:review`. Deep specs lead to better implementations -- invest in the discovery.

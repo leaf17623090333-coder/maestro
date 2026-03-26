@@ -7,8 +7,8 @@ import {
 } from '../../app/dcp/components.ts';
 
 describe('COMPONENT_REGISTRY', () => {
-  test('has exactly 10 components', () => {
-    expect(COMPONENT_REGISTRY).toHaveLength(10);
+  test('has exactly 9 components', () => {
+    expect(COMPONENT_REGISTRY).toHaveLength(9);
   });
 
   test('is sorted by priority ascending', () => {
@@ -23,9 +23,9 @@ describe('COMPONENT_REGISTRY', () => {
     expect(protected_.map(c => c.name)).toEqual(['spec', 'worker-rules', 'revision']);
   });
 
-  test('components 3-9 are not protected', () => {
+  test('components 3-8 are not protected', () => {
     const unprotected = COMPONENT_REGISTRY.filter(c => !c.protected);
-    expect(unprotected).toHaveLength(7);
+    expect(unprotected).toHaveLength(6);
     expect(unprotected.every(c => c.priority >= 3)).toBe(true);
   });
 
@@ -33,7 +33,7 @@ describe('COMPONENT_REGISTRY', () => {
     expect(COMPONENT_REGISTRY.map(c => c.name)).toEqual([
       'spec', 'worker-rules', 'revision', 'graph',
       'completed-tasks', 'doctrine', 'memories',
-      'skills', 'agent-tools', 'handoff',
+      'skills', 'agent-tools',
     ]);
   });
 
@@ -69,16 +69,16 @@ describe('allocateBudget', () => {
       ['revision', ''],                     // 0 tokens
       ['graph', 'x'.repeat(80)],           // 20 tokens
       ['memories', 'x'.repeat(120)],       // 30 tokens
-      ['handoff', 'x'.repeat(40)],         // 10 tokens
+      ['agent-tools', 'x'.repeat(40)],     // 10 tokens
     ]);
     // Budget: 50 total. Protected: 15. Remaining: 35
     // graph (pri 3): 20 -> remaining 15
     // memories (pri 6): needs 30, gets 15
-    // handoff (pri 9): 0 remaining
+    // agent-tools (pri 8): 0 remaining
     const result = allocateBudget(50, content);
     expect(result.get('graph')).toBe(20);
     expect(result.get('memories')).toBe(15);
-    expect(result.get('handoff')).toBe(0);
+    expect(result.get('agent-tools')).toBe(0);
   });
 
   test('missing components get 0', () => {
@@ -96,13 +96,13 @@ describe('allocateBudget', () => {
       ['graph', 'x'.repeat(40)],
       ['doctrine', 'x'.repeat(40)],
       ['memories', 'x'.repeat(80)],
-      ['handoff', 'x'.repeat(40)],
+      ['agent-tools', 'x'.repeat(40)],
     ]);
     const result = allocateBudget(10000, content);
     expect(result.get('spec')).toBe(10);
     expect(result.get('graph')).toBe(10);
     expect(result.get('memories')).toBe(20);
-    expect(result.get('handoff')).toBe(10);
+    expect(result.get('agent-tools')).toBe(10);
   });
 });
 
@@ -116,7 +116,7 @@ describe('pruneComponents', () => {
       ['spec', 'x'.repeat(400)],           // 100 tokens
       ['worker-rules', 'x'.repeat(200)],   // 50 tokens
       ['revision', 'x'.repeat(100)],       // 25 tokens
-      ['handoff', 'x'.repeat(40)],         // 10 tokens
+      ['agent-tools', 'x'.repeat(40)],     // 10 tokens
     ]);
     // Budget 50 -- less than protected total (175), but protected stay
     const result = pruneComponents(content, 50);
@@ -124,7 +124,7 @@ describe('pruneComponents', () => {
     expect(includedNames).toContain('spec');
     expect(includedNames).toContain('worker-rules');
     expect(includedNames).toContain('revision');
-    expect(result.dropped.map(e => e.name)).toContain('handoff');
+    expect(result.dropped.map(e => e.name)).toContain('agent-tools');
   });
 
   test('drops lowest priority first when over budget', () => {
@@ -135,20 +135,20 @@ describe('pruneComponents', () => {
       ['graph', 'x'.repeat(40)],           // 10 tokens
       ['doctrine', 'x'.repeat(40)],        // 10 tokens
       ['memories', 'x'.repeat(40)],        // 10 tokens
+      ['skills', 'x'.repeat(40)],          // 10 tokens
       ['agent-tools', 'x'.repeat(40)],     // 10 tokens
-      ['handoff', 'x'.repeat(40)],         // 10 tokens
     ]);
     // Protected: 15. Unprotected: 50. Budget: 45 total -> 30 for unprotected
     const result = pruneComponents(content, 45);
     const includedNames = result.included.map(e => e.name);
     const droppedNames = result.dropped.map(e => e.name);
 
-    // graph, doctrine, memories fit (30 tokens), agent-tools and handoff dropped
+    // graph, doctrine, memories fit (30 tokens), skills and agent-tools dropped
     expect(includedNames).toContain('graph');
     expect(includedNames).toContain('doctrine');
     expect(includedNames).toContain('memories');
+    expect(droppedNames).toContain('skills');
     expect(droppedNames).toContain('agent-tools');
-    expect(droppedNames).toContain('handoff');
   });
 
   test('includes everything when budget is generous', () => {

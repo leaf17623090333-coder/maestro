@@ -1,17 +1,17 @@
 ---
 name: maestro-pipeline-test
-description: Run a full end-to-end smoke test of all 34 maestro MCP tools AND the CLI commands in a single session. Use this skill when testing the maestro pipeline, verifying tool installation, validating a maestro setup, or checking that all tool groups work (feature, plan, task, memory, meta, graph, handoff, search). Trigger on "test maestro", "smoke test", "pipeline test", "verify all tools", "run pipeline test", or whenever the user wants to confirm maestro is functioning correctly -- even if they just say "does it work?" in a maestro context.
+description: Run a full end-to-end smoke test of all maestro CLI commands in a single session. Use this skill when testing the maestro pipeline, verifying tool installation, validating a maestro setup, or checking that all tool groups work (feature, plan, task, memory, meta, graph, handoff, search). Trigger on "test maestro", "smoke test", "pipeline test", "verify all tools", "run pipeline test", or whenever the user wants to confirm maestro is functioning correctly -- even if they just say "does it work?" in a maestro context.
 ---
 
 # Maestro Pipeline Smoke Test
 
-This skill exercises all 34 maestro MCP tools AND the CLI commands in a single end-to-end run. It creates a throwaway feature, walks through every pipeline stage, tests every tool group via both MCP and CLI, and produces a pass/fail report.
+This skill exercises all maestro CLI commands in a single end-to-end run. It creates a throwaway feature, walks through every pipeline stage, tests every tool group via CLI, and produces a pass/fail report.
 
 The test is designed to be fast and non-destructive. The smoke-test feature it creates can be cleaned up afterward.
 
 ## Before You Start
 
-Call `maestro_ping` to confirm the MCP server is reachable. If it fails, stop and tell the user -- nothing else will work.
+Call `maestro ping --json` to confirm the maestro CLI is reachable. If it fails, stop and tell the user -- nothing else will work.
 
 ### Setup: Switch to br backend
 
@@ -33,22 +33,22 @@ Use the feature name `pipeline-smoke-test` throughout. If it already exists from
 
 ### Phase 1: Meta Tools
 
-| Step | Tool | Parameters | Verify |
+| Step | Command | Parameters | Verify |
 |------|------|------------|--------|
-| 1.1 | `maestro_ping` | (none) | Response has `version` and `backend` |
-| 1.2 | `maestro_status` | `{ verbose: true }` | Response has `pipelineStage` |
-| 1.3 | `maestro_skill` | `{ name: "maestro:design" }` | Returns skill content (non-empty string) |
-| 1.4 | `maestro_init` | (none) | Response has `projectRoot` |
+| 1.1 | `maestro ping --json` | (none) | Response has `version` and `backend` |
+| 1.2 | `maestro status --json` | `--verbose` | Response has `pipelineStage` |
+| 1.3 | `maestro skill` | `maestro:design` | Returns skill content (non-empty string) |
+| 1.4 | `maestro init --json` | (none) | Response has `projectRoot` |
 
 ### Phase 2: Feature + Memory
 
-| Step | Tool | Parameters | Verify |
+| Step | Command | Parameters | Verify |
 |------|------|------------|--------|
-| 2.1 | `maestro_feature_create` | `{ name: "pipeline-smoke-test" }` | Response has `feature` with name matching |
-| 2.2 | `maestro_feature_list` | (none) | `pipeline-smoke-test` appears in list |
-| 2.3 | `maestro_memory_write` | `{ name: "discovery-notes", content: "Smoke test discovery: verified maestro tools are accessible and feature was created." }` | Response has `path` |
-| 2.4 | `maestro_memory_read` | `{ name: "discovery-notes" }` | Content matches what was written |
-| 2.5 | `maestro_memory_list` | (none) | `discovery-notes` appears in list |
+| 2.1 | `maestro feature-create` | `--name pipeline-smoke-test --json` | Response has `feature` with name matching |
+| 2.2 | `maestro feature-list --json` | (none) | `pipeline-smoke-test` appears in list |
+| 2.3 | `maestro memory-write` | `--name discovery-notes --file <content-path> --json` | Response has `path` |
+| 2.4 | `maestro memory-read` | `--name discovery-notes --json` | Content matches what was written |
+| 2.5 | `maestro memory-list --json` | (none) | `discovery-notes` appears in list |
 
 ### Phase 3: Plan Lifecycle
 
@@ -60,7 +60,7 @@ Use this exact plan content -- it has the required `## Discovery` section and ge
 This is a pipeline smoke test to verify all maestro tools function correctly end-to-end.
 The test creates a minimal feature with two tasks: one creates a test artifact file,
 the other depends on the first and verifies it exists. This exercises dependency ordering,
-task state transitions, and the full feature lifecycle. All 34 MCP tools are called in sequence.
+task state transitions, and the full feature lifecycle. All tools are called in sequence via CLI.
 
 ## Implementation
 
@@ -85,35 +85,35 @@ Read the file created in task 1 and confirm it contains the expected content.
 None expected.
 ```
 
-| Step | Tool | Parameters | Verify |
+| Step | Command | Parameters | Verify |
 |------|------|------------|--------|
-| 3.1 | `maestro_plan_write` | `{ content: <plan above> }` | Response has `plan` with status |
-| 3.2 | `maestro_plan_comment` | `{ body: "Smoke test comment: plan looks good for pipeline validation.", author: "smoke-test" }` | Response has `comment` |
-| 3.3 | `maestro_plan_read` | (none) | Plan content is present, comment count >= 1 |
-| 3.4 | `maestro_plan_approve` | (none) | Plan status changes to approved |
+| 3.1 | `maestro plan-write` | `--file <plan-file> --json` | Response has `plan` with status |
+| 3.2 | `maestro plan-comment` | `--body "Smoke test comment: plan looks good for pipeline validation." --json` | Response has `comment` |
+| 3.3 | `maestro plan-read --json` | (none) | Plan content is present, comment count >= 1 |
+| 3.4 | `maestro plan-approve --json` | (none) | Plan status changes to approved |
 
 ### Phase 4: Task Lifecycle
 
 This is the most tool-dense phase. It exercises all 7 task tools and tests the full state machine: pending --> claimed --> blocked --> pending --> claimed --> done.
 
-| Step | Tool | Parameters | Verify |
+| Step | Command | Parameters | Verify |
 |------|------|------------|--------|
-| 4.1 | `maestro_tasks_sync` | (none) | Tasks are generated (count >= 2) |
-| 4.2 | `maestro_task_list` | (none) | Shows tasks with pending status |
-| 4.3 | `maestro_task_next` | (none) | Returns at least one runnable task; note its `folder` value |
-| 4.4 | `maestro_task_claim` | `{ task: <folder from 4.3>, agent_id: "smoke-test-agent" }` | Task status changes to claimed |
-| 4.5 | `maestro_task_block` | `{ task: <same folder>, reason: "Smoke test: intentional block to test state transition" }` | Task status changes to blocked |
-| 4.6 | `maestro_task_unblock` | `{ task: <same folder>, decision: "Smoke test: unblocking to continue pipeline test" }` | Task status changes back to pending |
-| 4.7 | `maestro_task_claim` | `{ task: <same folder>, agent_id: "smoke-test-agent" }` | Task status changes to claimed again |
-| 4.8 | `maestro_task_done` | `{ task: <same folder>, summary: "Smoke test: task completed as part of pipeline validation" }` | Task status changes to done |
+| 4.1 | `maestro task-sync --json` | (none) | Tasks are generated (count >= 2) |
+| 4.2 | `maestro task-list --json` | (none) | Shows tasks with pending status |
+| 4.3 | `maestro task-next --json` | (none) | Returns at least one runnable task; note its `folder` value |
+| 4.4 | `maestro task-claim` | `--task <folder from 4.3> --agent-id smoke-test-agent --json` | Task status changes to claimed |
+| 4.5 | `maestro task-block` | `--task <same folder> --reason "Smoke test: intentional block to test state transition" --json` | Task status changes to blocked |
+| 4.6 | `maestro task-unblock` | `--task <same folder> --decision "Smoke test: unblocking to continue pipeline test" --json` | Task status changes back to pending |
+| 4.7 | `maestro task-claim` | `--task <same folder> --agent-id smoke-test-agent --json` | Task status changes to claimed again |
+| 4.8 | `maestro task-done` | `--task <same folder> --file <summary-path> --json` | Task status changes to done |
 
 Now complete the second task (which depends on the first):
 
-| Step | Tool | Parameters | Verify |
+| Step | Command | Parameters | Verify |
 |------|------|------------|--------|
-| 4.9 | `maestro_task_next` | (none) | Second task is now runnable (dependency met) |
-| 4.10 | `maestro_task_claim` | `{ task: <second task folder>, agent_id: "smoke-test-agent" }` | Claimed |
-| 4.11 | `maestro_task_done` | `{ task: <second task folder>, summary: "Smoke test: verified dependency ordering works" }` | Done |
+| 4.9 | `maestro task-next --json` | (none) | Second task is now runnable (dependency met) |
+| 4.10 | `maestro task-claim` | `--task <second task folder> --agent-id smoke-test-agent --json` | Claimed |
+| 4.11 | `maestro task-done` | `--task <second task folder> --file <summary-path> --json` | Done |
 
 ### Phase 4b: Task Backend Switch (br -> fs -> br)
 
@@ -131,11 +131,11 @@ Tests hot-swap from br to the optional fs backend and back. Verifies fs still wo
 
 ### Phase 5: Memory Promotion + Feature Completion
 
-| Step | Tool | Parameters | Verify |
+| Step | Command | Parameters | Verify |
 |------|------|------------|--------|
-| 5.1 | `maestro_memory_promote` | `{ name: "discovery-notes" }` | Response has `promotedTo` path |
-| 5.2 | `maestro_feature_complete` | (none) | Feature marked as completed |
-| 5.3 | `maestro_feature_list` | (none) | Feature shows completed status |
+| 5.1 | `maestro memory-promote` | `--name discovery-notes --json` | Response has `promotedTo` path |
+| 5.2 | `maestro feature-complete --json` | (none) | Feature marked as completed |
+| 5.3 | `maestro feature-list --json` | (none) | Feature shows completed status |
 
 ### Phase 6: Conditional Tools
 
@@ -143,30 +143,30 @@ These tools depend on external CLIs. Try each one -- if it returns an error abou
 
 **Graph tools** (require `bv` CLI):
 
-| Step | Tool | Parameters | Verify |
+| Step | Command | Parameters | Verify |
 |------|------|------------|--------|
-| 6.1 | `maestro_graph_insights` | (none) | Returns insights or "not available" |
-| 6.2 | `maestro_graph_next` | (none) | Returns recommendation or "not available" |
-| 6.3 | `maestro_graph_plan` | `{ agents: 2 }` | Returns tracks or "not available" |
+| 6.1 | `maestro graph-insights --json` | (none) | Returns insights or "not available" |
+| 6.2 | `maestro graph-next --json` | (none) | Returns recommendation or "not available" |
+| 6.3 | `maestro graph-plan --json` | `--agents 2 --json` | Returns tracks or "not available" |
 
 **Handoff tools** (require Agent Mail):
 
-| Step | Tool | Parameters | Verify |
+| Step | Command | Parameters | Verify |
 |------|------|------------|--------|
-| 6.4 | `maestro_handoff_send` | `{ feature: "pipeline-smoke-test", task: <first task folder>, target_agent: "smoke-test-receiver" }` | Sent or "not available". If Agent Mail is running, verify `agentMailSent: true`. If `false`, record as `[!!]` with note about Agent Mail connectivity. |
-| 6.5 | `maestro_handoff_receive` | `{ feature: "pipeline-smoke-test", agent_id: "smoke-test-receiver" }` | Returns handoffs array or "not available" |
-| 6.6 | `maestro_handoff_ack` | `{ thread_id: <from 6.5 if available> }` | Acknowledged or "not available" |
+| 6.4 | `maestro handoff-send` | `--feature pipeline-smoke-test --task <first task folder> --target smoke-test-receiver --json` | Sent or "not available". If Agent Mail is running, verify `agentMailSent: true`. If `false`, record as `[!!]` with note about Agent Mail connectivity. |
+| 6.5 | `maestro handoff-receive` | `--feature pipeline-smoke-test --agent-id smoke-test-receiver --json` | Returns handoffs array or "not available" |
+| 6.6 | `maestro handoff-ack` | `--thread-id <from 6.5 if available> --json` | Acknowledged or "not available" |
 
 **Search tools** (require `cass` CLI):
 
-| Step | Tool | Parameters | Verify |
+| Step | Command | Parameters | Verify |
 |------|------|------------|--------|
-| 6.7 | `maestro_search_sessions` | `{ query: "smoke test", limit: 3 }` | Returns results array or "not available" |
-| 6.8 | `maestro_search_related` | `{ file_path: "CLAUDE.md", limit: 3 }` | Returns results array or "not available" |
+| 6.7 | `maestro search-sessions` | `--query "smoke test" --limit 3 --json` | Returns results array or "not available" |
+| 6.8 | `maestro search-related` | `--file CLAUDE.md --limit 3 --json` | Returns results array or "not available" |
 
 ### Phase 7: CLI Commands
 
-After the MCP pipeline, verify the CLI layer works too. Run each command via `maestro <command> --json` (using `bunx tsx src/cli.ts` if `maestro` binary isn't in PATH). The feature was completed in Phase 5, so create a fresh throwaway feature `cli-smoke-test` for commands that need an active feature.
+After the pipeline phases above, verify additional CLI commands. Run each command via `maestro <command> --json` (using `bunx tsx src/cli.ts` if `maestro` binary isn't in PATH). The feature was completed in Phase 5, so create a fresh throwaway feature `cli-smoke-test` for commands that need an active feature.
 
 **Setup:**
 

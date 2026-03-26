@@ -45,7 +45,7 @@ async function main(): Promise<void> {
   if (!activeFeature) {
     const ctx = [
       '[maestro] No active feature.',
-      'Use maestro MCP tools (maestro_status, maestro_feature_create) to start a new feature.',
+      'Run `maestro status --json` or `maestro feature-create --json` to start a new feature.',
     ].join('\n');
     writeOutput({
       hookSpecificOutput: {

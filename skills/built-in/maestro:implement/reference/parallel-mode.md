@@ -35,9 +35,9 @@ If agent-mail is not available, parallel mode falls back to heuristic file-scope
 
 ### 6b.1: Build Task Dependency Graph
 
-Call `maestro_task_next` repeatedly (or `maestro_task_list` for a full view) to understand the task graph. For each pending task, determine:
+Call `maestro task-next` repeatedly (or `maestro task-list` for a full view) to understand the task graph. For each pending task, determine:
 
-1. **Explicit dependencies**: Tasks blocked by earlier tasks (defined in `maestro_tasks_sync` output)
+1. **Explicit dependencies**: Tasks blocked by earlier tasks (defined in `maestro task-sync` output)
 2. **File scope**: Infer which files each task will modify based on the task spec
 3. **Independence**: Two tasks are independent if:
    - Neither depends on the other's output
@@ -83,7 +83,7 @@ For each wave:
 
 ### 6c.1: Claim Tasks, Reserve Files, and Spawn Sub-agents
 
-For each task in the wave, call `maestro_task_claim` to transition it from `pending` to `claimed`.
+For each task in the wave, call `maestro task-claim` to transition it from `pending` to `claimed`.
 
 **File reservations** (if agent-mail available): Before spawning, call `file_reservation_paths` for each task's inferred file scope with `exclusive: true` and a TTL of 7200 seconds. If any reservation returns `conflicts`, re-sequence the conflicting task into a later wave.
 
@@ -115,7 +115,7 @@ Spawn ALL sub-agents in a single message (parallel tool calls) for maximum concu
 
 ### 6c.2: Sub-agent Prompt Template
 
-Each sub-agent receives the compiled task spec from `maestro_task_next`:
+Each sub-agent receives the compiled task spec from `maestro task-next`:
 
 ```
 You are executing a single task from a maestro implementation plan.
@@ -124,7 +124,7 @@ You are executing a single task from a maestro implementation plan.
 {task_slug}: {task_title}
 
 ### Spec
-{compiled task spec from maestro_task_next}
+{compiled task spec from maestro task-next}
 
 ## Context
 - Feature plan: Read `.maestro/features/<feature-name>/plan.md`
@@ -216,7 +216,7 @@ One commit per wave. Include `[parallel: tasks {slug1}, {slug2}]` suffix to indi
 
 For each successfully completed task in the wave:
 
-1. Call `maestro_task_done` with the task ID and a summary including the commit SHA
+1. Call `maestro task-done` with the task ID and a summary including the commit SHA
 2. **BR mirror**: If `feature.json` has `beads_epic_id`, close the corresponding BR issues:
    ```bash
    br close {issue_id} --reason "sha:{sha7} | parallel wave" --suggest-next --json
@@ -296,7 +296,7 @@ git worktree prune
 ## Worked Example: Parallel Execution
 
 **Feature**: "Add REST API endpoints for user management"
-**Tasks** (from `maestro_task_next` / `maestro_task_list`):
+**Tasks** (from `maestro task-next` / `maestro task-list`):
 - 01-get-users: Create GET /users endpoint
 - 02-get-user-by-id: Create GET /users/:id endpoint
 - 03-post-users: Create POST /users endpoint
@@ -335,8 +335,8 @@ git worktree prune
 
 ```
 --- Wave 1 ---
-maestro_task_claim("01-get-users")
-maestro_task_claim("04-validation-middleware")
+maestro task-claim --task 01-get-users --json
+maestro task-claim --task 04-validation-middleware --json
 Spawning sub-agent: 01-get-users [worktree: .claude/worktrees/01-get-users]
 Spawning sub-agent: 04-validation-middleware [worktree: .claude/worktrees/04-validation-middleware]
 
@@ -348,12 +348,12 @@ Merging wave 1...
   git merge --no-commit worktree/04-validation-middleware  [ok]
   CI=true bun test  [ok] 10 new tests pass, 0 regressions
   git commit -m "feat(api): add GET /users and validation middleware [parallel: 01-get-users, 04-validation-middleware]"
-maestro_task_done("01-get-users", summary: "GET /users handler (sha: m1n2o3p)")
-maestro_task_done("04-validation-middleware", summary: "Validation middleware (sha: m1n2o3p)")
+maestro task-done --task 01-get-users --summary "GET /users handler (sha: m1n2o3p)"
+maestro task-done --task 04-validation-middleware --summary "Validation middleware (sha: m1n2o3p)"
 
 --- Wave 2 ---
-maestro_task_claim("02-get-user-by-id")
-maestro_task_claim("03-post-users")
+maestro task-claim --task 02-get-user-by-id --json
+maestro task-claim --task 03-post-users --json
 Spawning sub-agent: 02-get-user-by-id
 Spawning sub-agent: 03-post-users
 
@@ -366,20 +366,20 @@ Merging wave 2 (partial)...
   git merge --no-commit worktree/02-get-user-by-id  [ok]
   CI=true bun test  [ok]
   git commit -m "feat(api): add GET /users/:id [parallel: 02-get-user-by-id]"
-maestro_task_done("02-get-user-by-id", summary: "GET /users/:id handler (sha: q4r5s6t)")
+maestro task-done --task 02-get-user-by-id --summary "GET /users/:id handler (sha: q4r5s6t)"
 
 --- Task 03-post-users (sequential retry) ---
 Executing in main session with full context...
 Created src/models/user.ts (was missing from task scope)
 Created POST /users handler
 [ok] 5 tests pass
-maestro_task_done("03-post-users", summary: "POST /users handler + user model (sha: u7v8w9x)")
+maestro task-done --task 03-post-users --summary "POST /users handler + user model (sha: u7v8w9x)"
 
 --- Wave 3 ---
-maestro_task_claim("05-pagination")
+maestro task-claim --task 05-pagination --json
 05-pagination: Adding pagination to GET /users (sequential, depends on 01)
 [ok] 3 tests pass
-maestro_task_done("05-pagination", summary: "Pagination for GET /users (sha: y0z1a2b)")
+maestro task-done --task 05-pagination --summary "Pagination for GET /users (sha: y0z1a2b)"
 
 --- All tasks done ---
 ```

@@ -22,7 +22,7 @@ Review the implementation of a feature against its specification and plan. Verif
 
 ## Step 1: Select Feature
 
-1. **If `--current`**: Find the active feature via `maestro_feature_list`
+1. **If `--current`**: Find the active feature via `maestro feature-list`
 2. **If feature name given**: Match by name or description substring
 3. **If no args and features exist**: List completed and claimed features, ask user
 4. **If no args and no features**: Fall back to reviewing uncommitted changes via `git diff HEAD`
@@ -289,14 +289,14 @@ Use NEEDS_DISCUSSION (instead of REQUEST_CHANGES) when:
 Recommended workflow:
 
 - `maestro init` -- Initialize maestro for the project
-- `maestro_feature_create` -- Create a feature to work on
+- `maestro feature-create` -- Create a feature to work on
 - `maestro:design` -- Deep discovery for ambitious features
-- `maestro_plan_write` -- Write the implementation plan
-- `maestro_plan_approve` -- Approve the plan for execution
-- `maestro_tasks_sync` -- Generate tasks from approved plan
+- `maestro plan-write` -- Write the implementation plan
+- `maestro plan-approve` -- Approve the plan for execution
+- `maestro task-sync` -- Generate tasks from approved plan
 - `maestro:implement` -- Execute the implementation
 - `maestro:review` -- **You are here.** Verify implementation correctness
-- `maestro_feature_complete` -- Mark feature done
+- `maestro feature-complete` -- Mark feature done
 - `maestro:revert` -- Undo implementation if needed
 
 Review works best after commits are made, as it analyzes git history to understand what was implemented. It compares the implementation against the plan and task specs. If issues are found, use `maestro:revert` to undo and re-implement, or apply fixes directly.

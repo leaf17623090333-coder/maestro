@@ -8,15 +8,15 @@ When ALL tasks are done, execute this protocol.
 br epic status --json
 ```
 
-Check if all children of the feature epic are closed. If so, the feature is complete. Falls back to checking `maestro_task_list` for remaining non-done tasks if no `beads_epic_id`.
+Check if all children of the feature epic are closed. If so, the feature is complete. Falls back to checking `maestro task-list` for remaining non-done tasks if no `beads_epic_id`.
 
-**maestro-based completion detection**: Call `maestro_status` or `maestro_task_list`. If all tasks are in `done` state, the feature is complete.
+**maestro-based completion detection**: Call `maestro status --json` or `maestro task-list`. If all tasks are in `done` state, the feature is complete.
 
 ---
 
 ## 8.1: Mark Feature Complete
 
-Call `maestro_feature_complete` (MCP) or `maestro feature-complete` (CLI) to mark the feature as completed. This updates `feature.json` status to `completed`.
+Call `maestro feature-complete` (MCP) or `maestro feature-complete` (CLI) to mark the feature as completed. This updates `feature.json` status to `completed`.
 
 ## 8.1.5: Record Skill Effectiveness
 
@@ -94,6 +94,6 @@ git commit -m "chore(maestro): complete feature {feature-name}"
 **{feature description}** -- all {task_count} tasks finished.
 
 **Commits**: {list of task SHAs from task summaries}
-**Next**: `maestro:review {feature-name}` to verify, or `maestro_feature_create` for next feature.
+**Next**: `maestro:review {feature-name}` to verify, or `maestro feature-create` for next feature.
 To update project docs: `maestro:review {feature-name}`
 ```

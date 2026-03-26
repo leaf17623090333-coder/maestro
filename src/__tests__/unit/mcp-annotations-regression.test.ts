@@ -8,7 +8,7 @@
  * - Workflow recommender referenced pre-merge tool names that don't exist
  *
  * These tests verify annotations match the tool's actual behavior and that
- * recommender references use the merged action syntax.
+ * recommender references use the correct CLI-style syntax.
  */
 
 import { describe, test, expect } from 'bun:test';
@@ -39,43 +39,13 @@ describe('annotation constants', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 2. Handler files use correct annotations (source-level check)
+// 2. Handler annotation compliance -- removed in Phase 5b (handler files deleted)
 // ---------------------------------------------------------------------------
-describe('handler annotation compliance', () => {
-  const fs = require('fs');
-  const path = require('path');
-  const HANDLERS_DIR = path.join(import.meta.dir, '../../surfaces/mcp/handlers');
-
-  function readHandler(filename: string): string {
-    return fs.readFileSync(path.join(HANDLERS_DIR, filename), 'utf-8');
-  }
-
-  test('maestro_skill uses ANNOTATIONS_MUTATING (not READONLY)', () => {
-    // Bug: was ANNOTATIONS_READONLY despite having install/create/remove/sync
-    const content = readHandler('skill.ts');
-    expect(content).toContain('ANNOTATIONS_MUTATING');
-    expect(content).not.toContain('ANNOTATIONS_READONLY');
-  });
-
-  test('maestro_stage has annotations (was missing entirely)', () => {
-    const content = readHandler('workflow.ts');
-    expect(content).toContain('annotations:');
-    expect(content).toContain('ANNOTATIONS_MUTATING');
-  });
-
-  test('maestro_memory uses ANNOTATIONS_DESTRUCTIVE (not MUTATING)', () => {
-    // Bug: was ANNOTATIONS_MUTATING despite having delete/archive
-    const content = readHandler('memory.ts');
-    // The mutating tool (maestro_memory) should use DESTRUCTIVE
-    // The read tool (maestro_memory_read) should use READONLY
-    // Both should be imported
-    expect(content).toContain('ANNOTATIONS_DESTRUCTIVE');
-    expect(content).toContain('ANNOTATIONS_READONLY');
-  });
-});
+// Handler files were deleted in Phase 5b. The annotation constants still exist in
+// annotations.ts and are tested in section 1.
 
 // ---------------------------------------------------------------------------
-// 3. Recommender uses merged tool names (not pre-merge stale names)
+// 3. Recommender uses CLI-style tool references (not pre-merge MCP stale names)
 // ---------------------------------------------------------------------------
 describe('recommender tool name references', () => {
   function makeRegistry(): WorkflowRegistry {
@@ -98,28 +68,28 @@ describe('recommender tool name references', () => {
     };
   }
 
-  test('urgent review tools use merged action syntax', () => {
-    // Bug: was 'maestro_task_accept', 'maestro_task_reject' (tools that don't exist)
+  test('urgent review tools use CLI action syntax', () => {
+    // Recommender uses CLI-style references (maestro task-accept) post CLI migration
     const rec = recommend(makeRegistry(), 'execution', makeContext({ taskReview: 2 }));
     for (const toolRef of rec.urgent) {
       if (toolRef.includes('accept') || toolRef.includes('reject')) {
-        expect(toolRef).toMatch(/^maestro_task\(action: /);
+        expect(toolRef).toMatch(/^maestro task-/);
       }
     }
   });
 
-  test('urgent revision tools use merged action syntax', () => {
-    // Bug: was 'maestro_task_claim' (tool that doesn't exist post-merge)
+  test('urgent revision tools use CLI action syntax', () => {
+    // Recommender uses CLI-style references (maestro task-claim) post CLI migration
     const rec = recommend(makeRegistry(), 'execution', makeContext({ taskRevision: 1 }));
     for (const toolRef of rec.urgent) {
       if (toolRef.includes('claim')) {
-        expect(toolRef).toMatch(/^maestro_task\(action: /);
+        expect(toolRef).toMatch(/^maestro task-/);
       }
     }
   });
 
-  test('sync urgency uses merged action syntax', () => {
-    // Bug: was 'maestro_tasks_sync' (tool that doesn't exist)
+  test('sync urgency uses CLI action syntax', () => {
+    // Recommender uses CLI-style references (maestro task-sync) post CLI migration
     const rec = recommend(makeRegistry(), 'approval', makeContext({
       stage: 'approval',
       planApproved: true,
@@ -127,13 +97,14 @@ describe('recommender tool name references', () => {
     }));
     for (const toolRef of rec.urgent) {
       if (toolRef.includes('sync')) {
-        expect(toolRef).toMatch(/^maestro_task\(action: /);
+        expect(toolRef).toMatch(/^maestro task-/);
       }
     }
   });
 
-  test('no urgent references contain underscore-separated tool names', () => {
-    // Guard against future regressions where someone adds maestro_X_Y instead of maestro_X(action: Y)
+  test('no urgent references use old underscore-separated MCP tool names', () => {
+    // Guard against regressions where someone re-introduces maestro_task_X style names
+    // (those were pre-merge MCP stale names). CLI-style references use "maestro X-Y".
     const stages = ['discovery', 'research', 'planning', 'approval', 'execution', 'done'] as const;
     const registry = makeRegistry();
 
@@ -145,13 +116,10 @@ describe('recommender tool name references', () => {
         taskPending: 0,
       }));
       for (const toolRef of rec.urgent) {
-        // Merged tools use parenthesized action syntax, not underscore separation
-        // Exception: maestro_task, maestro_plan etc. are valid base tool names
+        // Old-style MCP stale names had 2+ underscores (maestro_task_accept).
+        // CLI-style names use a space + hyphen (maestro task-accept) -- no double underscores.
         const underscoreCount = (toolRef.match(/_/g) || []).length;
-        if (underscoreCount > 1) {
-          // More than one underscore suggests an old-style stale reference
-          expect(toolRef).toMatch(/\(action: /);
-        }
+        expect(underscoreCount).toBeLessThanOrEqual(1);
       }
     }
   });

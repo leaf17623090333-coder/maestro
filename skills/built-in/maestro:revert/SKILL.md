@@ -148,13 +148,13 @@ Determine what to revert:
 - **Task-level**: `--task <name>` specified. Revert a single task's commit(s).
 
 If no `<feature>` argument, proceed to Guided Selection:
-1. Call `maestro_feature_list` (MCP) or `maestro feature-list` (CLI) and review recent git history: `git log --oneline --since="7 days ago" --grep="maestro"`
+1. Call `maestro feature-list` (MCP) or `maestro feature-list` (CLI) and review recent git history: `git log --oneline --since="7 days ago" --grep="maestro"`
 2. Present a menu grouped by feature: name, description, status, completed task count
 3. If user provides a custom feature name, use that
 
 ### Step 2: Locate Feature
 
-Match feature argument against `maestro_feature_list` output. If not found: report and stop.
+Match feature argument against `maestro feature-list` output. If not found: report and stop.
 
 Read the feature's `plan.md` and `feature.json` to understand structure.
 
@@ -162,7 +162,7 @@ Read the feature's `plan.md` and `feature.json` to understand structure.
 
 **Goal:** Build the complete list of commits to revert for the target scope.
 
-**Task state source**: Call `maestro_task_list` or `maestro_status` to get all tasks and their summaries. Task summaries from `maestro_task_done` include commit SHAs for traceability.
+**Task state source**: Call `maestro task-list` or `maestro status --json` to get all tasks and their summaries. Task summaries from `maestro task-done` include commit SHAs for traceability.
 
 **BR-enhanced path** (if `feature.json` has `beads_epic_id`):
 ```bash
@@ -170,7 +170,7 @@ br list --status closed --parent {epic_id} --all --json
 ```
 Parse `close_reason` for SHAs (format: `sha:{7char}`). Scope by labels for `--phase`/`--task`.
 
-**Task summary path**: Parse commit SHAs from `maestro_task_done` summaries stored in task state. Scope by phase or task name as needed.
+**Task summary path**: Parse commit SHAs from `maestro task-done` summaries stored in task state. Scope by phase or task name as needed.
 
 **Plan-update commits** (always check):
 ```bash
@@ -275,7 +275,7 @@ After resolving: `git revert --continue`
 
 ### Steps 8-10: Update Task State, Feature State, Verify
 
-**Task state** -- For each reverted task, the task needs to be reset to `pending`. Since maestro v2 does not have a direct "reset to pending" for done tasks via MCP, the orchestrator should note which tasks were reverted. If `maestro_task_block` / `maestro_task_unblock` can be used to cycle the state, use that. Otherwise, manually update the task state files in `.maestro/features/{feature-name}/tasks/`.
+**Task state** -- For each reverted task, the task needs to be reset to `pending`. Since maestro v2 does not have a direct "reset to pending" for done tasks via MCP, the orchestrator should note which tasks were reverted. If `maestro task-block` / `maestro task-unblock` can be used to cycle the state, use that. Otherwise, manually update the task state files in `.maestro/features/{feature-name}/tasks/`.
 
 ```bash
 git add .maestro/features/{feature-name}/
@@ -310,7 +310,7 @@ Report pass/fail. If tests fail: warn user and offer to debug.
 
 **Next**:
 - `maestro:implement {feature-name}` -- Re-implement reverted tasks
-- `maestro_status` / `maestro status` -- Check overall progress
+- `maestro status --json` / `maestro status` -- Check overall progress
 - To undo this revert: see Rollback-of-Rollback below
 ```
 
@@ -328,7 +328,7 @@ git status --porcelain              # Must be empty
 git branch --show-current           # Confirm correct branch
 git tag pre-revert-20250315-1430    # Backup
 
-# Resolve: maestro_task_list shows task "03-add-validation" is done, summary includes "sha: a1b2c3d"
+# Resolve: maestro task-list shows task "03-add-validation" is done, summary includes "sha: a1b2c3d"
 # Reconcile
 git cat-file -t a1b2c3d            # Verify exists
 
@@ -351,7 +351,7 @@ Phase 2 of the "payments" feature had 3 completed tasks. All must be undone.
 # Safety pre-checks (same as above)
 git tag pre-revert-20250315-1445
 
-# Resolve: maestro_task_list shows 3 done tasks in phase 2
+# Resolve: maestro task-list shows 3 done tasks in phase 2
 # SHAs from task summaries: d4e5f6g (newest), b2c3d4e, f7g8h9i (oldest)
 
 # Execute in reverse chronological order
@@ -488,12 +488,12 @@ Update maestro task state to reflect re-applied work:
 
 Recommended workflow:
 
-- `maestro_init` / `maestro init` -- Initialize maestro for the project
-- `maestro_feature_create` / `maestro feature-create` -- Create a new feature
-- `maestro_plan_write` / `maestro plan-write` -- Write the implementation plan
+- `maestro init --json` / `maestro init` -- Initialize maestro for the project
+- `maestro feature-create` / `maestro feature-create` -- Create a new feature
+- `maestro plan-write` / `maestro plan-write` -- Write the implementation plan
 - `maestro:implement` -- Execute the implementation
 - `maestro:review` -- Verify implementation correctness
-- `maestro_status` / `maestro status` -- Check progress
+- `maestro status --json` / `maestro status` -- Check progress
 - **`maestro:revert`** -- **You are here.** Undo implementation if needed
 
-Revert is the safety valve for `maestro:implement`. It undoes commits and resets task state so you can re-implement with `maestro:implement`. Use `maestro_status` after reverting to confirm the feature state is correct. Revert depends on atomic commits from implementation -- the cleaner the commit history, the more precise the revert.
+Revert is the safety valve for `maestro:implement`. It undoes commits and resets task state so you can re-implement with `maestro:implement`. Use `maestro status --json` after reverting to confirm the feature state is correct. Revert depends on atomic commits from implementation -- the cleaner the commit history, the more precise the revert.

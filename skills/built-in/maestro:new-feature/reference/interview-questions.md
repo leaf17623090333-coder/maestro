@@ -170,4 +170,4 @@ Use `reference/plan-template.md` for structure and rules (TDD injection, phase v
 
 Present the full plan for approval by embedding the entire plan content directly in the question field (same pattern as spec approval). Max 3 revision loops (same protocol as spec approval).
 
-Write approved plan via `maestro_plan_write` (MCP) or `maestro plan-write --feature <feature-name>` (CLI).
+Write approved plan via `maestro plan-write` (MCP) or `maestro plan-write --feature <feature-name>` (CLI).

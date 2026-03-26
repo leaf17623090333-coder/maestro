@@ -52,7 +52,6 @@ export const COMPONENT_REGISTRY: readonly DcpComponent[] = [
   makeComponent('memories', 6),
   makeComponent('skills', 7),
   makeComponent('agent-tools', 8),
-  makeComponent('handoff', 9),
 ] as const;
 
 /**

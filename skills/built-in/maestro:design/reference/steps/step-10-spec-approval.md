@@ -59,7 +59,7 @@ Compose the complete specification from all discovery steps (4-9), present for a
    - **[P]**: Read `reference/party-mode.md`. Run full 5-perspective review on complete spec. Present consolidated findings. User accepts/rejects. Return to approval prompt.
 
 6. **Save Spec**
-   Once approved, save the spec via `maestro_memory_write` (MCP) to the feature's memory, or write directly to `.maestro/features/<feature-name>/spec.md`.
+   Once approved, save the spec via `maestro memory-write` (MCP) to the feature's memory, or write directly to `.maestro/features/<feature-name>/spec.md`.
    Confirm: "Spec saved to `.maestro/features/<feature-name>/spec.md`."
 
 ## Quality Checks

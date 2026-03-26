@@ -118,6 +118,6 @@ Proceed with undo? (yes/no)
 
 **Next**:
 - `maestro:implement {feature-name}` -- Re-implement reverted tasks
-- `maestro_status` / `maestro status` -- Check overall progress
+- `maestro status --json` / `maestro status` -- Check overall progress
 - To undo this revert: `git revert --no-edit {revert_sha}` (or see Rollback-of-Rollback in SKILL.md)
 ```

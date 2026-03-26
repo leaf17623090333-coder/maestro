@@ -33,7 +33,7 @@ export function requireFeature(
   if (!feature) {
     throw new MaestroError(
       'No feature specified and no active feature set',
-      hints ?? ['Specify a feature name or create one with maestro_feature_create'],
+      hints ?? ['Specify a feature name or create one with maestro feature-create'],
     );
   }
   return feature;

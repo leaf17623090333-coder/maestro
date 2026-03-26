@@ -166,10 +166,10 @@ This runs at:
 
 ## Plan.md Mirror Protocol
 
-BR is the source of truth for task state when `br_enabled`. Plan.md is updated alongside for human readability. The maestro task state (`maestro_task_claim`, `maestro_task_done`) is the primary mechanism -- BR is a supplementary mirror:
+BR is the source of truth for task state when `br_enabled`. Plan.md is updated alongside for human readability. The maestro task state (`maestro task-claim`, `maestro task-done`) is the primary mechanism -- BR is a supplementary mirror:
 
-1. When claiming a task: `maestro_task_claim` AND `br update {id} --claim --json`
-2. When completing a task: `maestro_task_done` AND `br close {id} --reason "sha:{sha7} | {evidence}" --json`
-3. When reverting: `maestro_task_unblock` (reset to pending) AND `br update {id} --status open --json`
+1. When claiming a task: `maestro task-claim` AND `br update {id} --claim --json`
+2. When completing a task: `maestro task-done` AND `br close {id} --reason "sha:{sha7} | {evidence}" --json`
+3. When reverting: `maestro task-unblock` (reset to pending) AND `br update {id} --status open --json`
 
 Both updates happen together. If one fails, report the inconsistency.

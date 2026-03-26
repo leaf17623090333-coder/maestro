@@ -43,7 +43,7 @@ describe('taskBrief', () => {
     expect(result.feature).toBe('feat');
     expect(result.task).toBe('01-setup');
     expect(result.spec).toContain('Setup');
-    expect(result.workerRules).toContain('maestro_task_done');
+    expect(result.workerRules).toContain('maestro task-done');
     expect(result.hint).toBeUndefined();
     expect(result.dcp).toBeDefined();
     expect(result.dcp.scores).toBeArray();

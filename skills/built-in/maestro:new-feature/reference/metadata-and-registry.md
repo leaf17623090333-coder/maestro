@@ -2,7 +2,7 @@
 
 ## feature.json
 
-The `feature.json` file is created automatically by `maestro_feature_create`. After the design process completes, update it with additional fields:
+The `feature.json` file is created automatically by `maestro feature-create`. After the design process completes, update it with additional fields:
 
 ```json
 {
@@ -37,7 +37,7 @@ Located at `.maestro/features/<feature-name>/feature.json`.
 
 ## Feature Listing
 
-Use `maestro feature-list` (CLI) or `maestro_feature_list` (MCP) to view all features and their statuses. No manual registry file is needed -- the feature list is computed from `.maestro/features/*/feature.json`.
+Use `maestro feature-list` (CLI) or `maestro feature-list` (MCP) to view all features and their statuses. No manual registry file is needed -- the feature list is computed from `.maestro/features/*/feature.json`.
 
 ## Commit
 

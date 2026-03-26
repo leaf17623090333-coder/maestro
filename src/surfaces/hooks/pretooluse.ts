@@ -22,7 +22,7 @@ async function main(): Promise<void> {
     hookSpecificOutput: {
       hookEventName: HOOK_EVENTS.PreToolUse,
       additionalContext:
-        'If this commit belongs to a maestro task, finish the task with maestro_task_finish so report and audit metadata are recorded.',
+        'If this commit belongs to a maestro task, finish the task with `maestro task-done --task <id> --file <summary-path> --json` so report and audit metadata are recorded.',
     },
   });
 }

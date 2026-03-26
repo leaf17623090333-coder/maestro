@@ -2,7 +2,7 @@
 
 ## When to Run
 
-Execute this protocol when the last task in a phase is completed (marked `done` via `maestro_task_done`).
+Execute this protocol when the last task in a phase is completed (marked `done` via `maestro task-done`).
 
 **BR-based completion detection**: If `feature.json` has `beads_epic_id`:
 
@@ -10,9 +10,9 @@ Execute this protocol when the last task in a phase is completed (marked `done` 
 br list --status open --label "phase:{N}-{kebab}" --json
 ```
 
-If the result is empty (no open issues for this phase), the phase is complete. Falls back to checking `maestro_task_list` for remaining `pending` or `claimed` tasks if no `beads_epic_id`.
+If the result is empty (no open issues for this phase), the phase is complete. Falls back to checking `maestro task-list` for remaining `pending` or `claimed` tasks if no `beads_epic_id`.
 
-**maestro-based completion detection**: Call `maestro_task_list` or `maestro_status`. If all tasks in the current phase are in `done` state, the phase is complete.
+**maestro-based completion detection**: Call `maestro task-list` or `maestro status --json`. If all tasks in the current phase are in `done` state, the phase is complete.
 
 ## Steps
 
@@ -21,7 +21,7 @@ If the result is empty (no open issues for this phase), the phase is complete. F
 Confirm all tasks in the phase are `done`:
 
 ```
-maestro_task_list  (or maestro_status)
+maestro task-list  (or maestro status --json)
 ```
 
 All tasks for this phase should show state `done`. If any are `pending`, `claimed`, or `blocked`, the phase is not yet complete.
@@ -109,4 +109,4 @@ After user approval:
 CHECKPOINT_SHA=$(git rev-parse --short HEAD)
 ```
 
-Store in memory via `maestro_memory_write` for future reference (used by `maestro:revert` for phase-level reverts).
+Store in memory via `maestro memory-write` for future reference (used by `maestro:revert` for phase-level reverts).

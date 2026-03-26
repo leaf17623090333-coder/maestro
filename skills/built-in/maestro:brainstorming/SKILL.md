@@ -60,21 +60,13 @@ Brainstorming insights are valuable but volatile -- they exist only in the conve
 **How to persist:**
 ```
 # Create the feature first (if it doesn't exist yet)
-maestro_feature_create({ name: "<feature-name>", description: "<one-line>" })
+maestro feature-create --name "<feature-name>" --description "<one-line>" --json
 
 # Save the brainstorming output as feature memory
-maestro_memory_write({
-  key: "brainstorm-summary",
-  content: "<validated design summary>",
-  feature: "<feature-name>"
-})
+maestro memory-write --name "brainstorm-summary" --file <summary-path> --feature "<feature-name>" --json
 
 # Save key decisions separately for easy reference
-maestro_memory_write({
-  key: "design-decisions",
-  content: "<decisions and rationale>",
-  feature: "<feature-name>"
-})
+maestro memory-write --name "design-decisions" --file <decisions-path> --feature "<feature-name>" --json
 ```
 
 **When to persist:** After the user validates the design in Phase 3, before chaining into planning. Do not wait until the end of the conversation -- persist as soon as the design stabilizes.
@@ -85,19 +77,19 @@ Brainstorming produces understanding, not documents. The validated design feeds 
 
 **When the design is validated, chain forward:**
 
-1. **Create the feature** (if not already done): `maestro_feature_create` -- registers the feature in the maestro tracker
-2. **Save discovery context**: `maestro_memory_write` with the brainstorming output -- persists where the planner can reference it
+1. **Create the feature** (if not already done): `maestro feature-create` -- registers the feature in the maestro tracker
+2. **Save discovery context**: `maestro memory-write` with the brainstorming output -- persists where the planner can reference it
 3. **Choose the planning path** based on complexity:
-   - **Simple/well-understood**: `maestro_plan_write` -- write the plan directly from the brainstorming output
+   - **Simple/well-understood**: `maestro plan-write` -- write the plan directly from the brainstorming output
    - **Ambitious/multi-component**: Load `maestro:design` or `maestro:new-feature` for deeper discovery and structured spec generation
 
-The brainstorming output becomes the `## Discovery` section that `maestro_plan_write` requires. Do not write design docs to `docs/plans/` -- that bypasses the maestro workflow and leaves the design disconnected from execution.
+The brainstorming output becomes the `## Discovery` section that `maestro plan-write` requires. Do not write design docs to `docs/plans/` -- that bypasses the maestro workflow and leaves the design disconnected from execution.
 
 ### Decision Tree: What Comes Next?
 
 ```
 Is the scope clear and small (1-3 tasks)?
-  --> YES: maestro_plan_write directly
+  --> YES: maestro plan-write directly
   --> NO:
     Is a formal spec needed (multiple stakeholders, complex requirements)?
       --> YES: maestro:design (full 16-step process)
@@ -159,11 +151,11 @@ sent 10K req/sec and caused 503s for everyone.
 
 ## Relationship to Other Commands
 
-- `maestro_feature_create` -- Create a feature to work on (do this during brainstorming)
-- `maestro_memory_write` -- Persist brainstorming discoveries
+- `maestro feature-create` -- Create a feature to work on (do this during brainstorming)
+- `maestro memory-write` -- Persist brainstorming discoveries
 - `maestro:brainstorming` -- **You are here.** Explore ideas before planning
 - `maestro:design` -- Deep discovery for ambitious features (next step for complex work)
 - `maestro:new-feature` -- Interview + spec + plan (next step for medium complexity)
-- `maestro_plan_write` -- Write the plan directly (next step for simple work)
-- `maestro_plan_approve` -- Approve the plan for execution
+- `maestro plan-write` -- Write the plan directly (next step for simple work)
+- `maestro plan-approve` -- Approve the plan for execution
 - `maestro:implement` -- Execute the implementation

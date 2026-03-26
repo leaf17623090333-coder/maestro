@@ -13,6 +13,12 @@ async function main(): Promise<void> {
   const toolName = (input.tool_name as string) || 'unknown';
   const toolInput = (input.tool_input as Record<string, unknown>) || {};
 
+  // When triggered by Bash, only log if the command is a maestro CLI invocation
+  if (toolName === 'Bash') {
+    const command = (toolInput.command as string) || '';
+    if (!/^\s*maestro\b/.test(command)) return;
+  }
+
   const sessionsDir = getSessionsDir(projectDir);
   ensureDir(sessionsDir);
 

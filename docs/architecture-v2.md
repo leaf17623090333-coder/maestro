@@ -473,7 +473,7 @@ slash commands, built-in discovery, native UI. Maestro should not try to replica
 Instead: **maestro manages its own skills and syncs them TO the host.** The host loads them natively.
 
 ```
-WRONG: maestro scans ~/.claude/skills/, reads host skills, presents in maestro_skill_list
+WRONG: maestro scans ~/.claude/skills/, reads host skills, presents in maestro skill-list
 RIGHT: maestro writes its skills TO the host's skill directory, host loads them natively
 ```
 
@@ -581,7 +581,7 @@ Switch to Codex:
 
 Switch to standalone CLI:
   No sync (no host skill directory)
-  Skills available via maestro_skill() MCP tool only
+  Skills available via maestro skill <name> MCP tool only
 ```
 
 Skills themselves never move. Only symlink targets change.
@@ -589,12 +589,12 @@ Skills themselves never move. Only symlink targets change.
 ### Skill Management MCP Tools
 
 ```
-maestro_skill_list                     # List maestro-owned skills (built-in + external + toolbox + global)
-maestro_skill({ name })                # Load skill content
-maestro_skill_install({ source })      # Install from URL/path to skills/external/
-maestro_skill_create({ name })         # Scaffold new skill
-maestro_skill_remove({ name })         # Remove from skills/external/
-maestro_skill_sync                     # Re-sync symlinks to host
+maestro skill-list                     # List maestro-owned skills (built-in + external + toolbox + global)
+maestro skill <name>                # Load skill content
+maestro skill-install({ source })      # Install from URL/path to skills/external/
+maestro skill-create({ name })         # Scaffold new skill
+maestro skill-remove({ name })         # Remove from skills/external/
+maestro skill-sync                     # Re-sync symlinks to host
 ```
 
 ### Skill Install / Create
@@ -660,12 +660,12 @@ CLI:
   maestro skill sync
 
 MCP (new tools):
-  maestro_skill_list({ stage?, source? })
-  maestro_skill({ name, reference? })                  # existing, enhanced
-  maestro_skill_install({ source, global? })            # NEW
-  maestro_skill_create({ name, stage? })                # NEW
-  maestro_skill_remove({ name })                        # NEW
-  maestro_skill_sync()                                  # NEW
+  maestro skill-list({ stage?, source? })
+  maestro skill <name>                  # existing, enhanced
+  maestro skill-install({ source, global? })            # NEW
+  maestro skill-create({ name, stage? })                # NEW
+  maestro skill-remove({ name })                        # NEW
+  maestro skill-sync()                                  # NEW
 ```
 
 **Create a skill:**
@@ -728,12 +728,12 @@ $ maestro skill sync                                 # push to host
 | 2 | User's Claude Code skill in workflow config | Workflow engine says "load X". Host loads natively. Maestro doesn't read file. |
 | 3 | Name collision (maestro:implement vs user's implement) | Maestro syncs to subdirectory `.claude/skills/maestro/`. No collision with user skills. |
 | 4 | Symlinks break on Windows | Copy instead of symlink. Track in `.maestro/.skill-sync-manifest.json` for cleanup. |
-| 5 | Standalone CLI, no host | Skills via `maestro_skill()` only. No sync needed. |
-| 6 | Host doesn't support skills directory | Skip sync. `maestro_skill()` still works. |
+| 5 | Standalone CLI, no host | Skills via `maestro skill <name>` only. No sync needed. |
+| 6 | Host doesn't support skills directory | Skip sync. `maestro skill <name>` still works. |
 | 7 | Sync adds latency | ~1ms per symlink. 30 skills = 30ms. Negligible. |
 | 8 | Git commits synced symlinks | `.claude/skills/maestro/` gitignored by `maestro init`. |
 | 9 | Tool removed, bundled skills are stale symlinks | `skill_sync` cleans broken symlinks on every run. |
-| 10 | Bidirectional sync to host without skill support | Skip sync. Maestro skills work via `maestro_skill()` MCP tool regardless. Sync is enhancement. |
+| 10 | Bidirectional sync to host without skill support | Skip sync. Maestro skills work via `maestro skill <name>` MCP tool regardless. Sync is enhancement. |
 
 #### Security
 
@@ -749,9 +749,9 @@ $ maestro skill sync                                 # push to host
 | # | Edge case | Fix |
 |---|---|---|
 | 15 | Scanning multiple directories on every `skill_list` is slow | Cache skill inventory in `.maestro/.skillcache.json` with file modification timestamps. Invalidate on `skill_install`, `skill_remove`, `skill_sync`. SessionStart uses cache. |
-| 16 | Very large reference directory (100+ files, MB of data) | `maestro_skill()` loads SKILL.md only. Reference files loaded on demand via `reference:` param. Never load entire reference dir. |
+| 16 | Very large reference directory (100+ files, MB of data) | `maestro skill <name>` loads SKILL.md only. Reference files loaded on demand via `reference:` param. Never load entire reference dir. |
 | 17 | 50+ skills from all sources overflows response | Paginate: `skill_list({ stage: 'execution' })`, `skill_list({ source: 'external' })`. Default: show counts per source, not full list. |
-| 18 | Built-in registry is 380KB | Build-time embedded in `registry.generated.ts`. Discovery only loads metadata (name, desc, stage), not content. Content loaded lazily on `maestro_skill()`. |
+| 18 | Built-in registry is 380KB | Build-time embedded in `registry.generated.ts`. Discovery only loads metadata (name, desc, stage), not content. Content loaded lazily on `maestro skill <name>`. |
 
 #### Compatibility
 
@@ -770,7 +770,7 @@ $ maestro skill sync                                 # push to host
 | 24 | Skill removed but still referenced in workflow settings | `skill_remove` checks settings for references. Warn: "my-team:deploy is referenced in workflow.types.bug.skills.planning. Remove reference?" On load: missing skill = warn + continue. |
 | 25 | Install from private GitHub repo -- needs auth | `--token` flag or reads `GITHUB_TOKEN` env var. Uses `gh` CLI if available (already authed). Falls back: "Clone failed. Try: `gh auth login` then retry." |
 | 26 | Skill updated at source, local copy is stale | No auto-update. Skills are installed at a point in time. `maestro skill update <name>` re-fetches. Doctor optionally flags: "skill installed 90 days ago." |
-| 27 | Skill hot-reload -- user edits SKILL.md | Yes. `maestro_skill()` always reads from disk (no in-memory content cache). Skill metadata cache invalidated on file mtime change. |
+| 27 | Skill hot-reload -- user edits SKILL.md | Yes. `maestro skill <name>` always reads from disk (no in-memory content cache). Skill metadata cache invalidated on file mtime change. |
 | 28 | Uninstall skill that was synced to host -- orphaned symlink | `skill_remove` runs `skill_sync --clean` after removal. Cleans stale symlinks. Also cleans on next `skill_sync`. |
 | 29 | Skill install overwrites existing | Prompt: "my-team:deploy already exists. Overwrite? [y/N]". CLI flag: `--force` to skip prompt. |
 | 30 | Skill create with conflicting name | Error: "Skill 'X' already exists at skills/external/X/." |
@@ -781,7 +781,7 @@ $ maestro skill sync                                 # push to host
 |---|---|---|
 | 31 | Skill depends on a specific tool (`requires: ['bv']`) | `skill_list` shows: "maestro:graph-workflow (requires bv -- not installed)". Loading still works (guidance), but doctor flags missing tool. |
 | 32 | Skill chains to another skill (`chain: ['maestro:tdd']`) | Workflow engine loads chained skills when primary skill's stage completes. Circular chain guard: max depth 3. |
-| 33 | Skill has arguments (`maestro_skill({ name, args: '--parallel' })`) | Already supported: `argumentHint` in registry. Skills can declare expected arguments in frontmatter. Content adapts based on args. |
+| 33 | Skill has arguments (`maestro skill <name> '--parallel' })`) | Already supported: `argumentHint` in registry. Skills can declare expected arguments in frontmatter. Content adapts based on args. |
 | 34 | Skill overrides built-in and REMOVES guidance (weaker) | User's choice. `doctor --verbose` shows: "Custom maestro:implement is 20 lines vs built-in 150 lines. Intentional?" Information, not enforcement. |
 
 #### Multi-Host
@@ -789,8 +789,8 @@ $ maestro skill sync                                 # push to host
 | # | Edge case | Fix |
 |---|---|---|
 | 35 | Running inside Codex, no `~/.claude/skills/` | Skill discovery skips non-existent directories silently. Only scans host skill directories for detected host. |
-| 36 | Switching hosts mid-project -- synced skills in `.claude/skills/` useless in Codex | Maestro-owned skills (built-in, external, toolbox-bundled) work everywhere via `maestro_skill()`. Host-synced skills are host-specific. On switch, re-sync to new host target. Doctor notes: "3 Claude Code skills not available in Codex." |
-| 37 | Standalone CLI mode, no host skill directory | Skip sync. Skills available via `maestro_skill()` MCP tool regardless. Sync is enhancement, not requirement. |
+| 36 | Switching hosts mid-project -- synced skills in `.claude/skills/` useless in Codex | Maestro-owned skills (built-in, external, toolbox-bundled) work everywhere via `maestro skill <name>`. Host-synced skills are host-specific. On switch, re-sync to new host target. Doctor notes: "3 Claude Code skills not available in Codex." |
+| 37 | Standalone CLI mode, no host skill directory | Skip sync. Skills available via `maestro skill <name>` MCP tool regardless. Sync is enhancement, not requirement. |
 
 #### Naming & Organization
 
@@ -1575,8 +1575,8 @@ SessionStart hook:
   --> User sees full task list immediately in native UI
 
 During execution:
-  maestro_task_claim --> update filesystem + TaskUpdate host task
-  maestro_task_done  --> update filesystem + TaskUpdate host task
+  maestro task-claim --> update filesystem + TaskUpdate host task
+  maestro task-done  --> update filesystem + TaskUpdate host task
   (orchestrator handles all host updates, not workers)
 
 Session ends:
@@ -1803,7 +1803,7 @@ workflow/
 ### Playbook Generation Flow
 
 ```
-maestro_status called
+maestro status called
   --> derivePipelineStage(projectState)             [stages.ts]
   --> collectToolsForStage(stage)                   [registry.ts]
       --> all tools where workflow.stage includes current stage
@@ -1843,7 +1843,7 @@ maestro_status called
 ### Problem
 
 The current pipeline is a rigid 6-stage sequence. Every work type (feature, bug, chore) goes through
-all 6 stages. Skills exist but aren't loaded automatically -- agents must manually call `maestro_skill()`.
+all 6 stages. Skills exist but aren't loaded automatically -- agents must manually call `maestro skill <name>`.
 Tools are hardcoded per stage instead of being driven by skills.
 
 ### Work Types with Configurable Pipelines
@@ -1922,18 +1922,18 @@ SessionStart:
   3. Look up skill for this stage from work type config
   4. Inject skill summary into agent context (lazy -- full load on demand)
   --> Agent automatically knows what to do
-  --> No manual maestro_skill() call needed
+  --> No manual maestro skill <name> call needed
 ```
 
 ### Stage Navigation
 
-New MCP tool: `maestro_stage`
+New MCP tool: `maestro stage-jump`
 
 ```
-maestro_stage({ action: 'next' })      # normal forward transition
-maestro_stage({ action: 'skip' })      # skip current stage (only if optional)
-maestro_stage({ action: 'back' })      # go to previous stage
-maestro_stage({ action: 'jump', target: 'planning' })  # jump to specific stage
+maestro stage-next      # normal forward transition
+maestro stage-jump({ action: 'skip' })      # skip current stage (only if optional)
+maestro stage-jump({ action: 'back' })      # go to previous stage
+maestro stage-jump({ action: 'jump', target: 'planning' })  # jump to specific stage
 ```
 
 Guards:
@@ -2003,7 +2003,7 @@ Switching features reloads the skill and DCP context for that feature.
 | # | Edge case | Fix |
 |---|---|---|
 | 7 | Chore with no plan -- how does tasks_sync work? | Skip `tasks_sync`. Create single implicit task from feature name. `task_done` completes feature. |
-| 8 | Change work type mid-feature | `maestro_feature_update({ type: 'feature' })`. Recalculates pipeline. Existing artifacts preserved. |
+| 8 | Change work type mid-feature | `maestro feature-update({ type: 'feature' })`. Recalculates pipeline. Existing artifacts preserved. |
 | 9 | Custom work type conflicts with built-in name | User overrides specified fields. Unspecified fall back to built-in defaults. Doctor warns. |
 | 10 | Custom work type with invalid pipeline | Validate at config load: `done` must be last, stages from known set. Error with fix suggestion. |
 | 11 | Hotfix bypasses verification | Intentional. Doctor flags: "Completed as hotfix with no verification." Settings can disable hotfix type. |
@@ -2018,7 +2018,7 @@ Switching features reloads the skill and DCP context for that feature.
 | 15 | Custom skill doesn't mention right tools | Not enforced. Skills are guidance, not enforcement. Tools still work. |
 | 16 | Multiple skills for one stage | Priority: user custom > stage default > tool-bundled. One primary, tool-bundled additive. |
 | 17 | Skill references tools that don't exist | Agent gets error on call. Skill is still useful guidance even with one tool missing. |
-| 18 | Skill is 10K tokens, bloats context | Lazy loading: SessionStart injects summary (name + 200 chars). Full load on `maestro_skill()`. |
+| 18 | Skill is 10K tokens, bloats context | Lazy loading: SessionStart injects summary (name + 200 chars). Full load on `maestro skill <name>`. |
 
 ### Edge Cases -- Concurrent Features
 
@@ -2111,10 +2111,10 @@ SessionStart hook checks agent role and filters accordingly.
 ### Auto-Load Budget
 
 - Max 2 primary skills auto-injected per stage (summary only -- name + description + first 200 chars)
-- Full content on demand via `maestro_skill()`
+- Full content on demand via `maestro skill <name>`
 - Total skill injection budget: 2000 tokens max
 - If two skills exceed budget: primary full, secondary summary-only
-- Meta skills NEVER auto-loaded (catalog only, explicit `maestro_skill()`)
+- Meta skills NEVER auto-loaded (catalog only, explicit `maestro skill <name>`)
 - Reference files NEVER auto-loaded (on-demand via `reference:` param)
 
 ### `maestro:visual` Context Triggers
@@ -2164,7 +2164,7 @@ Agent decides whether to load it.
 | 2 | Old aliases reference merged/removed skills | Remove all old aliases. Clean break. Error: "Skill not found." No deprecation period. |
 | 3 | User's workflow config references merged skill | Config resolution fails with clear error: "maestro:new-feature was merged into maestro:design. Update your settings." |
 | 4 | init is a CLI action not a pipeline stage | `maestro:init` loads in TWO contexts: (a) `maestro init` called, (b) doctor detects uninitialized project. Pre-pipeline, not a stage. |
-| 5 | maestro:status removed but referenced externally | Error: "Skill maestro:status was removed. Use maestro_status tool instead." No alias. |
+| 5 | maestro:status removed but referenced externally | Error: "Skill maestro:status was removed. Use maestro status tool instead." No alias. |
 
 ### Edge Cases -- Execution Overload
 
@@ -2172,7 +2172,7 @@ Agent decides whether to load it.
 |---|---|---|
 | 6 | 7 primary skills in execution stage -- token explosion | Never load all 7. Work type selects subset: feature = implement + tdd + dispatching. Bug = debugging + implement. |
 | 7 | Worker gets orchestrator skills (dispatching) | `audience` field in frontmatter. Workers get implement + tdd. Orchestrator gets dispatching + review. |
-| 8 | Even 3 skills exceed token budget | Max 2 auto-injected (summary only). Third+ available via manual `maestro_skill()`. Total cap: 2000 tokens. |
+| 8 | Even 3 skills exceed token budget | Max 2 auto-injected (summary only). Third+ available via manual `maestro skill <name>`. Total cap: 2000 tokens. |
 | 9 | Which skill is primary when multiple exist? | Work type config declares ONE primary per stage. Others are secondary (available, not auto-loaded). |
 
 ### Edge Cases -- Conditional & Visual
@@ -2192,7 +2192,7 @@ Agent decides whether to load it.
 | 15 | Simplify makes changes that break tests | Skill content says: "Run tests after each simplification." Guidance quality, not system enforcement. |
 | 16 | Simplify is not wanted -- user skips | Not enforced. Utility suggestion only. Agent can ignore. |
 | 17 | Note skill surfaces constantly ("you haven't saved memories") | Throttle: only if `memoryCount === 0` AND stage is research or later. Max once per session. |
-| 18 | prompt-leverage loaded but agent doesn't need it | Meta skills shown in catalog, NEVER auto-loaded. Explicit `maestro_skill()` only. |
+| 18 | prompt-leverage loaded but agent doesn't need it | Meta skills shown in catalog, NEVER auto-loaded. Explicit `maestro skill <name>` only. |
 | 19 | next-move loaded during execution -- contradicts plan | Suppressed during execution via `contextHint`. Only surfaces at `done` or no active feature. |
 
 ### Edge Cases -- Revived Skills
@@ -2207,12 +2207,12 @@ Agent decides whether to load it.
 
 | # | Edge case | Fix |
 |---|---|---|
-| 23 | Skills from previous stage linger in context | SessionStart loads skills for CURRENT stage only. Previous not injected. Manual `maestro_skill()` for previous stage skills. |
+| 23 | Skills from previous stage linger in context | SessionStart loads skills for CURRENT stage only. Previous not injected. Manual `maestro skill <name>` for previous stage skills. |
 | 24 | Stage jump back -- which skills load? | Skills for target stage. Jump to planning = design + plan-review-loop. Execution skills dropped. |
 | 25 | Chained skills create unexpected loads | Chain is suggestion, not forced. Engine checks: "already loaded this session? Skip." Track loaded skills per session. |
-| 26 | Auto-loaded skill is 500 lines | Summary injection only (name + description + 200 chars). Full content via `maestro_skill()`. |
+| 26 | Auto-loaded skill is 500 lines | Summary injection only (name + description + 200 chars). Full content via `maestro skill <name>`. |
 | 27 | Two auto-loaded skills + DCP + worker rules = 3000 tokens | Skill injection capped at 2000 tokens. Primary full summary, secondary truncated. DCP and worker rules have separate budgets. |
-| 28 | Reference files are large (revert: 498 lines of git commands) | Reference files never auto-loaded. On demand via `maestro_skill({ name, reference })`. Main SKILL.md should be concise overview pointing to references. |
+| 28 | Reference files are large (revert: 498 lines of git commands) | Reference files never auto-loaded. On demand via `maestro skill({ name, reference })`. Main SKILL.md should be concise overview pointing to references. |
 
 ---
 
@@ -2724,7 +2724,7 @@ SessionStart hook:
 **2. Explicit (agent/user decides)**
 
 ```
-maestro_handoff({
+maestro handoff-send({
   goal: "hand this to Sarah to finish the CLI handlers",
   feature: "toolbox-refactor",
   targetAgent: "sarah"
@@ -2840,7 +2840,7 @@ interface HandoffResult {
 ### MCP Tools
 
 ```
-maestro_handoff({
+maestro handoff-send({
   goal?: string,          // what next session should do (auto-inferred if omitted)
   feature?: string,       // defaults to active feature
   message?: string,       // custom message
@@ -2849,16 +2849,16 @@ maestro_handoff({
 })
 --> Returns: draft prompt + relevant files + token estimate
 
-maestro_handoff_read({ feature? })
+maestro handoff-receive({ feature? })
 --> Read latest handoff
 
-maestro_handoff_list({ feature?, limit? })
+maestro handoff-list({ feature?, limit? })
 --> List handoff history
 
-maestro_handoff_ack({ feature? })
+maestro handoff-ack({ feature? })
 --> Acknowledge (won't re-inject)
 
-maestro_handoff_status()
+maestro handoff-status()
 --> Pending handoffs across all features
 ```
 
@@ -2874,7 +2874,7 @@ SESSION START:
           Goal: continue implementing 04-verification-extract
           Progress: 4/7 tasks, 60% through task 04
           2 uncommitted files on branch feat/toolbox
-          Load full handoff: maestro_handoff_read()"
+          Load full handoff: maestro handoff-receive()"
   4. Agent acknowledges and continues
 
 PRECOMPACT / SESSION END:
@@ -3105,18 +3105,18 @@ nothing installed                            --> FsAdapter only (maestro data)
 ### MCP Tools (expanded)
 
 ```
-maestro_search({ query, scope?, feature?, limit?, days? })
+maestro search-sessions({ query, scope?, feature?, limit?, days? })
   --> Search everything (or scoped). Built-in always works.
   --> With external tool: includes session transcripts too.
 
-maestro_search_sessions({ query, agent?, limit?, days? })
+maestro search-sessions({ query, agent?, limit?, days? })
   --> Sessions only. Returns empty if no external tool.
   --> Hint: "Install cass or search tool for session search."
 
-maestro_search_related({ filePath, limit? })
+maestro search-related({ filePath, limit? })
   --> Find all context related to a file.
 
-maestro_search_similar({ content, limit? })       # NEW
+maestro search-sessions_similar({ content, limit? })       # NEW
   --> Find similar past features/plans (replaces queryHistoricalContext).
 ```
 
@@ -3277,17 +3277,17 @@ your-search similar --plan .maestro/features/new-feature/plan.md
 #### MCP Integration When Installed
 
 ```
-maestro_search({ query, scope?, feature?, limit? })
+maestro search-sessions({ query, scope?, feature?, limit? })
   --> Searches EVERYTHING (sessions + memories + plans + doctrine + handoffs)
   --> Unified, ranked results from your tool
 
-maestro_search_sessions({ query, agent?, limit? })
+maestro search-sessions({ query, agent?, limit? })
   --> Sessions only (backward compat with cass interface)
 
-maestro_search_related({ filePath })
+maestro search-related({ filePath })
   --> All context related to a file
 
-maestro_search_similar({ content })
+maestro search-sessions_similar({ content })
   --> Find similar past features/plans
   --> Replaces queryHistoricalContext entirely
 ```
@@ -3426,7 +3426,7 @@ No LLM. Selection frequency + age = importance signal.
 ### Consolidation Pipeline
 
 ```
-maestro_memory_consolidate({ feature })
+maestro memory-consolidate({ feature })
   |
   +--> 1. Load all memories with metadata
   |
@@ -3468,7 +3468,7 @@ Trigger 2: session end / handoff
   --> Light consolidation: connect new memories, update selection scores
 
 Trigger 3: explicit command
-  --> maestro_memory_consolidate({ feature, aggressive? })
+  --> maestro memory-consolidate({ feature, aggressive? })
 
 Trigger 4: memory count threshold
   --> Feature has 30+ memories? Auto-suggest: "Run consolidation to clean up."
@@ -3525,16 +3525,16 @@ interface MemoryConnection {
 ### New MCP Tools
 
 ```
-maestro_memory_consolidate({ feature?, aggressive? })
+maestro memory-consolidate({ feature?, aggressive? })
   --> Run consolidation pipeline. Returns ConsolidationResult.
 
-maestro_memory_connect({ feature, a, b, relation })
+maestro memory-connect({ feature, a, b, relation })
   --> Manually connect two memories.
 
-maestro_memory_connections({ feature, name })
+maestro memory-connections({ feature, name })
   --> Show all connections for a memory.
 
-maestro_memory_insights({ feature? })
+maestro memory_insights({ feature? })
   --> Show cross-cutting patterns from last consolidation.
 ```
 
@@ -3562,7 +3562,7 @@ CONSOLIDATION (periodic):
     v
 PROMOTION:
   Auto: consolidation promotes priority 0-1 decisions with 3+ selections
-  Manual: maestro_memory_promote
+  Manual: maestro memory-promote
     |
     v
 ARCHIVAL:
@@ -3669,9 +3669,9 @@ Everything else stays algorithmic. LLM is a polish layer, not the engine.
 
 | # | Edge case | Fix |
 |---|---|---|
-| 1 | Consolidation merges wrong memories | Threshold >80% keyword + same category. Undo: original archived, `merged-from` connection tracked. `maestro_memory_unmerge`. |
-| 2 | Compression loses important detail | Original archived. `compressed: true` in frontmatter. `maestro_memory_read --full` returns original. |
-| 3 | Auto-promotion promotes wrong memories | Conservative criteria: priority 0-1 + decision/architecture + 3+ selections. Undo: `maestro_memory_demote`. |
+| 1 | Consolidation merges wrong memories | Threshold >80% keyword + same category. Undo: original archived, `merged-from` connection tracked. `maestro memory-unmerge`. |
+| 2 | Compression loses important detail | Original archived. `compressed: true` in frontmatter. `maestro memory-read --full` returns original. |
+| 3 | Auto-promotion promotes wrong memories | Conservative criteria: priority 0-1 + decision/architecture + 3+ selections. Undo: `maestro memory-demote`. |
 | 4 | Consolidation slow (100+ memories) | Pre-filter by category for merge candidates. Tag pre-filter for connections. 100 memories < 500ms. |
 | 5 | Connection graph is circular (A-->B-->C-->A) | Allowed. Mutual influence is valid. Display as flat list, not tree. |
 | 6 | Selection tracking changes DCP scoring | New dimension at 0.05 weight. Small boost, not dominant. Existing 5 dimensions unchanged. |
@@ -3960,7 +3960,7 @@ PreCompact hook:
 ### MCP Tools (enhanced)
 
 ```
-maestro_dcp_preview({ feature?, task? })
+maestro dcp-preview({ feature?, task? })
   ENHANCED:
   --> Per-component breakdown with utilization %
   --> Deduplication savings shown
@@ -3968,13 +3968,13 @@ maestro_dcp_preview({ feature?, task? })
   --> Budget recommendations
   --> "Memory: 920/1024 tokens (90%), 5 included, 2 dropped, avg score 0.65"
 
-maestro_dcp_stats({ feature? })
+maestro dcp-preview_stats({ feature? })
   NEW:
   --> Historical DCP usage across all tasks in feature
   --> Avg utilization per component, peak, trends
   --> Recommendations: "Memory budget at 15% avg, consider reducing to 256"
 
-maestro_dcp_config({ component?, budget?, protected? })
+maestro dcp-preview_config({ component?, budget?, protected? })
   NEW:
   --> Adjust DCP settings per component on the fly
   --> "Set memory budget to 2048 for this feature" (doesn't change global settings)
@@ -4030,15 +4030,15 @@ Selection tracking               memory consolidation (importance scores)
 
 ---
 
-## `maestro_status` -- Universal Entry Point
+## `maestro status` -- Universal Entry Point
 
 ### Design Principle
 
-`maestro_status` is ALWAYS full. Every call. No delta detection, no first-call vs subsequent-call
+`maestro status` is ALWAYS full. Every call. No delta detection, no first-call vs subsequent-call
 magic, no session state tracking. Simple and predictable.
 
 ```
-maestro_status = ALWAYS returns the complete playbook + context
+maestro status = ALWAYS returns the complete playbook + context
 The response tells the agent what to do NEXT with exact command hints
 ```
 
@@ -4049,8 +4049,8 @@ Other tools use compact + delta to compensate.
 ### Three Universal Entry Points
 
 ```
-Claude Code (hooks):     SessionStart auto-injects --> maestro_status for refresh
-Codex/Cursor (no hooks): maestro_status is the FIRST call every session
+Claude Code (hooks):     SessionStart auto-injects --> maestro status for refresh
+Codex/Cursor (no hooks): maestro status is the FIRST call every session
 Standalone CLI:          maestro status in terminal
 ```
 
@@ -4066,12 +4066,12 @@ Progress: 4/7 tasks (57%)
   [>>] 05-error-envelope (claimed by worker-1)
   [--] 06-workflow  [--] 07-skill
 
---> Next: maestro_task_done({ task: "05-error-envelope", summary: "..." })
+--> Next: maestro task-done({ task: "05-error-envelope", summary: "..." })
 
 Also available:
-  maestro_task_info({ task: "05-error-envelope" })
-  maestro_task_list()
-  maestro_visual({ type: "status-dashboard" })
+  maestro task-info({ task: "05-error-envelope" })
+  maestro task-list()
+  maestro visual({ type: "status-dashboard" })
 
 Skill: maestro:implement (TDD workflow)
 Handoff: none pending
@@ -4084,29 +4084,29 @@ The `-->  Next:` line is the key. Exact tool call with pre-filled args where pos
 
 | State | Next hint |
 |---|---|
-| No feature | `maestro_feature_create({ name: "...", type: "feature" })` |
-| Discovery, no memories | Explore codebase, then `maestro_memory_write({ ... })` |
-| Research, has memories | `maestro_plan_write({ content: "..." })` |
-| Plan written, not approved | `maestro_plan_approve({ feature: "..." })` |
-| Plan approved, no tasks | `maestro_tasks_sync({ feature: "..." })` |
-| Tasks exist, runnable | `maestro_task_claim({ task: "01-setup", agent_id: "..." })` |
-| Task claimed, working | Continue implementation, then `maestro_task_done({ ... })` |
-| Task in review | `maestro_task_accept({ task: "..." })` or `maestro_task_reject({ ... })` |
-| Task in revision | `maestro_task_claim({ task: "..." })` (retry) |
-| Task blocked | `maestro_task_unblock({ task: "...", decision: "..." })` |
-| All tasks done | `maestro_feature_complete({ feature: "..." })` |
-| Feature complete | `maestro_doctrine_suggest()` then `maestro_memory_promote()` |
+| No feature | `maestro feature-create({ name: "...", type: "feature" })` |
+| Discovery, no memories | Explore codebase, then `maestro memory-write({ ... })` |
+| Research, has memories | `maestro plan-write({ content: "..." })` |
+| Plan written, not approved | `maestro plan-approve({ feature: "..." })` |
+| Plan approved, no tasks | `maestro task-sync({ feature: "..." })` |
+| Tasks exist, runnable | `maestro task-claim({ task: "01-setup", agent_id: "..." })` |
+| Task claimed, working | Continue implementation, then `maestro task-done({ ... })` |
+| Task in review | `maestro task-accept({ task: "..." })` or `maestro task-reject({ ... })` |
+| Task in revision | `maestro task-claim({ task: "..." })` (retry) |
+| Task blocked | `maestro task-unblock({ task: "...", decision: "..." })` |
+| All tasks done | `maestro feature-complete({ feature: "..." })` |
+| Feature complete | `maestro doctrine-suggest()` then `maestro memory-promote()` |
 
 ### Section Flags (optional, for targeted queries)
 
 ```
-maestro_status                         # full (always, ~500 tokens)
-maestro_status --tasks                 # just task progress (~150 tokens)
-maestro_status --playbook              # just tools + skill + recommendation (~200 tokens)
-maestro_status --dcp                   # just DCP metrics (~150 tokens)
-maestro_status --handoff               # just handoff info (~200 tokens)
-maestro_status --tools                 # just available tools + agent tools (~200 tokens)
-maestro_status --feature <name>        # status of a different feature
+maestro status                         # full (always, ~500 tokens)
+maestro status --tasks                 # just task progress (~150 tokens)
+maestro status --playbook              # just tools + skill + recommendation (~200 tokens)
+maestro status --dcp                   # just DCP metrics (~150 tokens)
+maestro status --handoff               # just handoff info (~200 tokens)
+maestro status --tools                 # just available tools + agent tools (~200 tokens)
+maestro status --feature <name>        # status of a different feature
 ```
 
 Default (no flags) is always full. Flags are for when agent ONLY needs one piece.
@@ -4114,7 +4114,7 @@ Default (no flags) is always full. Flags are for when agent ONLY needs one piece
 ### Anti-Pollution Split
 
 ```
-maestro_status:       ALWAYS full (~500 tokens). Worth it -- it's the playbook.
+maestro status:       ALWAYS full (~500 tokens). Worth it -- it's the playbook.
 Every OTHER tool:     compact by default, delta when nothing changed.
 
 Status pays 500 tokens to orient the agent.
@@ -4167,22 +4167,22 @@ function respondWithDelta(toolName: string, data: unknown, budget: number) {
 ### Non-Status Tool Response Examples
 
 ```
-maestro_task_list (compact, ~150 tokens):
+maestro task-list (compact, ~150 tokens):
   "7 tasks: [ok]01-setup [ok]02-registry [ok]03-sdk [ok]04-verify [>>]05-error [--]06-workflow [--]07-skill"
 
-maestro_task_list (delta, unchanged, ~10 tokens):
+maestro task-list (delta, unchanged, ~10 tokens):
   "unchanged (30s ago)"
 
-maestro_memory_list (compact, ~200 tokens):
+maestro memory-list (compact, ~200 tokens):
   "12 memories: 4 decision, 3 research, 3 execution, 2 architecture | top: design-adapter-ctx(p0)"
 
-maestro_task_info (compact, ~100 tokens):
+maestro task-info (compact, ~100 tokens):
   "05-error | claimed worker-1 | deps: [ok]04-verify | spec: 45 lines | AC: 3 items"
 ```
 
 ### Nudge for Agents That Skip Status
 
-If the first tool call is NOT `maestro_status`:
+If the first tool call is NOT `maestro status`:
 
 ```typescript
 let statusCalled = false;  // in-memory, resets on server restart
@@ -4192,7 +4192,7 @@ function withStatusNudge(handler) {
     const result = await handler(input);
     if (!statusCalled) {
       statusCalled = true;  // only nudge once
-      return { ...result, _hint: "Run maestro_status for full workflow context." };
+      return { ...result, _hint: "Run maestro status for full workflow context." };
     }
     return result;
   };
@@ -4239,9 +4239,9 @@ One-time hint on the first non-status call. Not nagging.
 | 4 | "Next" hint has pre-filled args that are wrong | Best-guess from current state. Agent adjusts. Concrete suggestion > vague guidance. |
 | 5 | No hooks, agent doesn't call status | One-time nudge on first non-status tool call. After that, tools work normally. |
 | 6 | Agent calls `--tasks` flag | Returns just tasks (~150 tokens). Full status available without flag. |
-| 7 | Status response for project with 100 tasks | Task list truncated: "100 tasks (showing 10 most relevant). Full: maestro_task_list()." |
-| 8 | Status called before maestro init | "Project not initialized. Run maestro_init." No crash, clear instruction. |
-| 9 | Codex agent doesn't understand compact text format | Instruction in codex config: "Call maestro_status. Follow the line starting with -->." |
+| 7 | Status response for project with 100 tasks | Task list truncated: "100 tasks (showing 10 most relevant). Full: maestro task-list()." |
+| 8 | Status called before maestro init | "Project not initialized. Run maestro init." No crash, clear instruction. |
+| 9 | Codex agent doesn't understand compact text format | Instruction in codex config: "Call maestro status. Follow the line starting with -->." |
 | 10 | Status with `--json` flag | Returns structured JSON instead of compact text. For scripting and programmatic use. |
 
 ---
@@ -4254,7 +4254,7 @@ MCP and CLI share the same domain+action pattern. MCP is the optimized agent sur
 CLI is the full human surface (52+ subcommands). Both call the same usecases.
 
 ```
-MCP:  maestro_task({ action: 'claim', task: '05-error', agent_id: 'worker-1' })
+MCP:  maestro task({ action: 'claim', task: '05-error', agent_id: 'worker-1' })
 CLI:  maestro task claim 05-error --agent worker-1
       ^domain ^action ^args        ^flags
 ```
@@ -4266,20 +4266,20 @@ Merged by domain with read/write split for correct annotations:
 ```
 Domain          MCP (mutating)                      MCP (read-only)                    Reduction
 ------          --------------                      ---------------                    ---------
-Feature         maestro_feature({ action })         maestro_feature_read({ what })     5 --> 2
-Plan            maestro_plan({ action })            maestro_plan_read()                6 --> 2
-Task            maestro_task({ action })            maestro_task_read({ what })        13 --> 2
-Memory          maestro_memory({ action })          maestro_memory_read({ what })      7 --> 2
-Doctrine        maestro_doctrine({ action })        maestro_doctrine_read({ what })    6 --> 2
-Handoff         maestro_handoff({ action })         maestro_handoff_read()             3 --> 2
-Skill           --                                  maestro_skill({ action })          2 --> 1
-Graph           --                                  maestro_graph({ action })          3 --> 1
-Search          --                                  maestro_search({ action })         2 --> 1
-Visual          --                                  maestro_visual({ type })           2 --> 1
-Meta            maestro_init()                      maestro_status()                   4 --> 2
-Stage           maestro_stage({ action })           --                                 new
-Consolidate     maestro_consolidate({ feature })    --                                 new
-DCP             --                                  maestro_dcp({ action })            1 --> 1
+Feature         maestro feature-*         maestro feature-info({ what })     5 --> 2
+Plan            maestro plan-*            maestro plan-read()                6 --> 2
+Task            maestro task({ action })            maestro task_read({ what })        13 --> 2
+Memory          maestro memory({ action })          maestro memory-read({ what })      7 --> 2
+Doctrine        maestro doctrine-*        maestro doctrine-read({ what })    6 --> 2
+Handoff         maestro handoff-send({ action })         maestro handoff-receive()             3 --> 2
+Skill           --                                  maestro skill({ action })          2 --> 1
+Graph           --                                  maestro graph-*          3 --> 1
+Search          --                                  maestro search-sessions({ action })         2 --> 1
+Visual          --                                  maestro visual({ type })           2 --> 1
+Meta            maestro init()                      maestro status()                   4 --> 2
+Stage           maestro stage-jump({ action })           --                                 new
+Consolidate     maestro memory-consolidate    --                                 new
+DCP             --                                  maestro dcp-preview({ action })            1 --> 1
                                                                                        --------
                                                                                        57 --> 21
 ```
@@ -4288,48 +4288,48 @@ DCP             --                                  maestro_dcp({ action })     
 
 ```
 MUTATING (10 tools -- Claude Code asks confirmation):
-  maestro_init, maestro_feature, maestro_plan, maestro_task,
-  maestro_memory, maestro_doctrine, maestro_handoff,
-  maestro_stage, maestro_consolidate
+  maestro init, maestro feature-*, maestro plan-*, maestro task-*,
+  maestro memory, maestro doctrine-*, maestro handoff-send,
+  maestro stage-jump, maestro memory-consolidate
 
 READ-ONLY (11 tools -- Claude Code auto-approves):
-  maestro_status, maestro_feature_read, maestro_plan_read, maestro_task_read,
-  maestro_memory_read, maestro_doctrine_read, maestro_handoff_read,
-  maestro_skill, maestro_graph, maestro_search, maestro_visual, maestro_dcp
+  maestro status, maestro feature-info, maestro plan-read, maestro task_read,
+  maestro memory-read, maestro doctrine-read, maestro handoff-receive,
+  maestro skill, maestro graph-*, maestro search-sessions, maestro visual, maestro dcp-preview
 ```
 
 ### MCP Actions per Tool
 
 ```
-maestro_status()                                   # no actions -- always full
-maestro_init()                                     # no actions -- one-time setup
+maestro status()                                   # no actions -- always full
+maestro init()                                     # no actions -- one-time setup
 
-maestro_feature({ action })                        # create, complete, active
-maestro_feature_read({ what })                     # list, info
+maestro feature-*                        # create, complete, active
+maestro feature-info({ what })                     # list, info
 
-maestro_plan({ action })                           # write, approve, revoke
-maestro_plan_read()                                # read plan content
+maestro plan-*                           # write, approve, revoke
+maestro plan-read()                                # read plan content
 
-maestro_task({ action })                           # sync, claim, done, accept, reject, block, unblock
-maestro_task_read({ what })                        # list, info, spec, report, next, brief
+maestro task({ action })                           # sync, claim, done, accept, reject, block, unblock
+maestro task_read({ what })                        # list, info, spec, report, next, brief
 
-maestro_memory({ action })                         # write, delete, promote
-maestro_memory_read({ what })                      # read, list
+maestro memory({ action })                         # write, delete, promote
+maestro memory-read({ what })                      # read, list
 
-maestro_doctrine({ action })                       # write, approve, suggest
-maestro_doctrine_read({ what })                    # list, read
+maestro doctrine-*                       # write, approve, suggest
+maestro doctrine-read({ what })                    # list, read
 
-maestro_skill({ action })                          # load, list
+maestro skill({ action })                          # load, list
 
-maestro_handoff({ action })                        # send, ack
-maestro_handoff_read()                             # read latest, list history
+maestro handoff-send({ action })                        # send, ack
+maestro handoff-receive()                             # read latest, list history
 
-maestro_graph({ action })                          # insights, next, plan (conditional: bv)
-maestro_search({ action })                         # sessions, related (conditional: cass/search tool)
-maestro_visual({ type })                           # all visual types
-maestro_stage({ action })                          # next, skip, back, jump
-maestro_consolidate({ feature })                   # memory consolidation
-maestro_dcp({ action })                            # preview, stats
+maestro graph-*                          # insights, next, plan (conditional: bv)
+maestro search-sessions({ action })                         # sessions, related (conditional: cass/search tool)
+maestro visual({ type })                           # all visual types
+maestro stage-jump({ action })                          # next, skip, back, jump
+maestro memory-consolidate                   # memory consolidation
+maestro dcp-preview({ action })                            # preview, stats
 ```
 
 ### CLI: Full Surface (52+ subcommands)
@@ -4506,8 +4506,8 @@ cli/
 Old flat commands:        maestro task-claim, maestro task-done, maestro memory-write
 New nested subcommands:   maestro task claim, maestro task done, maestro memory write
 
-Old MCP tools:            maestro_task_claim, maestro_task_done, maestro_memory_write
-New merged MCP:           maestro_task({ action: 'claim' }), maestro_memory({ action: 'write' })
+Old MCP tools:            maestro task-claim, maestro task-done, maestro memory-write
+New merged MCP:           maestro task({ action: 'claim' }), maestro memory({ action: 'write' })
 
 Backward compat:
   CLI: old kebab-case names registered as aliases --> deprecation warning --> remove in v3
@@ -4519,15 +4519,15 @@ Backward compat:
 | # | Edge case | Fix |
 |---|---|---|
 | 1 | Old CLI `maestro task-claim` still used | Alias: `task-claim` redirects to `task claim`. Deprecation warning. |
-| 2 | Old MCP `maestro_task_claim` still used | Alias registered, delegates to `maestro_task({ action: 'claim' })`. Deprecation. |
+| 2 | Old MCP `maestro task-claim` still used | Alias registered, delegates to `maestro task({ action: 'claim' })`. Deprecation. |
 | 3 | `maestro task` with no subcommand | Help: "Available: sync, claim, done, accept, reject, block, unblock, list, info, spec, report, next, brief." |
 | 4 | Agent passes invalid action | Error: "Unknown action 'foo'. Available: claim, done, accept, ...". |
-| 5 | Read tool called with write intent | Error: "Use maestro_task({ action: 'done' }) for state changes." |
+| 5 | Read tool called with write intent | Error: "Use maestro task({ action: 'done' }) for state changes." |
 | 6 | Merged tool description too long | Short description + action enum: "Task state changes. Actions: sync, claim, done, accept, reject, block, unblock." |
 | 7 | Claude Code asks confirmation for read tools | Read tools annotated READONLY. Claude Code auto-approves. Only MUTATING asks. |
 | 8 | Scripts using old CLI names | Aliases preserve compat. Scripts keep working. |
 | 9 | Tab completion for nested subcommands | citty supports nested subcommands. Auto-complete works. |
-| 10 | CLI-only command called via MCP | Error: "maestro_doctor is CLI-only. Use maestro_status for health info." |
+| 10 | CLI-only command called via MCP | Error: "maestro doctor is CLI-only. Use maestro status for health info." |
 
 ---
 
@@ -4540,7 +4540,7 @@ Maestro INFORMS the agent about what can run in parallel and where conflicts exi
 The AGENT decides when and how to parallelize.
 
 ```
-WRONG: maestro_parallel() complex engine spawns workers, manages lifecycle
+WRONG: maestro parallel() complex engine spawns workers, manages lifecycle
 RIGHT: maestro tells agent "3 tasks runnable, 02+03 safe, 05 conflicts with 02"
        Agent decides: "I'll spawn 2 workers for 02+03, do 05 after"
 ```
@@ -4563,7 +4563,7 @@ RIGHT: maestro tells agent "3 tasks runnable, 02+03 safe, 05 conflicts with 02"
 When 2+ tasks are runnable, response includes parallel analysis:
 
 ```
-maestro_task_read({ what: 'next' })
+maestro task_read({ what: 'next' })
 
 {
   runnable: ['02-registry', '03-sdk', '05-error'],
@@ -4604,14 +4604,14 @@ detection is the safety net.
 ### The Orchestrator Loop (agent's reasoning, not maestro code)
 
 ```
-1. Call maestro_task_read({ what: 'next' })
+1. Call maestro task_read({ what: 'next' })
    --> Learn: 3 runnable, 02+03 safe, 05 conflicts with 02
 
 2. Decide: spawn 2 workers for 02+03 in parallel
 
 3. Claim both tasks:
-   maestro_task({ action: 'claim', task: '02-registry', agent_id: 'worker-02' })
-   maestro_task({ action: 'claim', task: '03-sdk', agent_id: 'worker-03' })
+   maestro task({ action: 'claim', task: '02-registry', agent_id: 'worker-02' })
+   maestro task({ action: 'claim', task: '03-sdk', agent_id: 'worker-03' })
 
 4. Spawn workers (Claude Code Agent tool):
    Agent({ prompt: "Implement 02-registry...", isolation: "worktree" })
@@ -4619,11 +4619,11 @@ detection is the safety net.
 
 5. Workers execute:
    - Pre-agent hook auto-injects DCP context per worker
-   - Workers call maestro_task({ action: 'done' }) when finished
+   - Workers call maestro task({ action: 'done' }) when finished
    - Verification runs automatically on task_done
 
 6. Check results:
-   maestro_task_read({ what: 'list' })
+   maestro task_read({ what: 'list' })
    --> 02 done (score 0.90), 03 done (score 0.85)
 
 7. Merge worktrees (dependency order):
@@ -4631,7 +4631,7 @@ detection is the safety net.
    Build after each merge to verify
 
 8. Next iteration:
-   maestro_task_read({ what: 'next' })
+   maestro task_read({ what: 'next' })
    --> 05-error now runnable (02 is done, conflict resolved)
    --> Continue sequential or check for more parallel opportunities
 ```
@@ -4663,8 +4663,8 @@ The skill tells the agent HOW to orchestrate. Not code -- guidance:
 - If conflict: task goes to revision, retry
 
 ## Discovery Sharing
-- Workers share: maestro_discovery({ action: 'share', message: '...' })
-- Check discoveries: maestro_discovery({ action: 'check' })
+- Workers share: maestro discovery({ action: 'share', message: '...' })
+- Check discoveries: maestro discovery({ action: 'check' })
 - Relay important findings to other workers if needed
 ```
 
@@ -4673,12 +4673,12 @@ The skill tells the agent HOW to orchestrate. Not code -- guidance:
 Only 2 new simple tools. No complex orchestration engine.
 
 ```
-maestro_discovery({ action: 'share' | 'check', message? })
+maestro discovery({ action: 'share' | 'check', message? })
   Share: writes discovery to .maestro/features/<f>/discoveries/<worker>.md
   Check: reads all discoveries from other workers
   Simple filesystem read/write.
 
-maestro_reserve({ action: 'lock' | 'release' | 'check', file, worker? })
+maestro file-lock --action lock|release|check --file <path> --worker <name>
   Lock: writes .maestro/reservations/<file-hash>.lock
   Release: deletes lock file
   Check: lists current reservations
@@ -4688,7 +4688,7 @@ maestro_reserve({ action: 'lock' | 'release' | 'check', file, worker? })
 Enhanced existing tool:
 
 ```
-maestro_task_read({ what: 'next' })
+maestro task_read({ what: 'next' })
   ENHANCED: includes parallelAnalysis when 2+ tasks runnable
   (safe list, conflict list, file overlaps, suggestion text)
 ```
@@ -4696,7 +4696,7 @@ maestro_task_read({ what: 'next' })
 ### Status Shows Parallel State
 
 ```
-maestro_status during parallel execution:
+maestro status during parallel execution:
 
 ## maestro: toolbox-refactor (execution, 2/7 done)
 

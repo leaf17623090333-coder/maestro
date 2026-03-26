@@ -134,23 +134,24 @@ describe('textResponse() contract', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 4. Handler compliance: no raw respond({error:...}) calls remain
+// 4. Handler compliance -- removed in Phase 5b (handler files deleted)
 // ---------------------------------------------------------------------------
+// MCP handler files were deleted in Phase 5b. These compliance checks are vacuously
+// satisfied (no handlers exist to violate the contract). The respond/errorResponse
+// utilities are tested in sections 1-3 above.
 describe('handler error response compliance', () => {
   const HANDLERS_DIR = path.join(import.meta.dir, '../../surfaces/mcp/handlers');
 
   test('no handler uses respond({error:}) for errors', () => {
-    // This is the pattern that was the root cause of 77 inconsistent error responses.
-    // All errors must go through errorResponse() for uniform structure.
-    const handlerFiles = fs.readdirSync(HANDLERS_DIR)
-      .filter(f => f.endsWith('.ts'));
+    // Handlers deleted in Phase 5b -- directory may not exist; treat as empty.
+    const handlerFiles = fs.existsSync(HANDLERS_DIR)
+      ? fs.readdirSync(HANDLERS_DIR).filter((f: string) => f.endsWith('.ts'))
+      : [];
 
     const violations: string[] = [];
 
     for (const file of handlerFiles) {
       const content = fs.readFileSync(path.join(HANDLERS_DIR, file), 'utf-8');
-      // Match respond({ error: ... }) but NOT errorResponse(...)
-      // Look for `respond({` followed by `error:` without `success:` before it
       const lines = content.split('\n');
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
@@ -164,11 +165,11 @@ describe('handler error response compliance', () => {
   });
 
   test('all handlers import errorResponse', () => {
-    const handlerFiles = fs.readdirSync(HANDLERS_DIR)
-      .filter(f => f.endsWith('.ts'));
+    // Handlers deleted in Phase 5b -- directory may not exist; treat as empty.
+    const handlerFiles = fs.existsSync(HANDLERS_DIR)
+      ? fs.readdirSync(HANDLERS_DIR).filter((f: string) => f.endsWith('.ts'))
+      : [];
 
-    // Handlers that do not have any error returns (standalone tools) may skip this.
-    // We check that files which CONTAIN errorResponse calls also import it.
     const missingImport: string[] = [];
 
     for (const file of handlerFiles) {

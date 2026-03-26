@@ -28,7 +28,7 @@ Generate the implementation plan using enriched template with FR traceability. E
    - `tech-stack` -- informs technology choices in tasks
    - `guidelines` -- coding standards and conventions
 
-   Access via `maestro memory-read --global --key <key>` (CLI) or `maestro_memory_read` (MCP).
+   Access via `maestro memory-read --global --key <key>` (CLI) or `maestro memory-read` (MCP).
 
    Combine with codebase patterns from step 11.
 
@@ -98,7 +98,7 @@ Generate the implementation plan using enriched template with FR traceability. E
    - Max 3 revision loops. After 3, ask user to approve current version or provide final edits.
 
 8. **Write Plan**
-   Once approved, write the plan via `maestro_plan_write` (MCP) or `maestro plan-write --feature <feature-name>` (CLI).
+   Once approved, write the plan via `maestro plan-write` (MCP) or `maestro plan-write --feature <feature-name>` (CLI).
    This writes to `.maestro/features/<feature-name>/plan.md`.
    Confirm: "Plan written to `.maestro/features/<feature-name>/plan.md`."
 

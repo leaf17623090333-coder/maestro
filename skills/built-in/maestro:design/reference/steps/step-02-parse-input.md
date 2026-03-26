@@ -21,7 +21,7 @@ Extract feature description and generate a kebab-case feature name.
    - Convert to kebab-case
    - Example: "Add user authentication with OAuth" --> `user-auth-oauth`
 
-4. Check existing features via `maestro feature-list` (CLI) or `maestro_feature_list` (MCP). Warn if a feature with a similar name already exists.
+4. Check existing features via `maestro feature-list` (CLI) or `maestro feature-list` (MCP). Warn if a feature with a similar name already exists.
 
 ## Next Step
 Read and follow `reference/steps/step-03-create-dir.md`.

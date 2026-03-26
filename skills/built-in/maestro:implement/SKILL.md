@@ -89,7 +89,7 @@ MODE SELECTION CHECKLIST
 
 ## Step 2: Feature Selection
 
-1. Call `maestro_feature_list` (MCP) or `maestro feature-list` (CLI) to list all features. Filter for features with status `approved` or `executing`.
+1. Call `maestro feature-list` (MCP) or `maestro feature-list` (CLI) to list all features. Filter for features with status `approved` or `executing`.
 2. **If feature name given**: Match by exact name or case-insensitive substring on description. If multiple matches, ask user.
 3. **If no feature name**: Filter features with status `approved` or `executing`. 0 = error, 1 = auto-select, multiple = ask user.
 4. **Confirm selection**: Ask user to start or cancel.
@@ -100,19 +100,19 @@ Load context in tiers to minimize upfront token cost:
 
 ### Essential (load immediately)
 1. Read feature plan: `.maestro/features/<feature-name>/plan.md`
-2. Call `maestro_status` to get current feature state
+2. Call `maestro status --json` to get current feature state
 
 ### Deferred (load at first task start)
-3. Read project memory: `maestro_memory_list` to discover relevant memory entries
+3. Read project memory: `maestro memory-list` to discover relevant memory entries
 4. Read feature-specific memory: `.maestro/features/<feature-name>/memory/` (if exists)
 
 ### On-demand (load only if relevant to current task)
-5. Read any relevant memory entries via `maestro_memory_read`
+5. Read any relevant memory entries via `maestro memory-read`
 6. Note matched skills from `feature.json` `"skills"` array. Reference their guidance when relevant to current task (skill descriptions are already in runtime context). **Graceful degradation**: if missing/empty, proceed without.
 
 ## Step 4: Update Feature Status
 
-Call `maestro_status` to check current feature state. If the feature is in `approved` status, it will transition to `executing` when the first task is claimed.
+Call `maestro status --json` to check current feature state. If the feature is in `approved` status, it will transition to `executing` when the first task is claimed.
 
 ## Step 4.5: BR Check
 
@@ -122,17 +122,17 @@ If `br_enabled` and `.beads/` does not exist: `br init --prefix maestro --json`.
 
 ## Step 5: Build Task Queue
 
-Call `maestro_task_next` (MCP) or `maestro task-next` (CLI) to get the next runnable task with its compiled spec. This replaces manual plan parsing -- maestro manages task state, dependency resolution, and ordering.
+Call `maestro task-next` (MCP) or `maestro task-next` (CLI) to get the next runnable task with its compiled spec. This replaces manual plan parsing -- maestro manages task state, dependency resolution, and ordering.
 
-If `--resume`: `maestro_task_next` automatically skips tasks in `done` state and returns the next `pending` task with all dependencies satisfied.
+If `--resume`: `maestro task-next` automatically skips tasks in `done` state and returns the next `pending` task with all dependencies satisfied.
 
 ### Task Dependency Resolution
 
 Dependencies are resolved by maestro in this priority order:
 
 1. **BR dependencies** (if `br_enabled`): Use `bv -robot-plan -label "track:{epic_id}" -format json` to get dependency-respecting execution order. This is the most reliable source because dependencies are explicit.
-2. **maestro task graph**: `maestro_task_next` respects task dependencies defined during `maestro_tasks_sync`. Tasks are returned in dependency-respecting order.
-3. **Stale claim detection**: Claims expire after the configured timeout (default 120 minutes). Expired claims are automatically reset to `pending` when `maestro_task_next` is called.
+2. **maestro task graph**: `maestro task-next` respects task dependencies defined during `maestro task-sync`. Tasks are returned in dependency-respecting order.
+3. **Stale claim detection**: Claims expire after the configured timeout (default 120 minutes). Expired claims are automatically reset to `pending` when `maestro task-next` is called.
 
 **Dependency conflict detection:**
 ```
@@ -223,7 +223,7 @@ FAILURE TRIAGE
 
 ### Stale Task Recovery
 
-If `maestro_status` shows a task stuck in `claimed` state with no active worker:
+If `maestro status --json` shows a task stuck in `claimed` state with no active worker:
 
 ```
 [!] Task 2.1 is marked claimed but no worker is active.
@@ -233,7 +233,7 @@ If `maestro_status` shows a task stuck in `claimed` state with no active worker:
 Recovery:
 1. Check if partial work exists (uncommitted files, partial implementation)
 2. If partial work is salvageable: use `--resume` to continue from current state
-3. If partial work is broken: reset to last commit. The stale claim will auto-expire on the next `maestro_task_next` call, resetting the task to `pending`.
+3. If partial work is broken: reset to last commit. The stale claim will auto-expire on the next `maestro task-next` call, resetting the task to `pending`.
 4. If using BR: `br update {issue_id} --status open --json` to unblock downstream
 
 ---
@@ -277,14 +277,14 @@ After each task checkpoint report, ask the operator if they want a Hygienic code
 
 Recommended workflow:
 
-- `maestro_init` / `maestro init` -- Initialize maestro for the project
-- `maestro_feature_create` / `maestro feature-create` -- Create a new feature
-- `maestro_plan_write` / `maestro plan-write` -- Write the implementation plan
-- `maestro_plan_approve` / `maestro plan-approve` -- Approve the plan
-- `maestro_tasks_sync` / `maestro task-sync` -- Generate tasks from the plan
+- `maestro init --json` / `maestro init` -- Initialize maestro for the project
+- `maestro feature-create` / `maestro feature-create` -- Create a new feature
+- `maestro plan-write` / `maestro plan-write` -- Write the implementation plan
+- `maestro plan-approve` / `maestro plan-approve` -- Approve the plan
+- `maestro task-sync` / `maestro task-sync` -- Generate tasks from the plan
 - **`maestro:implement`** -- **You are here.** Execute the implementation
 - `maestro:review` -- Verify implementation correctness
-- `maestro_status` / `maestro status` -- Check progress
+- `maestro status --json` / `maestro status` -- Check progress
 - `maestro:revert` -- Undo implementation if needed
 
-Implementation consumes the `plan.md` created during planning. Each task produces atomic commits. Run `maestro_status` to check progress mid-implementation, or `maestro:revert` to undo if something goes wrong.
+Implementation consumes the `plan.md` created during planning. Each task produces atomic commits. Run `maestro status --json` to check progress mid-implementation, or `maestro:revert` to undo if something goes wrong.

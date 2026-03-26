@@ -135,7 +135,7 @@ function generateSessionHandoff(
     }
 
     sections.push('### Handoff Context');
-    sections.push(`1. Call \`maestro_status\` to get current state.`);
+    sections.push(`1. Run \`maestro status --json\` to get current state.`);
     sections.push(`2. Review task \`${recentTask.id}\` for continuation.`);
     sections.push('');
 

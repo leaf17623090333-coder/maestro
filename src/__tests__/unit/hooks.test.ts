@@ -162,7 +162,7 @@ describe('pretooluse hook (via subprocess)', () => {
     const parsed = JSON.parse(output);
     expect(parsed.hookSpecificOutput.hookEventName).toBe('PreToolUse');
     expect(parsed.hookSpecificOutput.additionalContext).toContain(
-      'maestro_task_finish',
+      'maestro task-done',
     );
   });
 

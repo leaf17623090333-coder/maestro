@@ -151,7 +151,6 @@ If you skip the rebuild, the MCP server and CLI will serve stale skill content.
 | Directory name | `maestro:design` | Literal colon in name |
 | Slug in code | `'maestro:design'` | String key in registry |
 | CLI usage | `maestro skill maestro:design` | User-facing |
-| MCP usage | `maestro_skill({ name: 'maestro:design' })` | Tool input |
 
 ## Aliases
 

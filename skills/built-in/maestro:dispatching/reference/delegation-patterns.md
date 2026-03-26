@@ -27,14 +27,14 @@ Orchestrator
 **Workflow:**
 ```bash
 # Find the next runnable task
-maestro_task_next
+maestro task-next
 
 # Claim it
-maestro_task_claim --task 01-the-task
+maestro task-claim --task 01-the-task
 
 # Worker completes the task
 # Mark done
-maestro_task_done --task 01-the-task --summary "Completed all three subtasks sequentially"
+maestro task-done --task 01-the-task --summary "Completed all three subtasks sequentially"
 
 # Review output, merge
 ```
@@ -68,22 +68,22 @@ Orchestrator
 **Workflow:**
 ```bash
 # Find runnable tasks
-maestro_task_next  # Returns recommended task with compiled spec
+maestro task-next  # Returns recommended task with compiled spec
 
 # Claim all independent tasks
-maestro_task_claim --task 01-fix-auth
-maestro_task_claim --task 02-fix-parser
-maestro_task_claim --task 03-fix-renderer
+maestro task-claim --task 01-fix-auth
+maestro task-claim --task 02-fix-parser
+maestro task-claim --task 03-fix-renderer
 
 # Dispatch workers (pre-agent hook injects task spec automatically)
 # Wait for all to complete
 
 # Mark each done and merge incrementally
-maestro_task_done --task 01-fix-auth --summary "..."
+maestro task-done --task 01-fix-auth --summary "..."
 maestro merge --task 01-fix-auth
 bun test
 
-maestro_task_done --task 02-fix-parser --summary "..."
+maestro task-done --task 02-fix-parser --summary "..."
 maestro merge --task 02-fix-parser
 bun test
 ```
@@ -135,24 +135,24 @@ Orchestrator
 **Workflow:**
 ```bash
 # Phase 1
-maestro_task_next                    # Returns task 01 as runnable
-maestro_task_claim --task 01-define-types
+maestro task-next                    # Returns task 01 as runnable
+maestro task-claim --task 01-define-types
 # Worker completes
-maestro_task_done --task 01-define-types --summary "..."
+maestro task-done --task 01-define-types --summary "..."
 # Review, merge
 
 # Phase 2 (now runnable because 01 is done)
-maestro_task_next                    # Returns task 02 as runnable
-maestro_task_claim --task 02-implement
+maestro task-next                    # Returns task 02 as runnable
+maestro task-claim --task 02-implement
 # Worker completes
-maestro_task_done --task 02-implement --summary "..."
+maestro task-done --task 02-implement --summary "..."
 # Review, merge
 
 # Phase 3
-maestro_task_next                    # Returns task 03 as runnable
-maestro_task_claim --task 03-integration-tests
+maestro task-next                    # Returns task 03 as runnable
+maestro task-claim --task 03-integration-tests
 # Worker completes
-maestro_task_done --task 03-integration-tests --summary "..."
+maestro task-done --task 03-integration-tests --summary "..."
 # Review, merge
 ```
 
@@ -170,22 +170,22 @@ Task 3 (integration tests, depends on 2a and 2b)
 
 ```bash
 # Phase 1
-maestro_task_claim --task 01-types
+maestro task-claim --task 01-types
 # Complete and merge
 
 # Phase 2 (parallel -- both runnable after 01 is done)
-maestro_task_claim --task 02a-impl-a
-maestro_task_claim --task 02b-impl-b
+maestro task-claim --task 02a-impl-a
+maestro task-claim --task 02b-impl-b
 # Complete both, merge incrementally
 
 # Phase 3
-maestro_task_claim --task 03-integration
+maestro task-claim --task 03-integration
 # Complete and merge
 ```
 
 **Risk:** Slow -- sequential by nature.
 
-**Mitigation:** Maximize what can run in parallel at each phase. Use `maestro_task_next` to identify all runnable tasks after each merge.
+**Mitigation:** Maximize what can run in parallel at each phase. Use `maestro task-next` to identify all runnable tasks after each merge.
 
 ---
 
@@ -212,11 +212,11 @@ Orchestrator
   Review & merge
 ```
 
-**Detection:** `maestro_status` shows the task as `blocked` with a reason.
+**Detection:** `maestro status --json` shows the task as `blocked` with a reason.
 
 **Recovery workflow:**
 ```bash
-# 1. The worker called maestro_task_block with a reason.
+# 1. The worker called maestro task-block with a reason.
 #    The task is now in `blocked` state.
 
 # 2. Read the blocker details
@@ -226,11 +226,11 @@ maestro task-report-read --task 01-the-task
 # "Worker is blocked: [blocker reason]. What should we do?"
 
 # 4. Unblock with the decision -- task returns to `pending`
-maestro_task_unblock --task 01-the-task --decision "Use REST -- we need browser compatibility"
+maestro task-unblock --task 01-the-task --decision "Use REST -- we need browser compatibility"
 
 # 5. The unblocked task is now pending again.
 #    Claim it and dispatch a new worker (or the same worker resumes).
-maestro_task_claim --task 01-the-task
+maestro task-claim --task 01-the-task
 ```
 
 **What NOT to do:**
@@ -256,7 +256,7 @@ Orchestrator
   Diagnose: what went wrong?
     |
     v
-  maestro_task_next (auto-resets expired claim to pending)
+  maestro task-next (auto-resets expired claim to pending)
     |
     v
   Worker A' (fresh claim, retry with better context)
@@ -265,12 +265,12 @@ Orchestrator
   Review & merge
 ```
 
-**Detection:** `maestro_status` shows the task as `claimed` with an expired timestamp.
+**Detection:** `maestro status --json` shows the task as `claimed` with an expired timestamp.
 
 **Recovery:**
 ```bash
-# 1. maestro_task_next automatically resets expired claims to pending
-maestro_task_next
+# 1. maestro task-next automatically resets expired claims to pending
+maestro task-next
 
 # 2. Read any partial report the worker left
 maestro task-report-read --task 01-the-task
@@ -290,7 +290,7 @@ maestro task-report-read --task 01-the-task
 ```bash
 # For tasks needing spec update before retry
 maestro task-spec-write --task 01-the-task --content "..."
-maestro_task_claim --task 01-the-task
+maestro task-claim --task 01-the-task
 ```
 
 ---

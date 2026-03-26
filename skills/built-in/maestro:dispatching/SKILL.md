@@ -41,7 +41,7 @@ Unsure if they're independent? Sequential until proven otherwise.
 
 ## Prerequisite: Check Runnable Tasks
 
-Before dispatching, use `maestro_task_next` (MCP) or `maestro task-next` (CLI) to get runnable tasks -- tasks whose dependencies are all satisfied and that are in `pending` state.
+Before dispatching, use `maestro task-next` (MCP) or `maestro task-next` (CLI) to get runnable tasks -- tasks whose dependencies are all satisfied and that are in `pending` state.
 
 **Only dispatch tasks that are runnable.** Never claim tasks with unmet dependencies.
 
@@ -49,7 +49,7 @@ Only `done` satisfies dependencies (not `blocked` or `pending`).
 
 **Confirm with the operator first:**
 - "These tasks are runnable and independent: [list]. Execute in parallel?"
-- Record the decision with `maestro_memory_write`
+- Record the decision with `maestro memory-write`
 - Proceed only after operator approval
 
 ## Decision Flow
@@ -57,7 +57,7 @@ Only `done` satisfies dependencies (not `blocked` or `pending`).
 ```dot
 digraph dispatch_decision {
     rankdir=TB;
-    check [label="maestro_task_next\nGet runnable tasks", shape=box];
+    check [label="maestro task-next\nGet runnable tasks", shape=box];
     count [label="How many\nrunnable?", shape=diamond];
     one [label="Single Worker\n(Pattern 1)", shape=box, style=filled, fillcolor="#ccffcc"];
     independent [label="Do they share\nfiles or state?", shape=diamond];
@@ -169,12 +169,12 @@ One "no" means the tasks are NOT independent. Use Pattern 1 or Pattern 3 instead
 
 ```bash
 # Find runnable tasks with compiled specs
-maestro_task_next  # MCP -- returns recommended task with spec
+maestro task-next  # MCP -- returns recommended task with spec
 
 # Claim each task before dispatching a worker
-maestro_task_claim --task 01-fix-auth       # MCP: maestro_task_claim
-maestro_task_claim --task 02-fix-parser
-maestro_task_claim --task 03-fix-renderer
+maestro task-claim --task 01-fix-auth       # MCP: maestro task-claim
+maestro task-claim --task 02-fix-parser
+maestro task-claim --task 03-fix-renderer
 
 # Each claimed task gets a worker agent.
 # The pre-agent hook auto-injects the task spec into the worker prompt.
@@ -183,7 +183,7 @@ maestro_task_claim --task 03-fix-renderer
 ### 3. Monitor
 
 While workers are running:
-- `maestro_status` to check progress
+- `maestro status --json` to check progress
 - Watch for `blocked` status -- a worker needs a decision
 - Watch for stale `claimed` tasks -- a worker may have crashed (claim expired)
 
@@ -211,7 +211,7 @@ Mark each task done and merge one at a time. Re-test after each merge.
 
 ```bash
 # Mark task done with summary
-maestro_task_done --task 01-fix-auth --summary "Fixed null check in validator"
+maestro task-done --task 01-fix-auth --summary "Fixed null check in validator"
 
 # Merge first worker
 maestro merge --task 01-fix-auth
@@ -220,7 +220,7 @@ maestro merge --task 01-fix-auth
 bun test
 
 # Mark and merge second worker
-maestro_task_done --task 02-fix-parser --summary "Added edge case handling"
+maestro task-done --task 02-fix-parser --summary "Added edge case handling"
 maestro merge --task 02-fix-parser
 
 # Verify again
@@ -236,11 +236,11 @@ bun test
 The worker encountered something it cannot resolve without a decision.
 
 ```bash
-# The worker calls maestro_task_block with a reason.
+# The worker calls maestro task-block with a reason.
 # The task moves to `blocked` state.
 
 # 1. Check status to see blocked tasks
-maestro_status
+maestro status --json
 
 # 2. Read the blocker details
 maestro task-report-read --task 01-fix-auth
@@ -250,7 +250,7 @@ maestro task-report-read --task 01-fix-auth
 #  Should I normalize to format A or format B?'"
 
 # 4. Unblock with the decision
-maestro_task_unblock --task 01-fix-auth --decision "Normalize to format A -- it's the newer format"
+maestro task-unblock --task 01-fix-auth --decision "Normalize to format A -- it's the newer format"
 ```
 
 **Do NOT guess the answer.** Present to the operator. Wait.
@@ -259,16 +259,16 @@ maestro_task_unblock --task 01-fix-auth --decision "Normalize to format A -- it'
 
 The worker's claim has expired -- no active worker is running the task.
 
-**Detection:** `maestro_status` shows the task as `claimed` with an expired timestamp.
+**Detection:** `maestro status --json` shows the task as `claimed` with an expired timestamp.
 
 **Recovery:**
 ```bash
-# maestro_task_next auto-resets expired claims to pending.
+# maestro task-next auto-resets expired claims to pending.
 # Simply call task_next to find runnable tasks -- the stale task will be reset.
-maestro_task_next
+maestro task-next
 
 # Now claim it fresh for a new worker
-maestro_task_claim --task 01-fix-auth
+maestro task-claim --task 01-fix-auth
 ```
 
 **Diagnosis before retrying:**
@@ -380,7 +380,7 @@ Before marking dispatch complete:
 - [ ] Merged one at a time with tests between each merge
 - [ ] Full test suite passes after all merges
 - [ ] No unintended side effects (spot-check changed files)
-- [ ] Recorded decisions and outcomes with `maestro_memory_write`
+- [ ] Recorded decisions and outcomes with `maestro memory-write`
 
 Cannot check all boxes? You are not done.
 
@@ -403,8 +403,8 @@ tool-approval-race-conditions.test.ts: 1 failure (execution count = 0)
 
 **Step 3 -- Dispatch:**
 ```
-# Use maestro_task_next to find runnable tasks
-# Claim each: maestro_task_claim
+# Use maestro task-next to find runnable tasks
+# Claim each: maestro task-claim
 Worker 1 --> agent-tool-abort.test.ts (timing issues)
 Worker 2 --> batch-completion-behavior.test.ts (event structure)
 Worker 3 --> tool-approval-race-conditions.test.ts (async waiting)
@@ -416,9 +416,9 @@ Worker 3 --> tool-approval-race-conditions.test.ts (async waiting)
 - Worker 3: Added wait for async tool execution to complete
 
 **Step 5 -- Integration:**
-- `maestro_task_done` for Worker 1, merged, ran tests: green
-- `maestro_task_done` for Worker 2, merged, ran tests: green
-- `maestro_task_done` for Worker 3, merged, ran tests: green
+- `maestro task-done` for Worker 1, merged, ran tests: green
+- `maestro task-done` for Worker 2, merged, ran tests: green
+- `maestro task-done` for Worker 3, merged, ran tests: green
 - Full suite: green. Zero conflicts.
 
 **Time saved:** 3 problems solved in the time of 1.
@@ -428,12 +428,12 @@ Worker 3 --> tool-approval-race-conditions.test.ts (async waiting)
 | Problem | Solution |
 |---------|----------|
 | Workers keep editing same files | Tasks are coupled. Use Pattern 1 or Pattern 3. |
-| Worker blocks on a question | Read blocker via `maestro_status`, present to operator, unblock with `maestro_task_unblock`. |
+| Worker blocks on a question | Read blocker via `maestro status --json`, present to operator, unblock with `maestro task-unblock`. |
 | Worker produces wrong output | Review spec -- was it clear? Update with `maestro task-spec-write` and retry. |
 | Merge conflicts after parallel work | Independence was misjudged. Resolve conflict, then re-verify remaining merges. |
 | Not sure if tasks are independent | They are not. Start sequential, parallelize after first task proves isolation. |
 | Too many tasks to dispatch at once | Batch into groups of 3-4. Merge one batch before starting the next. |
-| Stale claim -- worker disappeared | `maestro_task_next` auto-resets expired claims. Re-claim and dispatch a new worker. |
+| Stale claim -- worker disappeared | `maestro task-next` auto-resets expired claims. Re-claim and dispatch a new worker. |
 
 ## Final Rules
 
@@ -443,7 +443,7 @@ Otherwise         --> sequential
 ```
 
 ```
-Worker done --> review report --> maestro_task_done --> run tests --> merge
+Worker done --> review report --> maestro task-done --> run tests --> merge
 Otherwise   --> not done
 ```
 

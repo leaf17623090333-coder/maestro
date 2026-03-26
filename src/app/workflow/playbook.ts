@@ -34,42 +34,42 @@ const STAGE_CONTENT: Record<PipelineStage, Omit<Playbook, 'tools'>> = {
     stage: 'discovery',
     objective: 'Explore scope, brainstorm, capture findings',
     skills: ['maestro:brainstorming', 'maestro:design', 'maestro:parallel-exploration'],
-    nextMilestone: 'Write plan with plan_write',
-    antiPatterns: ["Don't write the plan yet -- explore first", "Don't skip memory_write -- findings are lost without it"],
+    nextMilestone: 'Write plan with maestro plan-write',
+    antiPatterns: ["Don't write the plan yet -- explore first", "Don't skip maestro memory-write -- findings are lost without it"],
   },
   research: {
     stage: 'research',
     objective: 'Deep-dive codebase, save structured findings',
     skills: ['maestro:brainstorming', 'maestro:design', 'maestro:parallel-exploration'],
-    nextMilestone: 'Write plan with plan_write',
+    nextMilestone: 'Write plan with maestro plan-write',
     antiPatterns: ["Don't research without saving findings as memory", "Don't start planning before research is sufficient"],
   },
   planning: {
     stage: 'planning',
     objective: 'Write plan with discovery section, non-goals, ghost diffs',
     skills: ['maestro:design'],
-    nextMilestone: 'Approve plan with plan_approve',
+    nextMilestone: 'Approve plan with maestro plan-approve',
     antiPatterns: ["Don't skip ## Discovery section in plan", "Don't approve your own plan without review"],
   },
   approval: {
     stage: 'approval',
     objective: 'Generate tasks from the approved plan',
     skills: ['maestro:implement'],
-    nextMilestone: 'Call tasks_sync to generate tasks',
-    antiPatterns: ["Don't skip tasks_sync -- jumping to implementation without tasks loses tracking"],
+    nextMilestone: 'Run maestro task-sync to generate tasks',
+    antiPatterns: ["Don't skip maestro task-sync -- jumping to implementation without tasks loses tracking"],
   },
   execution: {
     stage: 'execution',
     objective: 'Claim tasks, implement via TDD, verify',
     skills: ['maestro:implement', 'maestro:dispatching', 'maestro:tdd'],
     nextMilestone: 'All tasks done',
-    antiPatterns: ["Don't skip task_claim before working", "Don't mark done without verification"],
+    antiPatterns: ["Don't skip maestro task-claim before working", "Don't mark done without verification"],
   },
   done: {
     stage: 'done',
     objective: 'Complete feature, promote memories, review doctrine',
     skills: [],
-    nextMilestone: 'Call feature_complete',
+    nextMilestone: 'Run maestro feature-complete',
     antiPatterns: ["Don't forget to promote useful memories to global"],
   },
 };
@@ -85,7 +85,7 @@ export function buildPlaybook(
 ): Playbook {
   const content = STAGE_CONTENT[stage];
   const tools = registry
-    ? registry.getToolsForStage(stage, toolbox).map(t => t.replace('maestro_', ''))
+    ? registry.getToolsForStage(stage, toolbox)
     : [];
   return { ...content, tools };
 }
@@ -110,17 +110,17 @@ export function buildPlaybookWithExternalSkills(
 const allTasksCompleteHint = (ctx?: TransitionContext): TransitionHint | undefined => {
   if (ctx?.taskDone === undefined || ctx?.taskTotal === undefined) return undefined;
   if (ctx.taskDone < ctx.taskTotal) return undefined;
-  return { nextStep: 'All tasks complete. Call feature_complete' };
+  return { nextStep: 'All tasks complete. Run maestro feature-complete' };
 };
 
 const TRANSITION_HINTS: Record<string, (ctx?: TransitionContext) => TransitionHint | undefined> = {
   plan_approve: () => ({
-    nextStep: 'Call tasks_sync to generate tasks, then task_next',
+    nextStep: 'Run maestro task-sync to generate tasks, then maestro task-next',
     loadSkill: 'maestro:implement',
   }),
   tasks_sync: (ctx) => {
     if (!ctx?.created || ctx.created <= 0) return undefined;
-    return { nextStep: 'Call task_next to find runnable work, then task_claim' };
+    return { nextStep: 'Run maestro task-next to find runnable work, then maestro task-claim' };
   },
   task_done: allTasksCompleteHint,
   task_accept: allTasksCompleteHint,

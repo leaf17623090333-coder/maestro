@@ -54,10 +54,10 @@ export function recommend(
   // Build urgent list from task state
   const urgent: string[] = [];
   if (context.taskReview > 0) {
-    urgent.push('maestro_task(action: accept)', 'maestro_task(action: reject)');
+    urgent.push('maestro task-accept', 'maestro task-reject');
   }
   if (context.taskRevision > 0) {
-    urgent.push('maestro_task(action: claim)');
+    urgent.push('maestro task-claim');
   }
 
   // Split stage tools into primary and secondary
@@ -77,8 +77,8 @@ export function recommend(
 
   // Add contextual urgency: stage-specific tools that should be called first
   if (stage === 'approval' && context.planApproved && context.taskPending === 0) {
-    if (!urgent.includes('maestro_task(action: sync)')) {
-      urgent.push('maestro_task(action: sync)');
+    if (!urgent.includes('maestro task-sync')) {
+      urgent.push('maestro task-sync');
     }
   }
 

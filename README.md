@@ -109,7 +109,7 @@ Stale claims expire after a configurable timeout (default 120 min) and auto-rese
 
 ## MCP Tools (26)
 
-All tools are prefixed `maestro_` in MCP. Tools use merged action/what params: mutating tools use `action`, read-only tools use `what`.
+All commands use the `maestro <command>` format. Use `--json` for structured output.
 
 | Group | Tools | Count |
 |-------|-------|-------|

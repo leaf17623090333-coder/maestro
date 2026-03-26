@@ -277,38 +277,3 @@ describe('conditional tool registration', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// Phase 4a: shared params
-// ---------------------------------------------------------------------------
-describe('shared Zod params', () => {
-  test('featureParam produces correct schema', async () => {
-    const { featureParam } = await import('../../surfaces/mcp/params.ts');
-    const schema = featureParam();
-    // Should be optional string
-    expect(schema.isOptional()).toBe(true);
-    const result = schema.safeParse(undefined);
-    expect(result.success).toBe(true);
-    const result2 = schema.safeParse('my-feature');
-    expect(result2.success).toBe(true);
-  });
-
-  test('taskParam produces required string schema', async () => {
-    const { taskParam } = await import('../../surfaces/mcp/params.ts');
-    const schema = taskParam();
-    expect(schema.isOptional()).toBe(false);
-    const fail = schema.safeParse(undefined);
-    expect(fail.success).toBe(false);
-    const pass = schema.safeParse('01-setup');
-    expect(pass.success).toBe(true);
-  });
-
-  test('limitParam produces optional number with default', async () => {
-    const { limitParam } = await import('../../surfaces/mcp/params.ts');
-    const schema = limitParam(10);
-    expect(schema.isOptional()).toBe(true);
-    const result = schema.parse(undefined);
-    expect(result).toBe(10);
-    const result2 = schema.parse(5);
-    expect(result2).toBe(5);
-  });
-});

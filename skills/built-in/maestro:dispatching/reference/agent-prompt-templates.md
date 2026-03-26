@@ -58,7 +58,7 @@ Design decisions:
 - Summary: what you implemented, any design choices you made
 ```
 
-**After worker completes:** `maestro_task_done --task <id> --summary "<worker's summary>"`
+**After worker completes:** `maestro task-done --task <id> --summary "<worker's summary>"`
 
 ---
 
@@ -104,7 +104,7 @@ Existing test patterns in this project:
 - Summary: what you tested, any design concerns discovered
 ```
 
-**After worker completes:** `maestro_task_done --task <id> --summary "<worker's summary>"`
+**After worker completes:** `maestro task-done --task <id> --summary "<worker's summary>"`
 
 ---
 
@@ -154,7 +154,7 @@ Related recent changes: [mention recent commits or PRs that might have caused th
 - Summary: root cause, what you changed, why this fix is correct
 ```
 
-**After worker completes:** `maestro_task_done --task <id> --summary "<worker's summary>"`
+**After worker completes:** `maestro task-done --task <id> --summary "<worker's summary>"`
 
 ---
 
@@ -199,7 +199,7 @@ Existing tests that must keep passing:
 - Summary: what you moved/renamed/extracted, any follow-up work needed
 ```
 
-**After worker completes:** `maestro_task_done --task <id> --summary "<worker's summary>"`
+**After worker completes:** `maestro task-done --task <id> --summary "<worker's summary>"`
 
 ---
 
@@ -208,16 +208,16 @@ Existing tests that must keep passing:
 Every worker follows this lifecycle, regardless of task type:
 
 ```
-1. maestro_task_next    -- orchestrator finds runnable task with compiled spec
-2. maestro_task_claim   -- orchestrator claims the task (state: pending -> claimed)
+1. maestro task-next    -- orchestrator finds runnable task with compiled spec
+2. maestro task-claim   -- orchestrator claims the task (state: pending -> claimed)
 3. Worker executes      -- pre-agent hook injects task spec into worker prompt
-4a. maestro_task_done   -- worker succeeds (state: claimed -> done)
-4b. maestro_task_block  -- worker hits blocker (state: claimed -> blocked)
-    maestro_task_unblock -- orchestrator provides decision (state: blocked -> pending)
+4a. maestro task-done   -- worker succeeds (state: claimed -> done)
+4b. maestro task-block  -- worker hits blocker (state: claimed -> blocked)
+    maestro task-unblock -- orchestrator provides decision (state: blocked -> pending)
     Back to step 2.
 ```
 
-If a worker's claim expires (stale claim), `maestro_task_next` auto-resets it to `pending`.
+If a worker's claim expires (stale claim), `maestro task-next` auto-resets it to `pending`.
 
 ---
 

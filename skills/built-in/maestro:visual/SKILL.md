@@ -12,13 +12,13 @@ Render maestro state or debug data as self-contained interactive HTML files. All
 
 ## MCP Tools
 
-### `maestro_visual` -- Maestro State Visualizations
+### `maestro visual` -- Maestro State Visualizations
 
 Renders data gathered from maestro services. Requires an active feature.
 
 ```
-maestro_visual({ type: "plan-graph", feature: "my-feature" })
-maestro_visual({ type: "status-dashboard" })  // uses active feature
+maestro visual --type plan-graph --feature my-feature --json
+maestro visual --type status-dashboard --json  # uses active feature
 ```
 
 | Type | What it shows |
@@ -29,16 +29,12 @@ maestro_visual({ type: "status-dashboard" })  // uses active feature
 | `execution-timeline` | Timeline of completed tasks with execution insights. Knowledge flow graph. Doctrine effectiveness table. |
 | `doctrine-network` | Mermaid graph of doctrine items connected by shared tags. Effectiveness metrics table. |
 
-### `maestro_debug_visual` -- Debug Visualizations
+### `maestro debug-visual` -- Debug Visualizations
 
 Renders agent-provided structured data. No feature context needed.
 
 ```
-maestro_debug_visual({
-  type: "component-tree",
-  data: { nodes: [...] },
-  title: "React Component Hierarchy"
-})
+maestro debug-visual --type component-tree --title "React Component Hierarchy" --data '{ "nodes": [...] }' --json
 ```
 
 | Type | What it shows |

@@ -20,10 +20,10 @@ The feature description. Examples: `"Add dark mode support"`, `"Fix login timeou
 
 ## Step 1: Validate Prerequisites
 
-**Inputs:** Filesystem state, `maestro_status` output.
+**Inputs:** Filesystem state, `maestro status --json` output.
 
 **Actions:**
-1. Call `maestro_status` (MCP) or `maestro status` (CLI) to check initialization state.
+1. Call `maestro status --json` (MCP) or `maestro status` (CLI) to check initialization state.
 2. If maestro is not initialized: "Run `maestro init` first." Stop.
 3. Check global memory has product info (`maestro memory-read --key product`). If missing: "Run `maestro skill maestro:setup` to configure project context." Stop.
 
@@ -87,9 +87,9 @@ The feature description. Examples: `"Add dark mode support"`, `"Fix login timeou
 
 ## Step 4: Duplicate Check
 
-**Inputs:** Generated feature name, `maestro_feature_list` output.
+**Inputs:** Generated feature name, `maestro feature-list` output.
 
-**Actions:** Call `maestro_feature_list` (MCP) or `maestro feature-list` (CLI). Warn if any existing feature starts with the same prefix.
+**Actions:** Call `maestro feature-list` (MCP) or `maestro feature-list` (CLI). Warn if any existing feature starts with the same prefix.
 
 **Outputs:** Warning message if duplicate found, otherwise silent.
 
@@ -119,9 +119,8 @@ The feature description. Examples: `"Add dark mode support"`, `"Fix login timeou
 
 **Actions:**
 ```
-maestro_feature_create({ name: "<feature-name>", description: "<description>" })
+maestro feature-create --name "<feature-name>" --description "<description>" --json
 ```
-Or CLI: `maestro feature-create <feature-name> --description "<description>"`
 
 **Outputs:** Feature directory created at `.maestro/features/<feature-name>/` with `feature.json`.
 
@@ -264,7 +263,7 @@ Before presenting the plan, verify:
 
 Same protocol as spec approval (Step 8): max 3 rounds, push back on scope creep, accept user decision after one objection.
 
-**Outputs:** Approved plan written via `maestro_plan_write` (MCP) or `maestro plan-write --feature <feature-name>` (CLI).
+**Outputs:** Approved plan written via `maestro plan-write` (MCP) or `maestro plan-write --feature <feature-name>` (CLI).
 
 **Transition:** Proceed to Step 9.5 when plan is approved and written.
 
@@ -369,11 +368,11 @@ Recommended workflow:
 - `maestro init` -- Initialize maestro for the project
 - `maestro skill maestro:setup` -- Scaffold project context (run first)
 - `maestro skill maestro:new-feature` -- **You are here.** Create a feature with spec and plan
-- `maestro_plan_approve` -- Approve the plan for execution
-- `maestro_tasks_sync` -- Generate tasks from approved plan
+- `maestro plan-approve` -- Approve the plan for execution
+- `maestro task-sync` -- Generate tasks from approved plan
 - `maestro skill maestro:implement` -- Execute the implementation
 - `maestro skill maestro:review` -- Verify implementation correctness
-- `maestro_status` -- Check progress across all features
+- `maestro status --json` -- Check progress across all features
 - `maestro skill maestro:revert` -- Undo implementation if needed
 
 A feature created here produces `spec.md` and `plan.md` that `maestro:implement` consumes. The spec also serves as the baseline for `maestro:review` to validate against. Good specs lead to good implementations -- be thorough in the interview.

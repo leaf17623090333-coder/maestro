@@ -16,7 +16,7 @@ Update feature.json, commit all feature files, and display summary.
    Read `reference/metadata-and-registry.md` for feature.json schema and summary format.
 
 2. **Update feature.json**
-   The feature.json was created by `maestro_feature_create` in step 3. Update it with:
+   The feature.json was created by `maestro feature-create` in step 3. Update it with:
    - phases and tasks counts (from plan.md)
    - skills: [] (or detected skills from step 13)
    - beads_epic_id and beads_issue_map (from step 14, if applicable)
