@@ -180,3 +180,37 @@ Commands organized by domain:
 `init`, `install`, `status`, `agents-md`, `skill`, `skill-list`, `dcp-preview`, `ping`, `doctor`, `history`, `execution-insights`, `self-update`, `update`
 
 All commands accept `--json`. Use `maestro <command> --help` for full usage.
+
+## agentMemory Integration
+
+maestro integrates with **agentMemory** (`~/Code/agentMemory/`), a separate repo that provides a workflow-aware retrieval engine for `.maestro/` memory files.
+
+### What agentMemory Does
+- **Read-only retrieval engine** -- indexes `.maestro/` memory `.md` files, never writes them
+- **Sidecar index** at `.maestro/retrieval-index.json` with keyword tokens, checksums, optional embeddings
+- **6-signal hybrid retrieval**: semantic (0.25), keyword BM25 (0.15), pipeline stage (0.20), dependency graph (0.20), execution feedback (0.15), recency (0.05)
+- **MMR diversity selection** within token budgets
+- **Feedback loop** via `.maestro/feedback.jsonl` -- correlates injected memories with task outcomes
+
+### How It Connects
+- Installed as a dependency: `"agent-memory": "file:../agentMemory"` in package.json
+- Toolbox adapter at `src/infra/toolbox/tools/external/agent-memory/` (manifest + adapter)
+- Adapter registered in `src/infra/toolbox/loader.ts` as `'agent-memory'`
+- Container resolves `agentMemoryRetriever` when the toolbox detects it (optional, graceful fallback)
+- `taskBrief()` in `src/app/tasks/task-brief.ts` delegates to `agentMemoryRetriever.compile()` when available
+- Pre-agent hook passes the retriever through to `taskBrief()`
+- When not installed, standard DCP `selectMemories()` runs unchanged
+
+### Key Files
+| File | Role |
+|------|------|
+| `src/infra/toolbox/tools/external/agent-memory/adapter.ts` | Thin wrapper calling agentMemory library |
+| `src/infra/toolbox/tools/external/agent-memory/manifest.json` | Toolbox manifest (provides: null, priority: 200) |
+| `src/container.ts` | Resolves `agentMemoryRetriever` from toolbox |
+| `src/app/tasks/task-brief.ts` | Uses `compile()` for hybrid retrieval when available |
+| `src/surfaces/hooks/pre-agent.ts` | Passes retriever to `taskBrief()` |
+
+### Development
+- agentMemory repo: `~/Code/agentMemory/` (GitHub: ReinaMacCredy/agentMemory)
+- After changes to agentMemory, run `bun install` in maestro to pick up updates
+- Both repos must typecheck independently: `bun run typecheck` in each
