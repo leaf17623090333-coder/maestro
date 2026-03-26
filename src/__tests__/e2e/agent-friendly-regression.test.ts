@@ -203,9 +203,9 @@ describe('idempotent state transitions', () => {
 
     await harness.run('task-claim', '--feature', 'test-feature', '--task', task, '--agent-id', 'agent-1');
 
-    // Different agent tries to steal -- should fail
+    // Different agent tries to steal -- should fail (MaestroError = exit code 2)
     const steal = await harness.run('task-claim', '--feature', 'test-feature', '--task', task, '--agent-id', 'agent-2');
-    expect(steal.exitCode).toBe(1);
+    expect(steal.exitCode).toBe(2);
   });
 
   test('done on already-done task returns idempotent success', async () => {

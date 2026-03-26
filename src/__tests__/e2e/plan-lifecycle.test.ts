@@ -156,7 +156,7 @@ describe('plan write edge cases', () => {
     await setupFeature(harness);
 
     const result = await harness.run('plan-write', '--feature', 'test-feature', '--content', '# Plan\nSome content without discovery');
-    expect(result.exitCode).toBe(1);
+    expect(result.exitCode).toBe(2);
     expect(getErrorText(result)).toContain('Discovery');
   });
 
@@ -166,7 +166,7 @@ describe('plan write edge cases', () => {
 
     const shortPlan = '## Discovery\nToo short.\n\n### 1. Task\nDo something';
     const result = await harness.run('plan-write', '--feature', 'test-feature', '--content', shortPlan);
-    expect(result.exitCode).toBe(1);
+    expect(result.exitCode).toBe(2);
   });
 
   test('plan-write overwrites existing plan', async () => {
@@ -198,7 +198,7 @@ describe('plan write edge cases', () => {
       // Plan content should be empty/null
       expect(parsed.content === null || parsed.content === '' || parsed.content === undefined).toBe(true);
     } else {
-      expect(result.exitCode).toBe(1);
+      expect(result.exitCode).toBe(2);
     }
   });
 
@@ -207,6 +207,6 @@ describe('plan write edge cases', () => {
     await setupFeature(harness);
 
     const result = await harness.run('plan-approve', '--feature', 'test-feature');
-    expect(result.exitCode).toBe(1);
+    expect(result.exitCode).toBe(2);
   });
 });

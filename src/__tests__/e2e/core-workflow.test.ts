@@ -39,6 +39,7 @@ describe('core workflow', () => {
     await harness.run('init');
     await harness.run('feature-create', 'test-feature');
 
+    // feature-create duplicate throws plain Error (not MaestroError) = exit code 1
     const result = await harness.run('feature-create', 'test-feature');
     expect(result.exitCode).toBe(1);
     expect(getErrorText(result)).toContain('already exists');
@@ -51,7 +52,7 @@ describe('core workflow', () => {
 
     // Missing Discovery section
     const result = await harness.run('plan-write', '--feature', 'test-feature', '--content', '# Plan\nSome content');
-    expect(result.exitCode).toBe(1);
+    expect(result.exitCode).toBe(2);
     expect(getErrorText(result)).toContain('Discovery');
   });
 

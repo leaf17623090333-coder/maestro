@@ -31,9 +31,10 @@ afterEach(async () => {
 // 1. JSON error output contract
 // ---------------------------------------------------------------------------
 describe('CLI JSON error output', () => {
-  test('MaestroError produces structured JSON on stdout with exit code 1', async () => {
+  test('MaestroError produces structured JSON on stdout with exit code 2', async () => {
     // Exact reproduction: before the fix, this would produce human text on stderr.
     // Now it must produce {success:false, command, error, hints} on stdout.
+    // Exit code 2 = user/input error (MaestroError), 1 = system error.
     harness = await createTestHarness();
     await harness.run('init');
     await harness.run('config-set', '--key', 'tasks.backend', '--value', 'fs');
@@ -41,7 +42,7 @@ describe('CLI JSON error output', () => {
 
     // Trigger a MaestroError: plan-approve without a plan
     const result = await harness.run('plan-approve', '--feature', 'test-feature');
-    expect(result.exitCode).toBe(1);
+    expect(result.exitCode).toBe(2);
 
     // Must be valid JSON on stdout
     const parsed = JSON.parse(result.stdout);
@@ -68,7 +69,7 @@ describe('CLI JSON error output', () => {
 
     // Trigger error: feature-complete with undone tasks (includes hints)
     const result = await harness.run('feature-complete', '--feature', 'test-feature');
-    expect(result.exitCode).toBe(1);
+    expect(result.exitCode).toBe(2);
 
     const parsed = JSON.parse(result.stdout);
     expect(parsed.success).toBe(false);
@@ -85,6 +86,7 @@ describe('CLI JSON error output', () => {
     await harness.run('feature-create', 'test-feature');
 
     // Trigger plain Error: duplicate feature-create throws Error (not MaestroError)
+    // Plain Error = system error = exit code 1
     const result = await harness.run('feature-create', 'test-feature');
     expect(result.exitCode).toBe(1);
 
@@ -104,7 +106,7 @@ describe('CLI JSON error output', () => {
     // Trigger error with special chars in context: plan content with quotes
     const result = await harness.run('plan-write', '--feature', 'test-feature',
       '--content', 'Missing "Discovery" section with "quotes" and \\backslashes');
-    expect(result.exitCode).toBe(1);
+    expect(result.exitCode).toBe(2);
 
     // Must still be valid JSON despite special chars in error message
     const parsed = JSON.parse(result.stdout);
@@ -342,7 +344,8 @@ describe('output mode consistency across error paths', () => {
 
     for (const args of errorCommands) {
       const result = await harness.run(...args);
-      expect(result.exitCode).toBe(1);
+      // MaestroError = user error = exit code 2; system error = exit code 1
+      expect(result.exitCode).toBeGreaterThanOrEqual(1);
 
       // Every error must produce parseable JSON on stdout
       let parsed: Record<string, unknown>;

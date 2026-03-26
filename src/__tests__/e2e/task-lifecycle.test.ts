@@ -102,7 +102,7 @@ describe('task sync', () => {
 
     // Plan not approved
     const result = await harness.run('task-sync', '--feature', 'test-feature');
-    expect(result.exitCode).toBe(1);
+    expect(result.exitCode).toBe(2);
     expect(getErrorText(result)).toContain('approv');
   });
 });
@@ -141,7 +141,7 @@ describe('task list', () => {
     await setupWithTasks(harness, SEQUENTIAL_PLAN);
 
     const result = await harness.run('task-list', '--feature', 'test-feature', '--status', 'invalid');
-    expect(result.exitCode).toBe(1);
+    expect(result.exitCode).toBe(2);
     expect(getErrorText(result)).toContain('Invalid status');
   });
 });
@@ -167,7 +167,7 @@ describe('task claim', () => {
     await harness.run('task-claim', '--feature', 'test-feature', '--task', firstTask, '--agent-id', 'agent-1');
 
     const result = await harness.run('task-claim', '--feature', 'test-feature', '--task', firstTask, '--agent-id', 'agent-2');
-    expect(result.exitCode).toBe(1);
+    expect(result.exitCode).toBe(2);
   });
 
   test('rejects claiming a done task', async () => {
@@ -179,7 +179,7 @@ describe('task claim', () => {
     await harness.run('task-done', '--feature', 'test-feature', '--task', firstTask, '--summary', 'Done');
 
     const result = await harness.run('task-claim', '--feature', 'test-feature', '--task', firstTask, '--agent-id', 'a2');
-    expect(result.exitCode).toBe(1);
+    expect(result.exitCode).toBe(2);
   });
 });
 
@@ -204,7 +204,7 @@ describe('task done', () => {
     const firstTask = sync.created[0];
 
     const result = await harness.run('task-done', '--feature', 'test-feature', '--task', firstTask, '--summary', 'Done');
-    expect(result.exitCode).toBe(1);
+    expect(result.exitCode).toBe(2);
   });
 });
 
@@ -355,7 +355,7 @@ describe('full task lifecycle', () => {
     await harness.run('task-done', '--feature', 'test-feature', '--task', firstTask, '--summary', 'Done');
 
     const result = await harness.run('feature-complete', '--feature', 'test-feature');
-    expect(result.exitCode).toBe(1);
+    expect(result.exitCode).toBe(2);
     expect(getErrorText(result)).toContain('not done');
   });
 
@@ -365,7 +365,7 @@ describe('full task lifecycle', () => {
     await harness.run('feature-create', 'test-feature');
 
     const result = await harness.run('feature-complete', '--feature', 'test-feature');
-    expect(result.exitCode).toBe(1);
+    expect(result.exitCode).toBe(2);
     expect(getErrorText(result)).toContain('no tasks');
   });
 
@@ -412,6 +412,6 @@ describe('task info', () => {
     await setupWithTasks(harness, SEQUENTIAL_PLAN);
 
     const result = await harness.run('task-info', '--feature', 'test-feature', '--task', 'nonexistent');
-    expect(result.exitCode).toBe(1);
+    expect(result.exitCode).toBe(2);
   });
 });

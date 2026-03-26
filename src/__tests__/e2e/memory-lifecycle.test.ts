@@ -60,7 +60,7 @@ describe('memory CRUD', () => {
     await setupFeature(harness);
 
     const result = await harness.run('memory-read', '--feature', 'test-feature', '--name', 'nonexistent.md');
-    expect(result.exitCode).toBe(1);
+    expect(result.exitCode).toBe(2);
   });
 });
 
@@ -104,7 +104,7 @@ describe('memory delete', () => {
 
     // Verify it's gone
     const readResult = await harness.run('memory-read', '--feature', 'test-feature', '--name', 'to-delete.md');
-    expect(readResult.exitCode).toBe(1);
+    expect(readResult.exitCode).toBe(2);
   });
 
   test('delete nonexistent memory fails', async () => {
@@ -112,7 +112,7 @@ describe('memory delete', () => {
     await setupFeature(harness);
 
     const result = await harness.run('memory-delete', '--feature', 'test-feature', '--name', 'nonexistent.md');
-    expect(result.exitCode).toBe(1);
+    expect(result.exitCode).toBe(2);
   });
 });
 
@@ -137,7 +137,7 @@ describe('memory compile', () => {
     await setupFeature(harness);
 
     const result = await harness.run('memory-compile', '--feature', 'test-feature');
-    expect(result.exitCode).toBe(1);
+    expect(result.exitCode).toBe(2);
   });
 });
 

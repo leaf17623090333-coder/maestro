@@ -56,7 +56,7 @@ describe('config', () => {
     await harness.run('init');
 
     const result = await harness.run('config-get', '--key', 'nonexistent');
-    expect(result.exitCode).toBe(1);
+    expect(result.exitCode).toBe(2);
   });
 });
 
@@ -105,7 +105,7 @@ describe('feature-info', () => {
     await harness.run('init');
 
     const result = await harness.run('feature-info', '--feature', 'nonexistent');
-    expect(result.exitCode).toBe(1);
+    expect(result.exitCode).toBe(2);
   });
 });
 
