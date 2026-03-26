@@ -29,10 +29,11 @@ export function registerTaskTools(server: McpServer, thunk: ServicesThunk): void
     'maestro_task',
     {
       description:
-        'Task state changes. Actions: sync (generate tasks from approved plan), claim (claim a task), ' +
-        'done (mark complete with verification), accept (override failed verification -> done), ' +
-        'reject (send back for revision), block (record blocker), unblock (resolve blocker), ' +
-        'spec_write (write task spec), report_write (write completion report).',
+        'Task mutations.\n' +
+        'Actions: sync (requires: feature), claim (requires: task, agent_id), done (requires: task, summary), ' +
+        'accept (requires: task), reject (requires: task, feedback), block (requires: task, reason), ' +
+        'unblock (requires: task, decision), spec_write (requires: task, content), report_write (requires: task, content)\n' +
+        'Example: {action: "claim", task: "01-setup", agent_id: "worker-1"}',
       inputSchema: {
         action: z.enum(['sync', 'claim', 'done', 'accept', 'reject', 'block', 'unblock', 'spec_write', 'report_write'])
           .describe('Action to perform'),
@@ -181,9 +182,10 @@ export function registerTaskTools(server: McpServer, thunk: ServicesThunk): void
     'maestro_task_read',
     {
       description:
-        'Task read operations. What: list (all tasks with status), info (specific task details), ' +
-        'spec (compiled task spec), report (completion report), next (runnable tasks with recommended spec), ' +
-        'brief (full agent context: spec + memories + doctrine + graph + worker rules).',
+        'Task read operations.\n' +
+        'What: list (no required params), info (requires: task), spec (requires: task), ' +
+        'report (requires: task), next (no required params), brief (requires: task)\n' +
+        'Example: {what: "info", task: "01-setup"}',
       inputSchema: {
         what: z.enum(['list', 'info', 'spec', 'report', 'next', 'brief']).describe('What to read'),
         feature: featureParam(),

@@ -14,8 +14,11 @@ export function registerDoctrineTools(server: McpServer, thunk: ServicesThunk): 
     'maestro_doctrine',
     {
       description:
-        'Doctrine mutations. Actions: write (create/update doctrine item), approve (approve suggestion -> active), ' +
-        'suggest (analyze patterns to find candidates), deprecate (mark item inactive).',
+        'Doctrine mutations. Actions: write (requires: name, rule, rationale -- create/update doctrine item), ' +
+        'approve (requires: name, rule, rationale -- approve suggestion -> active), ' +
+        'suggest (analyze execution patterns to find candidates), ' +
+        'deprecate (requires: name -- mark item inactive). ' +
+        'Example: maestro_doctrine({ action: "write", name: "no-any", rule: "Avoid any type", rationale: "Type safety" })',
       inputSchema: {
         action: z.enum(['write', 'approve', 'suggest', 'deprecate']).describe('Action to perform'),
         name: z.string().optional().describe('Doctrine item name in kebab-case (required for write, approve, deprecate)'),
@@ -94,7 +97,10 @@ export function registerDoctrineTools(server: McpServer, thunk: ServicesThunk): 
   server.registerTool(
     'maestro_doctrine_read',
     {
-      description: 'Doctrine read operations. What: list (all items, optionally filtered by status), read (single item by name).',
+      description:
+        'Doctrine read operations. What: list (all items, optionally filtered by status), ' +
+        'read (requires: name -- single item by name). ' +
+        'Example: maestro_doctrine_read({ what: "read", name: "no-any" })',
       inputSchema: {
         what: z.enum(['list', 'read']).describe('What to read'),
         name: z.string().optional().describe('Doctrine item name (required for what: read)'),

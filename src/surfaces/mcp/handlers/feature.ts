@@ -14,7 +14,10 @@ export function registerFeatureTools(server: McpServer, thunk: ServicesThunk): v
   server.registerTool(
     'maestro_feature',
     {
-      description: 'Feature lifecycle mutations. Actions: create (new feature), complete (mark done).',
+      description:
+        'Feature mutations.\n' +
+        'Actions: create (requires: name), complete (no required params)\n' +
+        'Example: {action: "create", name: "auth-refactor"}',
       inputSchema: {
         action: z.enum(['create', 'complete']).describe('Action to perform'),
         feature: featureParam(),
@@ -48,7 +51,10 @@ export function registerFeatureTools(server: McpServer, thunk: ServicesThunk): v
   server.registerTool(
     'maestro_feature_read',
     {
-      description: 'Feature read operations. What: list (all features), info (specific feature details), active (current active feature).',
+      description:
+        'Feature read operations.\n' +
+        'What: list (no required params), info (requires: name), active (no required params)\n' +
+        'Example: {what: "info", name: "auth-refactor"}',
       inputSchema: {
         what: z.enum(['list', 'info', 'active']).describe('What to read'),
         feature: featureParam(),

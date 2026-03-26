@@ -21,8 +21,9 @@ export function registerHandoffTools(server: McpServer, thunk: ServicesThunk): v
     'maestro_handoff',
     {
       description:
-        'Handoff mutations via Agent Mail. Actions: send (send handoff document to another agent), ' +
-        'ack (acknowledge receipt of a handoff message).',
+        'Handoff mutations via Agent Mail. Actions: send (requires: task -- send handoff document to another agent), ' +
+        'ack (requires: thread_id -- acknowledge receipt of a handoff message). ' +
+        'Example: maestro_handoff({ action: "send", task: "implement-auth" })',
       inputSchema: {
         action: z.enum(['send', 'ack']).describe('Action to perform'),
         feature: featureParam(),
@@ -63,8 +64,10 @@ export function registerHandoffTools(server: McpServer, thunk: ServicesThunk): v
     'maestro_handoff_read',
     {
       description:
-        'Handoff read operations. What: read (specific handoff file content), list (all handoffs for feature), ' +
-        'status (exists + acknowledged check), receive (check Agent Mail for pending handoffs).',
+        'Handoff read operations. What: read (requires: id -- specific handoff file content), ' +
+        'list (all handoffs for feature), status (requires: id -- exists + acknowledged check), ' +
+        'receive (requires: agent_id -- check Agent Mail for pending handoffs). ' +
+        'Example: maestro_handoff_read({ what: "receive", agent_id: "worker-1" })',
       inputSchema: {
         what: z.enum(['read', 'list', 'status', 'receive']).describe('What to read'),
         feature: featureParam(),

@@ -17,9 +17,11 @@ export function registerSkillTools(server: McpServer, _thunk: ServicesThunk, dir
     'maestro_skill',
     {
       description:
-        'Skill operations. Actions: load (get skill content by name), list (all available skills), ' +
-        'install (add external skill from path), create (scaffold new skill), ' +
-        'remove (delete installed skill), sync (rescan + clean up).',
+        'Skill operations. Actions: load (requires: name -- returns raw text content), ' +
+        'list (all available skills), install (requires: source -- add external skill from path), ' +
+        'create (requires: name -- scaffold new skill), remove (requires: name -- delete installed skill), ' +
+        'sync (rescan + clean up). load returns raw text content; all other actions return JSON. ' +
+        'Example: maestro_skill({ action: "load", name: "maestro:design" })',
       inputSchema: {
         action: z.enum(['load', 'list', 'install', 'create', 'remove', 'sync'])
           .describe('Action to perform'),

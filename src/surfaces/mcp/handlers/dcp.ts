@@ -48,8 +48,10 @@ export function registerDcpTools(server: McpServer, thunk: ServicesThunk): void 
     'maestro_dcp',
     {
       description:
-        'DCP (Dynamic Context Pruning) operations. Actions: preview (memory selection scores for a task), ' +
-        'stats (token budgets and component breakdown), config (current DCP settings and component registry).',
+        'DCP (Dynamic Context Pruning) operations. Actions: preview (requires: task -- memory selection scores for a task), ' +
+        'stats (requires: task -- token budgets and component breakdown), ' +
+        'config (current DCP settings and component registry). ' +
+        'Example: maestro_dcp({ action: "preview", task: "implement-auth" })',
       inputSchema: {
         action: z.enum(['preview', 'stats', 'config']).describe('Action to perform'),
         feature: featureParam(),

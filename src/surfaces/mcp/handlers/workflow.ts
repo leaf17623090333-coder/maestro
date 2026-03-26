@@ -16,7 +16,12 @@ export function registerWorkflowTools(server: McpServer, _thunk: ServicesThunk):
   server.registerTool(
     'maestro_stage',
     {
-      description: 'Navigate pipeline stages: jump to a specific stage, skip forward, or go back.',
+      description:
+        'Navigate pipeline stages. Actions: jump (requires: target, currentStage -- go to a specific stage), ' +
+        'skip (requires: currentStage -- advance one stage forward), ' +
+        'back (requires: currentStage -- retreat one stage). ' +
+        'Stages: discovery, research, planning, approval, execution, done. ' +
+        'Example: maestro_stage({ action: "jump", target: "execution", currentStage: "planning" })',
       annotations: ANNOTATIONS_MUTATING,
       inputSchema: {
         action: z.enum(['jump', 'skip', 'back']).describe('Navigation action'),

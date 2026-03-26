@@ -18,9 +18,11 @@ export function registerMemoryTools(server: McpServer, thunk: ServicesThunk): vo
     'maestro_memory',
     {
       description:
-        'Memory mutations. Actions: write (save memory), delete (remove memory), promote (feature -> global), ' +
-        'compress (truncate to 200 chars), consolidate (deduplicate + compress + promote), ' +
-        'connect (link two memories), archive (archive all to timestamped dir).',
+        'Memory mutations.\n' +
+        'Actions: write (requires: name, content), delete (requires: name), promote (requires: name), ' +
+        'compress (requires: name), consolidate (no required params), ' +
+        'connect (requires: name, target, relation), archive (no required params)\n' +
+        'Example: {action: "write", name: "api-findings", content: "REST endpoints use /v2 prefix"}',
       inputSchema: {
         action: z.enum(['write', 'delete', 'promote', 'compress', 'consolidate', 'connect', 'archive'])
           .describe('Action to perform'),
@@ -130,8 +132,10 @@ export function registerMemoryTools(server: McpServer, thunk: ServicesThunk): vo
     'maestro_memory_read',
     {
       description:
-        'Memory read operations. What: read (single memory file), list (all files, with optional DCP scoring), ' +
-        'stats (count/bytes/timestamps), insights (duplicates + compression candidates), compile (concatenate all).',
+        'Memory read operations.\n' +
+        'What: read (requires: name), list (no required params), stats (no required params), ' +
+        'insights (no required params), compile (no required params)\n' +
+        'Example: {what: "read", name: "api-findings"}',
       inputSchema: {
         what: z.enum(['read', 'list', 'stats', 'insights', 'compile']).describe('What to read'),
         feature: z.string().optional().describe('Feature name (defaults to active feature; omit for global memory)'),

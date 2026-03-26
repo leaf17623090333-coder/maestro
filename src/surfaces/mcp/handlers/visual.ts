@@ -13,12 +13,13 @@ export function registerVisualTools(server: McpServer, thunk: ServicesThunk): vo
     'maestro_visual',
     {
       description:
-        'Render HTML visualizations. Type selects the visualization kind. ' +
-        'Maestro state types: plan-graph (task dependency flowchart), status-dashboard (KPI cards + progress), ' +
+        'Render HTML visualizations. type selects the visualization kind. ' +
+        'Maestro state types (require feature): plan-graph (task dependency flowchart), status-dashboard (KPI cards + progress), ' +
         'memory-map (category grid + distribution), execution-timeline (task events + knowledge flow), ' +
         'doctrine-network (doctrine relationships + effectiveness). ' +
-        'Debug types (require data): component-tree, state-flow, error-cascade, network-waterfall, dom-diff, console-timeline. ' +
-        'Writes to ~/.maestro/visuals/.',
+        'Debug types (require data param): component-tree, state-flow, error-cascade, network-waterfall, dom-diff, console-timeline. ' +
+        'Writes to ~/.maestro/visuals/. ' +
+        'Example: maestro_visual({ type: "status-dashboard" })',
       inputSchema: {
         type: z.enum([
           'plan-graph', 'status-dashboard', 'memory-map', 'execution-timeline', 'doctrine-network',

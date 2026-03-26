@@ -15,8 +15,10 @@ export function registerSearchTools(server: McpServer, thunk: ServicesThunk): vo
     'maestro_search',
     {
       description:
-        'Session history search. Actions: sessions (full-text search of past agent sessions), ' +
-        'related (find sessions that worked on a specific file), similar (find sessions with similar content).',
+        'Session history search. Actions: sessions (requires: query -- full-text search of past agent sessions), ' +
+        'related (requires: file_path -- find sessions that worked on a specific file), ' +
+        'similar (requires: content -- find sessions with similar content). ' +
+        'Example: maestro_search({ action: "sessions", query: "auth refactor" })',
       inputSchema: {
         action: z.enum(['sessions', 'related', 'similar']).describe('Action to perform'),
         query: z.string().optional().describe('Search query (required for sessions)'),

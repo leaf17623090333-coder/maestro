@@ -21,7 +21,8 @@ export function registerGraphTools(server: McpServer, thunk: ServicesThunk): voi
         'next (top recommended next bead with rationale -- requires bv), ' +
         'plan (parallel execution tracks for N agents -- requires bv), ' +
         'discovery (all runnable tasks with specs for parallel dispatch), ' +
-        'reserve (batch claim multiple tasks for parallel agents).',
+        'reserve (requires: tasks array -- batch claim multiple tasks for parallel agents). ' +
+        'Example: maestro_graph({ action: "discovery" })',
       inputSchema: {
         action: z.enum(['insights', 'next', 'plan', 'discovery', 'reserve'])
           .describe('Action to perform'),
