@@ -6,15 +6,8 @@ import { ANNOTATIONS_READONLY, ANNOTATIONS_MUTATING } from '../annotations.ts';
 import { readJson, writeJsonAtomic, ensureDir } from '../../../infra/utils/fs-io.ts';
 import { getNestedValue, setNestedValue } from '../../../infra/utils/object-utils.ts';
 import { MaestroError } from '../../../domain/errors.ts';
+import { validateSettingsKey } from '../../../domain/config-validation.ts';
 import * as path from 'path';
-
-/** Top-level keys from MaestroSettings that are valid write targets. */
-const WRITABLE_KEY_PREFIXES = [
-  'toolbox', 'agentTools', 'dcp', 'verification',
-  'doctrine', 'tasks', 'agents', 'host',
-] as const;
-
-const PROTOTYPE_POLLUTION_PATTERN = /(__proto__|constructor|prototype)/;
 
 const REDACT_PATTERN = /apiKey|token|secret|password/i;
 
@@ -70,22 +63,7 @@ export function registerConfigTools(server: McpServer, thunk: ServicesThunk): vo
       annotations: ANNOTATIONS_MUTATING,
     },
     withErrorHandling(async (input) => {
-      // Reject prototype pollution vectors
-      if (PROTOTYPE_POLLUTION_PATTERN.test(input.key)) {
-        throw new MaestroError(
-          `Invalid config key: "${input.key}" contains a disallowed segment`,
-          ['Keys must not contain __proto__, constructor, or prototype.'],
-        );
-      }
-
-      // Validate top-level key is a known MaestroSettings section
-      const topLevelKey = input.key.split('.')[0];
-      if (!WRITABLE_KEY_PREFIXES.includes(topLevelKey as typeof WRITABLE_KEY_PREFIXES[number])) {
-        throw new MaestroError(
-          `Unknown config section: "${topLevelKey}"`,
-          [`Valid top-level sections: ${WRITABLE_KEY_PREFIXES.join(', ')}`],
-        );
-      }
+      validateSettingsKey(input.key);
 
       const services = thunk.get();
       let parsed: unknown;

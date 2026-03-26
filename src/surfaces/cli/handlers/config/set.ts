@@ -8,6 +8,7 @@ import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
 import { output } from '../../../../infra/utils/output.ts';
 import { handleCommandError } from '../../../../domain/errors.ts';
+import { validateSettingsKey } from '../../../../domain/config-validation.ts';
 import { ensureDir, writeJsonAtomic, readJson } from '../../../../infra/utils/fs-io.ts';
 import { setNestedValue } from '../../../../infra/utils/object-utils.ts';
 import { homedir } from 'os';
@@ -33,6 +34,9 @@ export default defineCommand({
   },
   async run({ args }) {
     try {
+      // Validate key before writing
+      validateSettingsKey(args.key);
+
       // Parse value
       let parsed: unknown;
       try {

@@ -33,8 +33,8 @@ describe('config', () => {
     harness = await createTestHarness();
     await harness.run('init');
 
-    await harness.run('config-set', '--key', 'sandbox', '--value', 'true');
-    const result = await harness.run('config-get', '--key', 'sandbox');
+    await harness.run('config-set', '--key', 'dcp.enabled', '--value', 'true');
+    const result = await harness.run('config-get', '--key', 'dcp.enabled');
     expect(result.exitCode).toBe(0);
     const value = JSON.parse(result.stdout);
     expect(value).toBe(true);
@@ -44,8 +44,8 @@ describe('config', () => {
     harness = await createTestHarness();
     await harness.run('init');
 
-    await harness.run('config-set', '--key', 'claimExpiresMinutes', '--value', '60');
-    const result = await harness.run('config-get', '--key', 'claimExpiresMinutes');
+    await harness.run('config-set', '--key', 'tasks.claimExpiresMinutes', '--value', '60');
+    const result = await harness.run('config-get', '--key', 'tasks.claimExpiresMinutes');
     expect(result.exitCode).toBe(0);
     const value = JSON.parse(result.stdout);
     expect(value).toBe(60);
