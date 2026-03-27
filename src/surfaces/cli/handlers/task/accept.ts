@@ -5,7 +5,8 @@
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
 import { output } from '../../../../infra/utils/output.ts';
-import { handleCommandError } from '../../../../domain/errors.ts';
+import { MaestroError } from '../../../../domain/errors.ts';
+import { handleCommandError } from '../../error-handler.ts';
 import { requireFeature, FEATURE_HINT } from '../../../../infra/utils/resolve.ts';
 import { writeExecutionMemory } from '../../../../app/memory/execution/writer.ts';
 
@@ -31,14 +32,14 @@ export default defineCommand({
 
       const existing = await services.taskPort.get(featureName, args.task);
       if (!existing) {
-        throw new Error(`Task '${args.task}' not found`);
+        throw new MaestroError(`Task '${args.task}' not found`, ['Check task ID with maestro task-list']);
       }
       if (existing.status === 'done') {
         output(existing, () => `[ok] task '${args.task}' already accepted (done)`);
         return;
       }
       if (existing.status !== 'review') {
-        throw new Error(`Task '${args.task}' is not in review state (current: ${existing.status})`);
+        throw new MaestroError(`Task '${args.task}' is not in review state (current: ${existing.status})`, ['Only tasks in review state can be accepted']);
       }
       const summary = existing.summary ?? '';
       let report = null;

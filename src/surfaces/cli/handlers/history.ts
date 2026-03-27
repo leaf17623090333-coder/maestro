@@ -6,7 +6,7 @@ import { defineCommand } from 'citty';
 import { getServices } from '../../../services.ts';
 import { history, type HistoryResult } from '../../../app/workflow/history.ts';
 import { output, renderTable } from '../../../infra/utils/output.ts';
-import { handleCommandError } from '../../../domain/errors.ts';
+import { handleCommandError } from '../error-handler.ts';
 import type { FeatureStatusType } from '../../../domain/types.ts';
 
 function formatDuration(days?: number): string {

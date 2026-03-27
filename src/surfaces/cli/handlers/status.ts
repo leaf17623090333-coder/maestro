@@ -6,7 +6,7 @@ import { defineCommand } from 'citty';
 import { getServices } from '../../../services.ts';
 import { checkStatus, type StatusResult } from '../../../app/workflow/status.ts';
 import { output, renderStatusLine } from '../../../infra/utils/output.ts';
-import { handleCommandError } from '../../../domain/errors.ts';
+import { handleCommandError } from '../error-handler.ts';
 import { requireFeature, FEATURE_HINT } from '../../../infra/utils/resolve.ts';
 import { truncateList, formatTruncation } from '../../../infra/utils/truncation.ts';
 

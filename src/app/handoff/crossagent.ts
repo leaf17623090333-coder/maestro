@@ -24,9 +24,11 @@ import * as fs from 'fs';
 // Types
 // ============================================================================
 
+export type CrossAgentStatus = 'pending' | 'picked-up' | 'completed';
+
 export interface CrossAgentState {
   feature: string;
-  status: 'pending' | 'picked-up' | 'completed';
+  status: CrossAgentStatus;
   fromHost: string;
   toAgent?: string;
   createdAt: string;

@@ -291,7 +291,7 @@ describe('output mode consistency across error paths', () => {
     expect(violations).toEqual([]);
   });
 
-  test('handleCommandError is imported from domain/errors in all handlers', () => {
+  test('handleCommandError is imported from error-handler.ts in all handlers', () => {
     const HANDLERS_DIR = path.join(import.meta.dir, '../../surfaces/cli/handlers');
 
     function getAllHandlerFiles(dir: string): string[] {
@@ -314,8 +314,8 @@ describe('output mode consistency across error paths', () => {
       const content = fs.readFileSync(file, 'utf-8');
       if (!content.includes('handleCommandError(')) continue;
 
-      // Must import it from errors.ts
-      if (!content.includes("from") || !content.includes("errors")) {
+      // Must import it from error-handler.ts (surfaces/cli/error-handler.ts)
+      if (!content.includes("from") || !content.includes("error-handler")) {
         missingImport.push(path.relative(HANDLERS_DIR, file));
       }
     }

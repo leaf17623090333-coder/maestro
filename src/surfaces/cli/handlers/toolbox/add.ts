@@ -7,7 +7,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { defineCommand } from 'citty';
 import { output } from '../../../../infra/utils/output.ts';
-import { MaestroError, handleCommandError } from '../../../../domain/errors.ts';
+import { MaestroError } from '../../../../domain/errors.ts';
+import { handleCommandError } from '../../error-handler.ts';
 import type { TransportType } from '../../../../infra/toolbox/sdk/types.ts';
 
 const VALID_TRANSPORTS: TransportType[] = ['cli', 'http', 'mcp-stdio', 'mcp-http'];

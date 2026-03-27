@@ -7,7 +7,7 @@ import * as path from 'node:path';
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
 import { output, renderTable } from '../../../../infra/utils/output.ts';
-import { handleCommandError } from '../../../../domain/errors.ts';
+import { handleCommandError } from '../../error-handler.ts';
 import { requireFeature, FEATURE_HINT } from '../../../../infra/utils/resolve.ts';
 import { getHandoffsPath } from '../../../../infra/utils/paths.ts';
 import { fileExists } from '../../../../infra/utils/fs-io.ts';

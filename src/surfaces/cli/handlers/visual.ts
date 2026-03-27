@@ -4,7 +4,8 @@ import { visualize } from '../../../app/visual/visualize.ts';
 import type { MaestroVisualType, VisualResult } from '../../../app/visual/types.ts';
 import { MAESTRO_VISUAL_TYPES } from '../../../app/visual/types.ts';
 import { output } from '../../../infra/utils/output.ts';
-import { handleCommandError } from '../../../domain/errors.ts';
+import { MaestroError } from '../../../domain/errors.ts';
+import { handleCommandError } from '../error-handler.ts';
 import { requireFeature, FEATURE_HINT } from '../../../infra/utils/resolve.ts';
 
 function formatResult(result: VisualResult): string {
@@ -42,7 +43,7 @@ export default defineCommand({
       ]);
 
       if (!MAESTRO_VISUAL_TYPES.includes(args.type as MaestroVisualType)) {
-        throw new Error(`Invalid type: ${args.type}. Valid: ${MAESTRO_VISUAL_TYPES.join(', ')}`);
+        throw new MaestroError(`Invalid type: ${args.type}`, [`Valid types: ${MAESTRO_VISUAL_TYPES.join(', ')}`]);
       }
 
       const result = await visualize(

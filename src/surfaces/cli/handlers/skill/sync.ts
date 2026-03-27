@@ -5,7 +5,7 @@
 import { defineCommand } from 'citty';
 import { syncSkills } from '../../../../app/skills/sync.ts';
 import { output } from '../../../../infra/utils/output.ts';
-import { handleCommandError } from '../../../../domain/errors.ts';
+import { handleCommandError } from '../../error-handler.ts';
 
 export default defineCommand({
   meta: { name: 'skill-sync', description: 'Rescan skill registry and clean up broken entries\n\nExamples:\n  maestro skill-sync\n  maestro skill-sync --json' },

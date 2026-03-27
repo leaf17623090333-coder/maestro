@@ -5,7 +5,7 @@
 import { defineCommand } from 'citty';
 import { listSkills, type SkillEntry } from '../../../../app/skills/registry.ts';
 import { output, renderTable } from '../../../../infra/utils/output.ts';
-import { handleCommandError } from '../../../../domain/errors.ts';
+import { handleCommandError } from '../../error-handler.ts';
 
 function formatSkillList(skills: Array<SkillEntry>): string {
   if (skills.length === 0) return 'No skills available.';

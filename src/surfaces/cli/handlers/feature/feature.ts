@@ -6,7 +6,8 @@ import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
 import { output } from '../../../../infra/utils/output.ts';
 import { renderStatusLine } from '../../../../infra/utils/output.ts';
-import { handleCommandError, MaestroError } from '../../../../domain/errors.ts';
+import { MaestroError } from '../../../../domain/errors.ts';
+import { handleCommandError } from '../../error-handler.ts';
 
 export default defineCommand({
   meta: { name: 'feature-active', description: 'Show or set active feature\n\nExamples:\n  maestro feature-active\n  maestro feature-active --json' },

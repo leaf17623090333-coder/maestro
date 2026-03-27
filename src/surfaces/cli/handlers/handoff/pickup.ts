@@ -5,7 +5,7 @@
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
 import { output } from '../../../../infra/utils/output.ts';
-import { handleCommandError } from '../../../../domain/errors.ts';
+import { handleCommandError } from '../../error-handler.ts';
 import { pickupCrossAgentHandoff } from '../../../../app/handoff/crossagent.ts';
 
 export default defineCommand({

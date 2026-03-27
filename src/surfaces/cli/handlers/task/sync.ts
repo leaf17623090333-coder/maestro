@@ -7,7 +7,7 @@ import { getServices } from '../../../../services.ts';
 import { syncPlan } from '../../../../app/tasks/sync-plan.ts';
 import { translatePlan } from '../../../../app/tasks/translate-plan.ts';
 import { output } from '../../../../infra/utils/output.ts';
-import { handleCommandError } from '../../../../domain/errors.ts';
+import { handleCommandError } from '../../error-handler.ts';
 import { requireFeature, FEATURE_HINT } from '../../../../infra/utils/resolve.ts';
 
 export default defineCommand({

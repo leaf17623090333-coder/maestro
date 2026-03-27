@@ -6,7 +6,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { defineCommand } from 'citty';
 import { output } from '../../../../infra/utils/output.ts';
-import { handleCommandError } from '../../../../domain/errors.ts';
+import { handleCommandError } from '../../error-handler.ts';
 import { loadManifest, inferTransport } from '../../../../infra/toolbox/loader.ts';
 import { sanitizeDetectCommand } from '../../../../infra/utils/cli-detect.ts';
 import { execFileSync } from 'node:child_process';

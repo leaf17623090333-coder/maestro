@@ -5,7 +5,7 @@
 import { defineCommand } from 'citty';
 import { installSkill } from '../../../../app/skills/install.ts';
 import { output } from '../../../../infra/utils/output.ts';
-import { handleCommandError } from '../../../../domain/errors.ts';
+import { handleCommandError } from '../../error-handler.ts';
 
 export default defineCommand({
   meta: { name: 'skill-install', description: 'Install a skill from a local directory\n\nExamples:\n  maestro skill-install --source ./my-skill\n  maestro skill-install --source /path/to/skill --json' },

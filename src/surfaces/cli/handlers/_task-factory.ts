@@ -5,9 +5,9 @@
 import { defineCommand } from 'citty';
 import { getServices } from '../../../services.ts';
 import { output, renderStatusLine } from '../../../infra/utils/output.ts';
-import { MaestroError, handleCommandError } from '../../../domain/errors.ts';
-import { readStdinText } from '../../../infra/utils/stdin.ts';
-import * as fs from 'fs';
+import { MaestroError } from '../../../domain/errors.ts';
+import { handleCommandError } from '../error-handler.ts';
+import { resolveContentArg } from '../resolve-content.ts';
 import type { TaskInfo } from '../../../domain/types.ts';
 import { requireFeature, FEATURE_HINT } from '../../../infra/utils/resolve.ts';
 
@@ -86,18 +86,7 @@ export function makeDocWriteCommand(docType: 'spec' | 'report') {
         const services = getServices();
         const featureName = requireFeature(services, args.feature, [FEATURE_HINT]);
         const { taskPort } = services;
-        let rawContent = args.content;
-        if (!rawContent && args.file) {
-          rawContent = fs.readFileSync(args.file, 'utf-8');
-        }
-        if (!rawContent && args.stdin) {
-          rawContent = await readStdinText();
-        }
-        if (!rawContent) {
-          throw new MaestroError(`No ${docType} content provided`, [
-            `Pass --content "..." or --file path/to/${docType}.md or --stdin`,
-          ]);
-        }
+        const rawContent = await resolveContentArg(args.content, args, `${docType} content`);
         // Unescape literal \n from CLI args to actual newlines
         const content = rawContent.replace(/\\n/g, '\n');
         await taskPort[portMethod](featureName, args.task, content);

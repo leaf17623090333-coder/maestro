@@ -6,7 +6,7 @@ import { defineCommand } from 'citty';
 import { getServices } from '../../../services.ts';
 import { executionInsights, type ExecutionInsightsResult } from '../../../app/workflow/insights.ts';
 import { output } from '../../../infra/utils/output.ts';
-import { handleCommandError } from '../../../domain/errors.ts';
+import { handleCommandError } from '../error-handler.ts';
 import { requireFeature, FEATURE_HINT } from '../../../infra/utils/resolve.ts';
 
 function formatInsights(result: ExecutionInsightsResult): string {

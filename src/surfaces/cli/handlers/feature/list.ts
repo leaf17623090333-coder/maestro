@@ -6,7 +6,7 @@ import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
 import { output } from '../../../../infra/utils/output.ts';
 import { renderTable } from '../../../../infra/utils/output.ts';
-import { handleCommandError } from '../../../../domain/errors.ts';
+import { handleCommandError } from '../../error-handler.ts';
 
 export default defineCommand({
   meta: { name: 'feature-list', description: 'List all features\n\nExamples:\n  maestro feature-list\n  maestro feature-list --json' },

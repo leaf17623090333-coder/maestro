@@ -4,7 +4,8 @@ import { debugVisualize } from '../../../app/visual/debug-visualize.ts';
 import type { DebugVisualType, VisualResult } from '../../../app/visual/types.ts';
 import { DEBUG_VISUAL_TYPES } from '../../../app/visual/types.ts';
 import { output } from '../../../infra/utils/output.ts';
-import { handleCommandError, MaestroError } from '../../../domain/errors.ts';
+import { MaestroError } from '../../../domain/errors.ts';
+import { handleCommandError } from '../error-handler.ts';
 
 function formatResult(result: VisualResult): string {
   const lines: string[] = [];

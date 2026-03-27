@@ -5,7 +5,8 @@
 import { defineCommand } from 'citty';
 import { getServices } from '../../../services.ts';
 import { output, renderTable } from '../../../infra/utils/output.ts';
-import { MaestroError, handleCommandError } from '../../../domain/errors.ts';
+import { MaestroError } from '../../../domain/errors.ts';
+import { handleCommandError } from '../error-handler.ts';
 import { requireFeature, FEATURE_HINT } from '../../../infra/utils/resolve.ts';
 import { pruneContext } from '../../../app/dcp/prune-context.ts';
 import { resolveDcpConfig } from '../../../app/dcp/config.ts';

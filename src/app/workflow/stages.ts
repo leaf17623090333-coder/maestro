@@ -5,7 +5,8 @@
 
 import type { FeatureStatusType, TaskStatusType } from '../../domain/types.ts';
 
-export type PipelineStage = 'discovery' | 'research' | 'planning' | 'approval' | 'execution' | 'handoff' | 'done';
+export const PIPELINE_STAGES = ['discovery', 'research', 'planning', 'approval', 'execution', 'handoff', 'done'] as const;
+export type PipelineStage = typeof PIPELINE_STAGES[number];
 
 export function derivePipelineStage(opts: {
   planExists: boolean;

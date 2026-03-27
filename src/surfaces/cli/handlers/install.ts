@@ -13,7 +13,7 @@
 
 import { defineCommand } from 'citty';
 import { output } from '../../../infra/utils/output.ts';
-import { handleCommandError } from '../../../domain/errors.ts';
+import { handleCommandError } from '../error-handler.ts';
 import { ensureDir, writeAtomic } from '../../../infra/utils/fs-io.ts';
 import { BUILTIN_SKILLS } from '../../../app/skills/registry.ts';
 import * as path from 'path';

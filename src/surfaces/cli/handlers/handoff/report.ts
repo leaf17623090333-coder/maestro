@@ -5,11 +5,10 @@
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
 import { output } from '../../../../infra/utils/output.ts';
-import { handleCommandError, MaestroError } from '../../../../domain/errors.ts';
+import { handleCommandError } from '../../error-handler.ts';
+import { resolveContentArg } from '../../resolve-content.ts';
 import { requireFeature, FEATURE_HINT } from '../../../../infra/utils/resolve.ts';
 import { reportCrossAgentHandoff } from '../../../../app/handoff/crossagent.ts';
-import { readStdinText } from '../../../../infra/utils/stdin.ts';
-import * as fs from 'fs';
 
 export default defineCommand({
   meta: { name: 'handoff-report', description: 'Report completion of a cross-agent handoff\n\nExamples:\n  maestro handoff-report --content "All tasks implemented and tested" --json\n  maestro handoff-report --feature my-feat --file report.md --json' },
@@ -38,19 +37,7 @@ export default defineCommand({
       const services = getServices();
       const featureName = requireFeature(services, args.feature, [FEATURE_HINT]);
 
-      // Resolve content via cascade
-      let content = args.content;
-      if (!content && args.file) {
-        content = fs.readFileSync(args.file, 'utf-8');
-      }
-      if (!content && args.stdin) {
-        content = await readStdinText();
-      }
-      if (!content) {
-        throw new MaestroError('No summary provided', [
-          'Pass --content "..." or --file path/to/report.md or --stdin',
-        ]);
-      }
+      const content = await resolveContentArg(args.content, args, 'summary');
 
       const result = await reportCrossAgentHandoff(
         {

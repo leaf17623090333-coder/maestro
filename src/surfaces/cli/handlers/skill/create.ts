@@ -5,7 +5,7 @@
 import { defineCommand } from 'citty';
 import { createSkill } from '../../../../app/skills/create.ts';
 import { output } from '../../../../infra/utils/output.ts';
-import { handleCommandError } from '../../../../domain/errors.ts';
+import { handleCommandError } from '../../error-handler.ts';
 
 export default defineCommand({
   meta: { name: 'skill-create', description: 'Scaffold a new skill with a SKILL.md template\n\nExamples:\n  maestro skill-create --name my-workflow\n  maestro skill-create --name my-workflow --stage execution --json' },

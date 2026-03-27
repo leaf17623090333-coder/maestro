@@ -5,7 +5,8 @@
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
 import { output } from '../../../../infra/utils/output.ts';
-import { handleCommandError } from '../../../../domain/errors.ts';
+import { MaestroError } from '../../../../domain/errors.ts';
+import { handleCommandError } from '../../error-handler.ts';
 import { requireFeature, FEATURE_HINT } from '../../../../infra/utils/resolve.ts';
 import { getHandoffPath } from '../../../../infra/utils/paths.ts';
 import { readText } from '../../../../infra/utils/fs-io.ts';
@@ -30,7 +31,7 @@ export default defineCommand({
       const filePath = getHandoffPath(services.directory, feature, args.id);
       const content = readText(filePath);
       if (content === null) {
-        throw new Error(`Handoff not found: ${args.id} (looked at ${filePath})`);
+        throw new MaestroError(`Handoff not found: ${args.id}`, [`Looked at ${filePath}`]);
       }
       output({ feature, id: args.id, filePath, content }, (r) => r.content);
     } catch (err) {

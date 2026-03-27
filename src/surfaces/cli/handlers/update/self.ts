@@ -4,7 +4,8 @@
 
 import { defineCommand } from 'citty';
 import { output } from '../../../../infra/utils/output.ts';
-import { handleCommandError, MaestroError } from '../../../../domain/errors.ts';
+import { MaestroError } from '../../../../domain/errors.ts';
+import { handleCommandError } from '../../error-handler.ts';
 import {
   detectInstall,
   selfUpdate,

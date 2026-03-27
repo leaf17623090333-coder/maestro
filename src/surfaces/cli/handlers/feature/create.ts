@@ -5,7 +5,7 @@
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
 import { output } from '../../../../infra/utils/output.ts';
-import { handleCommandError } from '../../../../domain/errors.ts';
+import { handleCommandError } from '../../error-handler.ts';
 
 export default defineCommand({
   meta: { name: 'feature-create', description: 'Create a new feature\n\nExamples:\n  maestro feature-create my-feature\n  maestro feature-create my-feature --ticket PROJ-123 --json' },

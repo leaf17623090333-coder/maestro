@@ -5,9 +5,8 @@
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
 import { output } from '../../../../infra/utils/output.ts';
-import { handleCommandError, MaestroError } from '../../../../domain/errors.ts';
-import { readStdinText } from '../../../../infra/utils/stdin.ts';
-import * as fs from 'fs';
+import { handleCommandError } from '../../error-handler.ts';
+import { resolveContentArg } from '../../resolve-content.ts';
 import { parseTags, requireFeature, FEATURE_HINT } from '../../../../infra/utils/resolve.ts';
 import { prependMetadataFrontmatter } from '../../../../infra/utils/frontmatter.ts';
 import { MEMORY_CATEGORIES } from '../../../../domain/types.ts';
@@ -60,18 +59,7 @@ export default defineCommand({
       const services = getServices();
       const { memoryAdapter } = services;
 
-      let content = args.content;
-      if (!content && args.file) {
-        content = fs.readFileSync(args.file, 'utf-8');
-      }
-      if (!content && args.stdin) {
-        content = await readStdinText();
-      }
-      if (!content) {
-        throw new MaestroError('No content provided', [
-          'Pass --content "..." or --file path/to/file.md or --stdin',
-        ]);
-      }
+      const content = await resolveContentArg(args.content, args);
 
       const finalContent = prependMetadataFrontmatter(content, {
         tags: args.tags ? parseTags(args.tags) : undefined,

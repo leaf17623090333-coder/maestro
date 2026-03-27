@@ -6,7 +6,8 @@
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
 import { output } from '../../../../infra/utils/output.ts';
-import { MaestroError, handleCommandError } from '../../../../domain/errors.ts';
+import { MaestroError } from '../../../../domain/errors.ts';
+import { handleCommandError } from '../../error-handler.ts';
 import { getNestedValue } from '../../../../infra/utils/object-utils.ts';
 
 export default defineCommand({

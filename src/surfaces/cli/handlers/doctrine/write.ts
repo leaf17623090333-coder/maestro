@@ -5,9 +5,8 @@
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
 import { output } from '../../../../infra/utils/output.ts';
-import { handleCommandError, MaestroError } from '../../../../domain/errors.ts';
-import { readStdinText } from '../../../../infra/utils/stdin.ts';
-import * as fs from 'fs';
+import { handleCommandError } from '../../error-handler.ts';
+import { resolveContentArg } from '../../resolve-content.ts';
 import { requireDoctrinePort, parseTags } from '../../../../infra/utils/resolve.ts';
 import { buildDoctrineItem } from '../../../../app/doctrine/factory.ts';
 import type { DoctrineStatus } from '../../../../domain/ports/doctrine.ts';
@@ -30,18 +29,7 @@ export default defineCommand({
       const services = getServices();
       const doctrinePort = requireDoctrinePort(services);
 
-      let rule = args.rule;
-      if (!rule && args.file) {
-        rule = fs.readFileSync(args.file, 'utf-8');
-      }
-      if (!rule && args.stdin) {
-        rule = await readStdinText();
-      }
-      if (!rule) {
-        throw new MaestroError('No rule provided', [
-          'Pass --rule "..." or --file path/to/rule.md or --stdin',
-        ]);
-      }
+      const rule = await resolveContentArg(args.rule, args, 'rule');
 
       const existing = doctrinePort.read(args.name) ?? undefined;
       const tags = parseTags(args.tags);

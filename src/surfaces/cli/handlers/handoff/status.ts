@@ -6,7 +6,7 @@ import * as fs from 'node:fs';
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
 import { output } from '../../../../infra/utils/output.ts';
-import { handleCommandError } from '../../../../domain/errors.ts';
+import { handleCommandError } from '../../error-handler.ts';
 import { requireFeature, FEATURE_HINT } from '../../../../infra/utils/resolve.ts';
 import { getHandoffPath } from '../../../../infra/utils/paths.ts';
 import { fileExists } from '../../../../infra/utils/fs-io.ts';

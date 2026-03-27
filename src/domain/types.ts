@@ -25,7 +25,8 @@ export interface FeatureJson {
 // Task Types
 // ============================================================================
 
-export type TaskStatusType = 'pending' | 'claimed' | 'done' | 'blocked' | 'review' | 'revision';
+export const TASK_STATUSES = ['pending', 'claimed', 'done', 'blocked', 'review', 'revision'] as const;
+export type TaskStatusType = typeof TASK_STATUSES[number];
 export type TaskOrigin = 'plan' | 'manual';
 
 export interface TaskStatus {
@@ -136,14 +137,6 @@ export interface MemoryFileWithMeta extends MemoryFile {
 // Config Types
 // ============================================================================
 
-export interface AgentModelConfig {
-  model?: string;
-  temperature?: number;
-  skills?: string[];
-  autoLoadSkills?: string[];
-  variant?: string;
-}
-
 export const DEFAULT_AGENT_MODELS = {
   'hive-master': 'github-copilot/claude-opus-4.5',
   'architect-planner': 'github-copilot/gpt-5.2-codex',
@@ -155,3 +148,9 @@ export const DEFAULT_AGENT_MODELS = {
 
 export type AgentName = keyof typeof DEFAULT_AGENT_MODELS;
 export const AGENT_NAMES = Object.keys(DEFAULT_AGENT_MODELS) as AgentName[];
+
+// ============================================================================
+// Host Types
+// ============================================================================
+
+export type HostType = 'claude-code' | 'codex' | 'standalone';

@@ -5,9 +5,8 @@
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
 import { output } from '../../../../infra/utils/output.ts';
-import { handleCommandError, MaestroError } from '../../../../domain/errors.ts';
-import { readStdinText } from '../../../../infra/utils/stdin.ts';
-import * as fs from 'fs';
+import { handleCommandError } from '../../error-handler.ts';
+import { resolveContentArg } from '../../resolve-content.ts';
 import { requireFeature, FEATURE_HINT } from '../../../../infra/utils/resolve.ts';
 
 export default defineCommand({
@@ -46,18 +45,7 @@ export default defineCommand({
       const featureName = requireFeature(services, args.feature, [FEATURE_HINT]);
       const { planAdapter } = services;
 
-      let body = args.body;
-      if (!body && args.file) {
-        body = fs.readFileSync(args.file, 'utf-8');
-      }
-      if (!body && args.stdin) {
-        body = await readStdinText();
-      }
-      if (!body) {
-        throw new MaestroError('No comment body provided', [
-          'Pass --body "..." or --file path/to/comment.md or --stdin',
-        ]);
-      }
+      const body = await resolveContentArg(args.body, args, 'comment body');
 
       const result = planAdapter.addComment(featureName, {
         body,

@@ -5,7 +5,7 @@
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
 import { output } from '../../../../infra/utils/output.ts';
-import { handleCommandError } from '../../../../domain/errors.ts';
+import { handleCommandError } from '../../error-handler.ts';
 import { requireFeature, FEATURE_HINT } from '../../../../infra/utils/resolve.ts';
 import { buildCrossAgentHandoff } from '../../../../app/handoff/crossagent.ts';
 import { readStdinText } from '../../../../infra/utils/stdin.ts';

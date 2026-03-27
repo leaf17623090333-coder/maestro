@@ -5,11 +5,10 @@
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
 import { output } from '../../../../infra/utils/output.ts';
-import { handleCommandError, MaestroError } from '../../../../domain/errors.ts';
+import { handleCommandError } from '../../error-handler.ts';
+import { resolveContentArg } from '../../resolve-content.ts';
 import { requireFeature, FEATURE_HINT } from '../../../../infra/utils/resolve.ts';
 import { writeExecutionMemory } from '../../../../app/memory/execution/writer.ts';
-import { readStdinText } from '../../../../infra/utils/stdin.ts';
-import * as fs from 'fs';
 
 export default defineCommand({
   meta: { name: 'task-done', description: 'Mark a task as done\n\nExamples:\n  maestro task-done --task 01-setup --summary "Implemented auth module"\n  maestro task-done --task 01-setup --file summary.md\n  maestro task-done --task 01-setup --summary "Added tests" --json' },
@@ -45,18 +44,7 @@ export default defineCommand({
         FEATURE_HINT,
       ]);
 
-      let summary = args.summary;
-      if (!summary && args.file) {
-        summary = fs.readFileSync(args.file, 'utf-8');
-      }
-      if (!summary && args.stdin) {
-        summary = await readStdinText();
-      }
-      if (!summary) {
-        throw new MaestroError('No summary provided', [
-          'Pass --summary "..." or --file path/to/summary.md or --stdin',
-        ]);
-      }
+      const summary = await resolveContentArg(args.summary, args, 'summary');
 
       const existing = await services.taskPort.get(featureName, args.task);
       if (existing) {

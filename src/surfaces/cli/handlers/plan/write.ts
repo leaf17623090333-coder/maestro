@@ -6,9 +6,8 @@ import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
 import { writePlan } from '../../../../app/plans/write-plan.ts';
 import { output } from '../../../../infra/utils/output.ts';
-import { handleCommandError, MaestroError } from '../../../../domain/errors.ts';
-import { readStdinText } from '../../../../infra/utils/stdin.ts';
-import * as fs from 'fs';
+import { handleCommandError } from '../../error-handler.ts';
+import { resolveContentArg } from '../../resolve-content.ts';
 import { requireFeature, FEATURE_HINT } from '../../../../infra/utils/resolve.ts';
 
 export default defineCommand({
@@ -55,18 +54,7 @@ export default defineCommand({
         return;
       }
 
-      let content = args.content;
-      if (!content && args.file) {
-        content = fs.readFileSync(args.file, 'utf-8');
-      }
-      if (!content && args.stdin) {
-        content = await readStdinText();
-      }
-      if (!content) {
-        throw new MaestroError('No content provided', [
-          'Pass --content "..." or --file path/to/plan.md or --stdin or --scaffold',
-        ]);
-      }
+      const content = await resolveContentArg(args.content, args);
 
       const result = await writePlan(services, featureName, content, { dryRun });
       output(result, (r) => {

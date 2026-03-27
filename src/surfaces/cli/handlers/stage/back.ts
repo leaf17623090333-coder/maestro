@@ -4,33 +4,32 @@
 
 import { defineCommand } from 'citty';
 import { output } from '../../../../infra/utils/output.ts';
-import { handleCommandError } from '../../../../domain/errors.ts';
+import { MaestroError } from '../../../../domain/errors.ts';
+import { handleCommandError } from '../../error-handler.ts';
 import { buildPlaybook } from '../../../../app/workflow/playbook.ts';
-import type { PipelineStage } from '../../../../app/workflow/stages.ts';
-
-const ALL_STAGES: PipelineStage[] = ['discovery', 'research', 'planning', 'approval', 'execution', 'done'];
+import { PIPELINE_STAGES, type PipelineStage } from '../../../../app/workflow/stages.ts';
 
 export default defineCommand({
   meta: { name: 'stage-back', description: 'Retreat one stage back in the pipeline\n\nExamples:\n  maestro stage-back --current-stage execution\n  maestro stage-back --current-stage planning --json' },
   args: {
     'current-stage': {
       type: 'string',
-      description: `Current pipeline stage (${ALL_STAGES.join(', ')})`,
+      description: `Current pipeline stage (${PIPELINE_STAGES.join(', ')})`,
       required: true,
     },
   },
   async run({ args }) {
     try {
       const current = args['current-stage'] as PipelineStage;
-      const currentIdx = ALL_STAGES.indexOf(current);
+      const currentIdx = PIPELINE_STAGES.indexOf(current);
       if (currentIdx === -1) {
-        throw new Error(`Unknown stage: ${current}. Valid: ${ALL_STAGES.join(', ')}`);
+        throw new MaestroError(`Unknown stage: ${current}`, [`Valid stages: ${PIPELINE_STAGES.join(', ')}`]);
       }
       if (currentIdx <= 0) {
-        throw new Error('Already at the first stage (discovery)');
+        throw new MaestroError('Already at the first stage (discovery)');
       }
 
-      const targetStage = ALL_STAGES[currentIdx - 1];
+      const targetStage = PIPELINE_STAGES[currentIdx - 1];
       const playbook = buildPlaybook(targetStage);
       output({ previousStage: current, newStage: targetStage, playbook }, (r) =>
         `[ok] retreated from '${r.previousStage}' to '${r.newStage}'`,

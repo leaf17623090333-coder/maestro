@@ -3,7 +3,8 @@
  * Detects whether maestro is running inside claude-code, codex, or standalone.
  */
 
-export type HostType = 'claude-code' | 'codex' | 'standalone';
+import type { HostType } from '../../domain/types.ts';
+export type { HostType };
 
 let _cached: HostType | undefined;
 

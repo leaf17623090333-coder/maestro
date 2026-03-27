@@ -6,7 +6,8 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { defineCommand } from 'citty';
 import { output } from '../../../../infra/utils/output.ts';
-import { handleCommandError, MaestroError } from '../../../../domain/errors.ts';
+import { MaestroError } from '../../../../domain/errors.ts';
+import { handleCommandError } from '../../error-handler.ts';
 
 export default defineCommand({
   meta: { name: 'skill-remove', description: 'Remove an installed skill\n\nExamples:\n  maestro skill-remove --name my-workflow\n  maestro skill-remove --name maestro:design --json' },

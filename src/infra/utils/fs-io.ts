@@ -71,6 +71,7 @@ export function writeText(filePath: string, content: string): void {
   writeAtomic(filePath, content);
 }
 
+/** @internal -- not used in production. Remove after cleaning up test references. */
 export function deepMerge<T extends Record<string, unknown>>(
   target: T,
   patch: Partial<T>

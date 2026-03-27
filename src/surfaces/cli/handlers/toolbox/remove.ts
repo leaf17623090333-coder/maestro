@@ -6,7 +6,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { defineCommand } from 'citty';
 import { output } from '../../../../infra/utils/output.ts';
-import { MaestroError, handleCommandError } from '../../../../domain/errors.ts';
+import { MaestroError } from '../../../../domain/errors.ts';
+import { handleCommandError } from '../../error-handler.ts';
 
 const BUILT_IN_TOOLS = new Set(['fs-tasks']);
 

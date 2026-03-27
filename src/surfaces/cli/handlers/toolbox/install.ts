@@ -6,7 +6,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { defineCommand } from 'citty';
 import { output } from '../../../../infra/utils/output.ts';
-import { MaestroError, handleCommandError } from '../../../../domain/errors.ts';
+import { MaestroError } from '../../../../domain/errors.ts';
+import { handleCommandError } from '../../error-handler.ts';
 import { loadManifest } from '../../../../infra/toolbox/loader.ts';
 
 export default defineCommand({

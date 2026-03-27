@@ -5,10 +5,10 @@
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
 import { output } from '../../../../infra/utils/output.ts';
-import { handleCommandError, MaestroError } from '../../../../domain/errors.ts';
+import { MaestroError } from '../../../../domain/errors.ts';
+import { handleCommandError } from '../../error-handler.ts';
+import { resolveContentArg } from '../../resolve-content.ts';
 import { requireFeature, FEATURE_HINT } from '../../../../infra/utils/resolve.ts';
-import { readStdinText } from '../../../../infra/utils/stdin.ts';
-import * as fs from 'fs';
 
 export default defineCommand({
   meta: { name: 'task-reject', description: 'Reject a task and request revision\n\nExamples:\n  maestro task-reject --task 01-setup --feedback "Tests missing"\n  maestro task-reject --task 01-setup --file /tmp/review.md --json' },
@@ -43,22 +43,11 @@ export default defineCommand({
         FEATURE_HINT,
       ]);
 
-      let feedback = args.feedback;
-      if (!feedback && args.file) {
-        feedback = fs.readFileSync(args.file, 'utf-8');
-      }
-      if (!feedback && args.stdin) {
-        feedback = await readStdinText();
-      }
-      if (!feedback) {
-        throw new MaestroError('No feedback provided', [
-          'Pass --feedback "..." or --file path/to/review.md or --stdin',
-        ]);
-      }
+      const feedback = await resolveContentArg(args.feedback, args, 'feedback');
 
       const existing = await services.taskPort.get(featureName, args.task);
       if (!existing || existing.status !== 'review') {
-        throw new Error(`Task '${args.task}' is not in review state (current: ${existing?.status ?? 'not found'})`);
+        throw new MaestroError(`Task '${args.task}' is not in review state (current: ${existing?.status ?? 'not found'})`, ['Only tasks in review state can be rejected']);
       }
       const revisionCount = (existing.revisionCount ?? 0) + 1;
       const task = await services.taskPort.revision(featureName, args.task, feedback, revisionCount);

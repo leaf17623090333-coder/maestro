@@ -7,6 +7,7 @@
 import type { HandoffDocument } from '../../../domain/ports/handoff.ts';
 import { execFileSync } from 'node:child_process';
 import { DETECT_TIMEOUT_MS } from '../../../domain/constants.ts';
+import { formatTimestamp } from '../../utils/time-utils.ts';
 
 /** Get list of modified files from git diff in the given project root. */
 export function getModifiedFiles(projectRoot: string): string[] {
@@ -39,7 +40,7 @@ export function formatHandoffMessage(
   feature: string,
   taskBackend: string = 'fs',
 ): string {
-  const timestamp = new Date().toISOString().replace('T', ' ').slice(0, 19);
+  const timestamp = formatTimestamp(new Date().toISOString());
   const sections: string[] = [];
   sections.push(`## Handoff: ${timestamp}`, '');
   sections.push('### Current Task State');

@@ -7,7 +7,7 @@ import * as path from 'path';
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
 import { output } from '../../../../infra/utils/output.ts';
-import { handleCommandError } from '../../../../domain/errors.ts';
+import { handleCommandError } from '../../error-handler.ts';
 import { validateSettingsKey } from '../../../../domain/config-validation.ts';
 import { ensureDir, writeJsonAtomic, readJson } from '../../../../infra/utils/fs-io.ts';
 import { setNestedValue } from '../../../../infra/utils/object-utils.ts';

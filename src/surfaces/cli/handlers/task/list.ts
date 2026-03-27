@@ -5,11 +5,10 @@
 import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
 import { output, renderTaskTable } from '../../../../infra/utils/output.ts';
-import { handleCommandError, MaestroError } from '../../../../domain/errors.ts';
-import type { TaskStatusType } from '../../../../domain/types.ts';
+import { MaestroError } from '../../../../domain/errors.ts';
+import { handleCommandError } from '../../error-handler.ts';
+import { TASK_STATUSES, type TaskStatusType } from '../../../../domain/types.ts';
 import { requireFeature, FEATURE_HINT } from '../../../../infra/utils/resolve.ts';
-
-const VALID_STATUSES: TaskStatusType[] = ['pending', 'claimed', 'done', 'blocked', 'review', 'revision'];
 
 export default defineCommand({
   meta: { name: 'task-list', description: 'List tasks for a feature\n\nExamples:\n  maestro task-list --feature my-feat\n  maestro task-list --feature my-feat --status pending --json' },
@@ -32,10 +31,10 @@ export default defineCommand({
     try {
       let statusFilter: TaskStatusType | undefined;
       if (args.status) {
-        if (!VALID_STATUSES.includes(args.status as TaskStatusType)) {
+        if (!TASK_STATUSES.includes(args.status as TaskStatusType)) {
           throw new MaestroError(
             `Invalid status '${args.status}'`,
-            [`Valid values: ${VALID_STATUSES.join(', ')}`],
+            [`Valid values: ${TASK_STATUSES.join(', ')}`],
           );
         }
         statusFilter = args.status as TaskStatusType;

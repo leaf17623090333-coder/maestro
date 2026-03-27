@@ -4,7 +4,7 @@
 
 import { defineCommand } from 'citty';
 import { output } from '../../../infra/utils/output.ts';
-import { handleCommandError } from '../../../domain/errors.ts';
+import { handleCommandError } from '../error-handler.ts';
 import { getMaestroPath } from '../../../infra/utils/paths.ts';
 import { ensureDir } from '../../../infra/utils/fs-io.ts';
 import { findProjectRoot } from '../../../infra/adapters/features/detection.ts';

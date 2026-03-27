@@ -12,6 +12,16 @@ export function formatDurationMinutes(minutes: number): string {
   return rem > 0 ? `${hours}h${rem}m` : `${hours}h`;
 }
 
+/** Format an ISO timestamp to "YYYY-MM-DD HH:MM:SS" (human-readable, no timezone). */
+export function formatTimestamp(iso: string): string {
+  return iso.replace('T', ' ').slice(0, 19);
+}
+
+/** Convert an ISO timestamp to a filesystem-safe string (replacing : and . with -). */
+export function timestampToFilename(iso: string): string {
+  return iso.replace(/[:.]/g, '-');
+}
+
 /**
  * Parse a compact duration string ("2h30m", "45m", "1h") into total minutes.
  * Returns undefined if the string contains no valid duration components.
