@@ -58,7 +58,7 @@ Claude Code is the orchestrator (spawning agents natively), maestro is the filin
 Agents interact via `maestro <command> --json` through Bash. Hooks inject context automatically.
 
 - **6 task states**: pending, claimed, done, blocked, review, revision
-- **89 CLI commands** across 14 domains, all with `--json` support
+- **92 CLI commands** across 14 domains, all with `--json` support
 - **Plain file backend** (default), optional br sync
 - **Hooks**: SessionStart (pipeline injection), PreToolUse:Agent (task spec injection)
 - **Doctrine Compiler**: cross-feature learning from execution history, injected into workers via separate budget
@@ -109,7 +109,7 @@ Claims expire after `claimExpiresMinutes` (default 120). Expired claims are auto
 
 All commands accept `--json` for structured output. Use `maestro <command> --help` for full usage.
 
-## CLI Commands (70)
+## CLI Commands (92)
 
 Commands organized by domain:
 
@@ -119,20 +119,20 @@ Commands organized by domain:
 ### Plan (6)
 `plan-write`, `plan-read`, `plan-approve`, `plan-revoke`, `plan-comment`, `plan-comments-clear`
 
-### Task (12)
-`task-sync`, `task-list`, `task-next`, `task-info`, `task-claim`, `task-done`, `task-block`, `task-unblock`, `task-spec-read`, `task-spec-write`, `task-report-read`, `task-report-write`
+### Task (15)
+`task-sync`, `task-list`, `task-next`, `task-info`, `task-claim`, `task-done`, `task-block`, `task-unblock`, `task-brief`, `task-accept`, `task-reject`, `task-spec-read`, `task-spec-write`, `task-report-read`, `task-report-write`
 
-### Memory (9)
-`memory-write`, `memory-read`, `memory-list`, `memory-delete`, `memory-compile`, `memory-consolidate`, `memory-archive`, `memory-stats`, `memory-promote`
+### Memory (12)
+`memory-write`, `memory-read`, `memory-list`, `memory-delete`, `memory-compile`, `memory-compress`, `memory-connect`, `memory-consolidate`, `memory-archive`, `memory-insights`, `memory-stats`, `memory-promote`
 
-### Handoff (3)
-`handoff-send`, `handoff-receive`, `handoff-ack`
+### Handoff (9)
+`handoff-send`, `handoff-receive`, `handoff-ack`, `handoff-list`, `handoff-read`, `handoff-status`, `handoff-plan`, `handoff-pickup`, `handoff-report`
 
-### Graph (3)
-`graph-insights`, `graph-next`, `graph-plan`
+### Graph (5)
+`graph-discovery`, `graph-insights`, `graph-next`, `graph-plan`, `graph-reserve`
 
-### Search (2)
-`search-sessions`, `search-related`
+### Search (3)
+`search-sessions`, `search-related`, `search-similar`
 
 ### Doctrine (6)
 `doctrine-list`, `doctrine-read`, `doctrine-write`, `doctrine-deprecate`, `doctrine-suggest`, `doctrine-approve`
@@ -146,8 +146,14 @@ Commands organized by domain:
 ### Visual (2)
 `visual`, `debug-visual`
 
-### Other (13)
-`init`, `install`, `status`, `agents-md`, `skill`, `skill-list`, `dcp-preview`, `ping`, `doctor`, `history`, `execution-insights`, `self-update`, `update`
+### Skill (6)
+`skill`, `skill-create`, `skill-install`, `skill-list`, `skill-remove`, `skill-sync`
+
+### Stage (3)
+`stage-back`, `stage-jump`, `stage-skip`
+
+### Other (11)
+`init`, `install`, `status`, `agents-md`, `dcp-preview`, `ping`, `doctor`, `history`, `execution-insights`, `self-update`, `update`
 
 All commands accept `--json`. Use `maestro <command> --help` for full usage.
 
@@ -158,7 +164,7 @@ Content params: prefer `--file <path>` for multi-line content. Alternatives: `--
 
 ### Session
 maestro status --json                    # [read] orient: stage, playbook, next action
-maestro skill <name>                     # [read] load skill into context
+maestro skill <name> --json              # [read] load skill into context
 
 ### Discovery
 maestro feature-create <name> --json                 # [write]
@@ -183,6 +189,14 @@ maestro task-done --task <id> --file <summary> --json    # [write]
 maestro task-block --task <id> --reason "..." --json     # [write]
 maestro task-accept --task <id> --json               # [write]
 maestro task-reject --task <id> --file <feedback> --json # [write]
+
+### Handoff
+maestro handoff-list --json                          # [read] list pending handoffs
+maestro handoff-read --feature <name> --json        # [read] inspect a handoff payload
+maestro handoff-status --feature <name> --json      # [read] inspect handoff state
+maestro handoff-plan --to <agent> --json            # [write] export plan for another agent
+maestro handoff-pickup --json                       # [write] discover and pick up pending handoff
+maestro handoff-report --content "..." --json       # [write] report completion back to the handoff owner
 
 ### Done
 maestro feature-complete --json                      # [write]
