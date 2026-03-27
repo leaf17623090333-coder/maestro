@@ -1,4 +1,4 @@
-import type { TemplateRenderer, DomDiffData } from '../../../app/visual/types.ts';
+import type { TemplateRenderer, DomDiffData } from '../../../domain/visual-types.ts';
 import { escapeHtml } from '../renderer.ts';
 
 function diffLines(expected: string, actual: string): { expectedHtml: string; actualHtml: string } {

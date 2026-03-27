@@ -1,4 +1,5 @@
-import type { TemplateRenderer, ExecutionTimelineData } from '../../../app/visual/types.ts';
+import type { TemplateRenderer } from '../../../domain/visual-types.ts';
+import type { ExecutionTimelineData } from '../../../app/visual/types.ts';
 import { escapeHtml, sanitizeMermaidLabel } from '../renderer.ts';
 import { MERMAID_CDN, ZOOM_CONTROLS_SCRIPT, ZOOM_CONTROLS_HTML } from '../css.ts';
 

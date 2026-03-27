@@ -1,4 +1,4 @@
-import type { TemplateRenderer, ComponentTreeData, ComponentTreeNode } from '../../../app/visual/types.ts';
+import type { TemplateRenderer, ComponentTreeData, ComponentTreeNode } from '../../../domain/visual-types.ts';
 import { escapeHtml, safeStringify } from '../renderer.ts';
 
 const MAX_TREE_DEPTH = 50;

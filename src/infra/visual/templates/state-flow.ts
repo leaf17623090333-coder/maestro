@@ -1,4 +1,4 @@
-import type { TemplateRenderer, StateFlowData } from '../../../app/visual/types.ts';
+import type { TemplateRenderer, StateFlowData } from '../../../domain/visual-types.ts';
 import { escapeHtml, safeStringify } from '../renderer.ts';
 
 function diffJson(prev: Record<string, unknown>, next: Record<string, unknown>): string {

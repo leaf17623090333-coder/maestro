@@ -1,4 +1,4 @@
-import type { TemplateRenderer, ErrorCascadeData, ErrorCascadeEntry } from '../../../app/visual/types.ts';
+import type { TemplateRenderer, ErrorCascadeData, ErrorCascadeEntry } from '../../../domain/visual-types.ts';
 import { escapeHtml } from '../renderer.ts';
 
 const MAX_ERROR_DEPTH = 50;

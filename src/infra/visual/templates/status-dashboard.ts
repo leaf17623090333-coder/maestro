@@ -1,4 +1,4 @@
-import type { TemplateRenderer, StatusDashboardData } from '../../../app/visual/types.ts';
+import type { TemplateRenderer, StatusDashboardData } from '../../../domain/visual-types.ts';
 import { escapeHtml } from '../renderer.ts';
 
 function statusBadge(status: string): string {
