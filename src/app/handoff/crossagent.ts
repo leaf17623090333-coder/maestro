@@ -87,6 +87,13 @@ export async function buildCrossAgentHandoff(
   // Validate feature exists and is active
   const featureJson = featureAdapter.requireActive(feature);
 
+  // Reject if already handed off (previous handoff still pending)
+  if (featureJson.status === 'handed-off') {
+    throw new MaestroError('Feature is already handed off to another agent', [
+      'Wait for handoff-report, or run: maestro handoff-pickup --json to check status',
+    ]);
+  }
+
   // Validate plan is approved
   const plan = planAdapter.read(feature);
   if (!plan || plan.status !== 'approved') {

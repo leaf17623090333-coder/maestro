@@ -38,6 +38,14 @@ export async function completeFeature(
   const feature = featureAdapter.get(featureName);
   if (!feature) throw new MaestroError(`Feature '${featureName}' not found`);
 
+  // Reject if feature is handed off to another agent
+  if (feature.status === 'handed-off') {
+    throw new MaestroError('Feature is handed off to another agent', [
+      'Wait for the other agent to run: maestro handoff-report --json',
+      'Or check status: maestro handoff-pickup --json',
+    ]);
+  }
+
   // Idempotent: if already completed, skip consolidation/promotion/doctrine
   if (feature.status === 'completed') {
     const tasks = await taskPort.list(featureName, { includeAll: true });
