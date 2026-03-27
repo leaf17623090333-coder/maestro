@@ -129,4 +129,42 @@ describe('selectMemories', () => {
     expect(result.includedCount).toBe(0);
     expect(result.droppedCount).toBe(1);
   });
+
+  test('effectivenessMap influences selection order', () => {
+    // Two memories with similar base relevance but different effectiveness
+    const memories = [
+      makeMemory('low-eff', 'Authentication setup decisions', {
+        metadata: { tags: ['auth'], priority: 1, category: 'decision' },
+      }),
+      makeMemory('high-eff', 'Authentication module configuration', {
+        metadata: { tags: ['auth'], priority: 1, category: 'decision' },
+      }),
+    ];
+    const task = makeTask({ name: 'Setup authentication', folder: '01-setup-auth' });
+
+    // high-eff gets a big boost, low-eff gets attenuated
+    const effectivenessMap = new Map([
+      ['high-eff', 1.0],
+      ['low-eff', 0.0],
+    ]);
+
+    const result = selectMemories(memories, task, null, 10000, 0.1, undefined, undefined, effectivenessMap);
+
+    // high-eff should score higher due to effectiveness boost
+    const highEffScore = result.scores.find(s => s.name === 'high-eff')!.score;
+    const lowEffScore = result.scores.find(s => s.name === 'low-eff')!.score;
+    expect(highEffScore).toBeGreaterThan(lowEffScore);
+  });
+
+  test('selectMemories without effectivenessMap behaves identically to undefined', () => {
+    const memories = [makeMemory('a', 'Auth setup content', {
+      metadata: { tags: ['auth'], priority: 1, category: 'decision' },
+    })];
+    const task = makeTask();
+
+    const without = selectMemories(memories, task, null, 10000);
+    const withUndefined = selectMemories(memories, task, null, 10000, 0.1, undefined, undefined, undefined);
+
+    expect(without.scores[0].score).toBe(withUndefined.scores[0].score);
+  });
 });

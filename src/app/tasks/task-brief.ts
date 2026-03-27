@@ -15,6 +15,7 @@ import { deriveFolderTags } from '../memory/execution/writer.ts';
 import { extractKeywords } from '../dcp/relevance.ts';
 import { appendDoctrineTrace } from '../doctrine/trace.ts';
 import { appendDcpTrace } from '../dcp/trace.ts';
+import { loadTelemetry, buildEffectivenessMap } from '../dcp/telemetry.ts';
 import { WORKER_RULES } from '../tasks/worker-rules.ts';
 import { resolveDcpConfig } from '../dcp/config.ts';
 import { resolveDoctrineConfig } from '../doctrine/config.ts';
@@ -65,12 +66,22 @@ function selectStandardDcp(
   memoryAdapter: { listWithMeta(feature: string): MemoryFileWithMeta[] },
   task: Parameters<typeof selectMemories>[1] & { planTitle?: string },
   feature: string,
-  dcpConfig: { memoryBudgetTokens: number; relevanceThreshold: number },
+  dcpConfig: { memoryBudgetTokens: number; relevanceThreshold: number; effectivenessSignal?: boolean; effectivenessMinSamples?: number },
   featureCreatedAt?: string,
   allTasks?: TaskWithDeps[],
+  projectRoot?: string,
 ) {
+  // Load effectiveness map if signal enabled and projectRoot available
+  let effectivenessMap: Map<string, number> | undefined;
+  if (dcpConfig.effectivenessSignal !== false && projectRoot) {
+    try {
+      const records = loadTelemetry(projectRoot);
+      effectivenessMap = buildEffectivenessMap(records, dcpConfig.effectivenessMinSamples);
+    } catch { /* best-effort */ }
+  }
+
   const rawMemories = memoryAdapter.listWithMeta(feature);
-  const selected = selectMemories(rawMemories, task, task.planTitle ?? null, dcpConfig.memoryBudgetTokens, dcpConfig.relevanceThreshold, featureCreatedAt, allTasks);
+  const selected = selectMemories(rawMemories, task, task.planTitle ?? null, dcpConfig.memoryBudgetTokens, dcpConfig.relevanceThreshold, featureCreatedAt, allTasks, effectivenessMap);
   const scoreMap = new Map(selected.scores.map(s => [s.name, s.score]));
   const memories = selected.memories.map(m => ({
     name: m.name,
@@ -191,12 +202,12 @@ export async function taskBrief(
       };
     } catch (e) {
       console.error('[maestro] agentMemory compile failed, falling back to standard DCP:', e);
-      const std = selectStandardDcp(memoryAdapter, task, feature, dcpConfig, featureCreatedAt, allTasks);
+      const std = selectStandardDcp(memoryAdapter, task, feature, dcpConfig, featureCreatedAt, allTasks, directory);
       memories = std.memories;
       dcpMetrics = std.dcpMetrics;
     }
   } else {
-    const std = selectStandardDcp(memoryAdapter, task, feature, dcpConfig, featureCreatedAt, allTasks);
+    const std = selectStandardDcp(memoryAdapter, task, feature, dcpConfig, featureCreatedAt, allTasks, directory);
     memories = std.memories;
     dcpMetrics = std.dcpMetrics;
   }

@@ -28,6 +28,8 @@ export interface DcpSettings {
   relevanceThreshold: number;
   observationMasking: boolean;
   handoffDecisionBudgetTokens: number;
+  effectivenessSignal: boolean;
+  effectivenessMinSamples: number;
 }
 
 export interface VerificationSettings {
@@ -98,6 +100,8 @@ export const DEFAULT_SETTINGS: MaestroSettings = {
     relevanceThreshold: 0.1,
     observationMasking: true,
     handoffDecisionBudgetTokens: 512,
+    effectivenessSignal: true,
+    effectivenessMinSamples: 3,
   },
   verification: {
     enabled: true,

@@ -159,4 +159,57 @@ describe('scoreRelevance', () => {
     expect(score).toBeGreaterThanOrEqual(0);
     expect(score).toBeLessThanOrEqual(1);
   });
+
+  test('effectiveness map boosts high-effectiveness memory', () => {
+    const memory = makeMemory({ name: 'proven-useful' });
+    const task = makeTask();
+    const effectivenessMap = new Map([['proven-useful', 1.0]]);
+
+    const withEffectiveness = scoreRelevance(memory, task, null, undefined, undefined, undefined, effectivenessMap);
+    const without = scoreRelevance(memory, task, null);
+
+    // effectiveness=1.0 vs default 0.5 -> should boost score
+    expect(withEffectiveness).toBeGreaterThan(without);
+  });
+
+  test('effectiveness map attenuates low-effectiveness memory', () => {
+    const memory = makeMemory({ name: 'often-fails' });
+    const task = makeTask();
+    const effectivenessMap = new Map([['often-fails', 0.0]]);
+
+    const withEffectiveness = scoreRelevance(memory, task, null, undefined, undefined, undefined, effectivenessMap);
+    const without = scoreRelevance(memory, task, null);
+
+    // effectiveness=0.0 vs default 0.5 -> should lower score
+    expect(withEffectiveness).toBeLessThan(without);
+  });
+
+  test('missing effectiveness map defaults to neutral (backward compatible)', () => {
+    const memory = makeMemory({ name: 'unknown-memory' });
+    const task = makeTask();
+
+    // No effectiveness map = default 0.5 for all memories
+    const score1 = scoreRelevance(memory, task, null);
+    const score2 = scoreRelevance(memory, task, null, undefined, undefined, undefined, undefined);
+
+    expect(score1).toBe(score2);
+  });
+
+  test('weights sum to 1.0', () => {
+    // Import the WEIGHTS constant indirectly by verifying score stays in [0, 1]
+    // with extreme inputs on all signals
+    const highMemory = makeMemory({
+      name: 'high-all',
+      metadata: { tags: ['auth', 'setup'], priority: 0, category: 'architecture' },
+      bodyContent: 'Authentication setup module configuration',
+      updatedAt: new Date().toISOString(),
+    });
+    const task = makeTask({ name: 'Setup authentication module', folder: '01-setup-auth' });
+    const effectivenessMap = new Map([['high-all', 1.0]]);
+    const featureCreated = new Date(Date.now() - 86400000 * 7).toISOString();
+
+    const score = scoreRelevance(highMemory, task, null, featureCreated, undefined, undefined, effectivenessMap);
+    expect(score).toBeGreaterThanOrEqual(0);
+    expect(score).toBeLessThanOrEqual(1);
+  });
 });

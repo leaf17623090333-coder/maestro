@@ -34,6 +34,7 @@ export function selectMemories(
   relevanceThreshold: number = 0.1,
   featureCreatedAt?: string,
   allTasks?: TaskWithDeps[],
+  effectivenessMap?: Map<string, number>,
 ): SelectedContext {
   if (memories.length === 0) {
     return { memories: [], totalTokens: 0, totalBytes: 0, includedCount: 0, droppedCount: 0, scores: [] };
@@ -51,7 +52,7 @@ export function selectMemories(
   if (budgetTokens <= 0) {
     const scores = memories.map(m => ({
       name: m.name,
-      score: scoreRelevance(m, task, planSection, featureCreatedAt, taskCtx, proximityCtx),
+      score: scoreRelevance(m, task, planSection, featureCreatedAt, taskCtx, proximityCtx, effectivenessMap),
       included: false,
     }));
     return { memories: [], totalTokens: 0, totalBytes: 0, includedCount: 0, droppedCount: memories.length, scores };
@@ -59,7 +60,7 @@ export function selectMemories(
 
   const scored = memories.map(m => ({
     memory: m,
-    score: scoreRelevance(m, task, planSection, featureCreatedAt, taskCtx, proximityCtx),
+    score: scoreRelevance(m, task, planSection, featureCreatedAt, taskCtx, proximityCtx, effectivenessMap),
     tokens: estimateTokens(m.bodyContent),
   }));
 

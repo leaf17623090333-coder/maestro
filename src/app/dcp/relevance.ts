@@ -12,11 +12,12 @@ import { extractKeywords, computeSetOverlap, scorePriority, STOPWORDS, TAG_WEIGH
 export { extractKeywords, computeSetOverlap, scorePriority, STOPWORDS, TAG_WEIGHT, KEYWORD_WEIGHT } from '../../domain/text-utils.ts';
 
 const WEIGHTS = {
-  tagOverlap: 0.30,
+  tagOverlap: 0.25,
   categoryMatch: 0.20,
   priority: 0.15,
   recency: 0.10,
-  keywordOverlap: 0.25,
+  keywordOverlap: 0.20,
+  effectiveness: 0.10,
 } as const;
 
 /**
@@ -117,6 +118,7 @@ export function scoreRelevance(
   featureCreatedAt?: string,
   precomputed?: TaskContext,
   proximityCtx?: ProximityContext,
+  effectivenessMap?: Map<string, number>,
 ): number {
   const ctx = precomputed ?? buildTaskContext(task, planSection);
   const tags = memory.metadata.tags ?? [];
@@ -130,13 +132,15 @@ export function scoreRelevance(
   const keywordScore = scoreKeywordOverlap(
     memory.bodyContent, memory.name, ctx.taskKeywords,
   );
+  const effectivenessScore = effectivenessMap?.get(memory.name) ?? 0.5;
 
   let score =
     WEIGHTS.tagOverlap * tagScore +
     WEIGHTS.categoryMatch * categoryScore +
     WEIGHTS.priority * priorityScore +
     WEIGHTS.recency * recencyScore +
-    WEIGHTS.keywordOverlap * keywordScore;
+    WEIGHTS.keywordOverlap * keywordScore +
+    WEIGHTS.effectiveness * effectivenessScore;
 
   if (proximityCtx) {
     const source = extractSourceTask(memory.name);
