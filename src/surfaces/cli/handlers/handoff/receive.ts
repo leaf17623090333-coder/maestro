@@ -9,7 +9,7 @@ import { handleCommandError } from '../../../../domain/errors.ts';
 import { resolveFeature, requireHandoffPort } from '../../../../infra/utils/resolve.ts';
 
 export default defineCommand({
-  meta: { name: 'handoff-receive', description: 'Check for pending handoffs\n\nExamples:\n  maestro handoff-receive --agent-id worker-1\n  maestro handoff-receive --feature my-feat --agent-id worker-1 --json' },
+  meta: { name: 'handoff-receive', description: 'Check for pending handoffs\n\nExamples:\n  maestro handoff-receive --json\n  maestro handoff-receive --agent-id worker-1 --json\n  maestro handoff-list --json   (alternative: list all handoff files)' },
   args: {
     feature: {
       type: 'string',
@@ -17,8 +17,7 @@ export default defineCommand({
     },
     'agent-id': {
       type: 'string',
-      description: 'Agent identifier to check handoffs for',
-      required: true,
+      description: 'Agent identifier to filter handoffs (optional, shows all if omitted)',
       alias: 'agentId',
     },
   },
@@ -29,7 +28,7 @@ export default defineCommand({
 
       const featureName = resolveFeature(services, args.feature);
 
-      const handoffs = await handoffPort.receiveHandoffs(featureName ?? undefined, args['agent-id']);
+      const handoffs = await handoffPort.receiveHandoffs(featureName ?? undefined, args['agent-id'] ?? '');
 
       output({ handoffs }, () => {
         if (handoffs.length === 0) return 'No pending handoffs.';

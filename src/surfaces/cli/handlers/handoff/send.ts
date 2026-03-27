@@ -9,7 +9,7 @@ import { handleCommandError } from '../../../../domain/errors.ts';
 import { requireFeature, requireHandoffPort, FEATURE_HINT } from '../../../../infra/utils/resolve.ts';
 
 export default defineCommand({
-  meta: { name: 'handoff-send', description: 'Send handoff to another agent\n\nExamples:\n  maestro handoff-send --feature my-feat --task 01-setup\n  maestro handoff-send --feature my-feat --task 01-setup --target-agent worker-1' },
+  meta: { name: 'handoff-send', description: 'Send handoff to another agent\n\nExamples:\n  maestro handoff-send --task 01-setup --content "Auth middleware done"\n  maestro handoff-send --task 01-setup --target-agent worker-1 --json\n  maestro handoff-send --task 01-setup --file handoff-notes.md --json' },
   args: {
     feature: {
       type: 'string',
