@@ -7,6 +7,7 @@ import { getServices } from '../../../../services.ts';
 import { output, renderTaskTable } from '../../../../infra/utils/output.ts';
 import { handleCommandError, MaestroError } from '../../../../domain/errors.ts';
 import type { TaskStatusType } from '../../../../domain/types.ts';
+import { requireFeature, FEATURE_HINT } from '../../../../infra/utils/resolve.ts';
 
 const VALID_STATUSES: TaskStatusType[] = ['pending', 'claimed', 'done', 'blocked', 'review', 'revision'];
 
@@ -15,8 +16,7 @@ export default defineCommand({
   args: {
     feature: {
       type: 'string',
-      description: 'Feature name',
-      required: true,
+      description: 'Feature name (defaults to active feature)',
     },
     status: {
       type: 'string',
@@ -41,8 +41,10 @@ export default defineCommand({
         statusFilter = args.status as TaskStatusType;
       }
 
-      const { taskPort } = getServices();
-      const tasks = await taskPort.list(args.feature, {
+      const services = getServices();
+      const featureName = requireFeature(services, args.feature, [FEATURE_HINT]);
+      const { taskPort } = services;
+      const tasks = await taskPort.list(featureName, {
         status: statusFilter,
         includeAll: args.all,
       });

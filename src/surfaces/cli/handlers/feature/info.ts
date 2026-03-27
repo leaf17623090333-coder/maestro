@@ -6,23 +6,25 @@ import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
 import { output, renderStatusLine } from '../../../../infra/utils/output.ts';
 import { MaestroError, handleCommandError } from '../../../../domain/errors.ts';
+import { requireFeature, FEATURE_HINT } from '../../../../infra/utils/resolve.ts';
 
 export default defineCommand({
   meta: { name: 'feature-info', description: 'Show feature details\n\nExamples:\n  maestro feature-info --feature my-feat\n  maestro feature-info --feature my-feat --json' },
   args: {
     feature: {
       type: 'string',
-      description: 'Feature name',
-      required: true,
+      description: 'Feature name (defaults to active feature)',
     },
   },
   async run({ args }) {
     try {
-      const { featureAdapter } = getServices();
-      const info = featureAdapter.getInfo(args.feature);
+      const services = getServices();
+      const featureName = requireFeature(services, args.feature, [FEATURE_HINT]);
+      const { featureAdapter } = services;
+      const info = featureAdapter.getInfo(featureName);
 
       if (!info) {
-        throw new MaestroError(`Feature '${args.feature}' not found`);
+        throw new MaestroError(`Feature '${featureName}' not found`);
       }
 
       output(info, (i) =>

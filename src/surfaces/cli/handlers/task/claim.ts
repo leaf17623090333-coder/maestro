@@ -20,11 +20,11 @@ export default defineCommand({
       description: 'Task ID (folder name)',
       required: true,
     },
-    agentId: {
+    'agent-id': {
       type: 'string',
       description: 'Agent identifier claiming this task',
       required: true,
-      alias: 'agent-id',
+      alias: 'agentId',
     },
   },
   async run({ args }) {
@@ -34,8 +34,8 @@ export default defineCommand({
         FEATURE_HINT,
       ]);
 
-      const task = await services.taskPort.claim(featureName, args.task, args.agentId);
-      output(task, () => `[ok] claimed '${args.task}' for agent '${args.agentId}'`);
+      const task = await services.taskPort.claim(featureName, args.task, args['agent-id']);
+      output(task, () => `[ok] claimed '${args.task}' for agent '${args['agent-id']}'`);
     } catch (err) {
       handleCommandError('task-claim', err);
     }

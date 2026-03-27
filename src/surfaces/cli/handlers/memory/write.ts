@@ -8,7 +8,7 @@ import { output } from '../../../../infra/utils/output.ts';
 import { handleCommandError, MaestroError } from '../../../../domain/errors.ts';
 import { readStdinText } from '../../../../infra/utils/stdin.ts';
 import * as fs from 'fs';
-import { parseTags } from '../../../../infra/utils/resolve.ts';
+import { parseTags, requireFeature, FEATURE_HINT } from '../../../../infra/utils/resolve.ts';
 import { prependMetadataFrontmatter } from '../../../../infra/utils/frontmatter.ts';
 import { MEMORY_CATEGORIES } from '../../../../domain/types.ts';
 
@@ -17,8 +17,7 @@ export default defineCommand({
   args: {
     feature: {
       type: 'string',
-      description: 'Feature name',
-      required: true,
+      description: 'Feature name (defaults to active feature)',
     },
     name: {
       type: 'string',
@@ -58,7 +57,8 @@ export default defineCommand({
   },
   async run({ args }) {
     try {
-      const { memoryAdapter } = getServices();
+      const services = getServices();
+      const { memoryAdapter } = services;
 
       let content = args.content;
       if (!content && args.file) {
@@ -81,7 +81,7 @@ export default defineCommand({
 
       const result = args.global
         ? memoryAdapter.writeGlobal(args.name, finalContent)
-        : memoryAdapter.write(args.feature, args.name, finalContent);
+        : memoryAdapter.write(requireFeature(services, args.feature, [FEATURE_HINT]), args.name, finalContent);
       output(result, (r) => `[ok] memory written --> ${r}`);
     } catch (err) {
       handleCommandError('memory-write', err);

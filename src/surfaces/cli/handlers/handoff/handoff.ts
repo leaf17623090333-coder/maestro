@@ -11,11 +11,11 @@ import { requireHandoffPort } from '../../../../infra/utils/resolve.ts';
 export default defineCommand({
   meta: { name: 'handoff-ack', description: 'Acknowledge a handoff\n\nExamples:\n  maestro handoff-ack --thread-id abc123\n  maestro handoff-ack --thread-id abc123 --json' },
   args: {
-    threadId: {
+    'thread-id': {
       type: 'string',
       description: 'Agent Mail thread ID to acknowledge',
       required: true,
-      alias: 'thread-id',
+      alias: 'threadId',
     },
   },
   async run({ args }) {
@@ -23,10 +23,10 @@ export default defineCommand({
       const services = getServices();
       const handoffPort = requireHandoffPort(services);
 
-      await handoffPort.acknowledgeHandoff(args.threadId);
+      await handoffPort.acknowledgeHandoff(args['thread-id']);
 
-      output({ threadId: args.threadId }, () =>
-        `[ok] acknowledged thread '${args.threadId}'`,
+      output({ threadId: args['thread-id'] }, () =>
+        `[ok] acknowledged thread '${args['thread-id']}'`,
       );
     } catch (err) {
       handleCommandError('handoff-ack', err);

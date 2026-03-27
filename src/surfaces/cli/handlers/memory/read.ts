@@ -6,14 +6,14 @@ import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
 import { output } from '../../../../infra/utils/output.ts';
 import { MaestroError, handleCommandError } from '../../../../domain/errors.ts';
+import { requireFeature, FEATURE_HINT } from '../../../../infra/utils/resolve.ts';
 
 export default defineCommand({
   meta: { name: 'memory-read', description: 'Read a memory file\n\nExamples:\n  maestro memory-read --feature my-feat --name finding\n  maestro memory-read --feature my-feat --name finding --json' },
   args: {
     feature: {
       type: 'string',
-      description: 'Feature name',
-      required: true,
+      description: 'Feature name (defaults to active feature)',
     },
     name: {
       type: 'string',
@@ -23,10 +23,12 @@ export default defineCommand({
   },
   async run({ args }) {
     try {
-      const { memoryAdapter } = getServices();
-      const content = memoryAdapter.read(args.feature, args.name);
+      const services = getServices();
+      const featureName = requireFeature(services, args.feature, [FEATURE_HINT]);
+      const { memoryAdapter } = services;
+      const content = memoryAdapter.read(featureName, args.name);
       if (content === null) {
-        throw new MaestroError(`memory '${args.name}' not found for feature '${args.feature}'`);
+        throw new MaestroError(`memory '${args.name}' not found for feature '${featureName}'`);
       }
       output(content, (c) => c);
     } catch (err) {

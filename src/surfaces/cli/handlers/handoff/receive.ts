@@ -15,11 +15,11 @@ export default defineCommand({
       type: 'string',
       description: 'Feature name (defaults to active feature)',
     },
-    agentId: {
+    'agent-id': {
       type: 'string',
       description: 'Agent identifier to check handoffs for',
       required: true,
-      alias: 'agent-id',
+      alias: 'agentId',
     },
   },
   async run({ args }) {
@@ -29,7 +29,7 @@ export default defineCommand({
 
       const featureName = resolveFeature(services, args.feature);
 
-      const handoffs = await handoffPort.receiveHandoffs(featureName ?? undefined, args.agentId);
+      const handoffs = await handoffPort.receiveHandoffs(featureName ?? undefined, args['agent-id']);
 
       output({ handoffs }, () => {
         if (handoffs.length === 0) return 'No pending handoffs.';

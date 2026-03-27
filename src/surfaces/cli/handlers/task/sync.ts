@@ -8,14 +8,14 @@ import { syncPlan } from '../../../../app/tasks/sync-plan.ts';
 import { translatePlan } from '../../../../app/tasks/translate-plan.ts';
 import { output } from '../../../../infra/utils/output.ts';
 import { handleCommandError } from '../../../../domain/errors.ts';
+import { requireFeature, FEATURE_HINT } from '../../../../infra/utils/resolve.ts';
 
 export default defineCommand({
   meta: { name: 'task-sync', description: 'Sync tasks from approved plan\n\nExamples:\n  maestro task-sync --feature my-feat\n  maestro task-sync --feature my-feat --dry-run' },
   args: {
     feature: {
       type: 'string',
-      description: 'Feature name',
-      required: true,
+      description: 'Feature name (defaults to active feature)',
     },
     'dry-run': {
       type: 'boolean',
@@ -26,13 +26,14 @@ export default defineCommand({
   async run({ args }) {
     try {
       const services = getServices();
+      const featureName = requireFeature(services, args.feature, [FEATURE_HINT]);
       const dryRun = args['dry-run'];
       const result = services.taskBackend === 'br'
-        ? await translatePlan(services, args.feature, { dryRun })
-        : await syncPlan(services, args.feature, { dryRun });
+        ? await translatePlan(services, featureName, { dryRun })
+        : await syncPlan(services, featureName, { dryRun });
 
       output(result, (r) => {
-        const lines = [`[ok] tasks synced for '${args.feature}'${dryRun ? ' (dry run)' : ''}`];
+        const lines = [`[ok] tasks synced for '${featureName}'${dryRun ? ' (dry run)' : ''}`];
         if (r.created.length > 0) lines.push(`  created: ${r.created.join(', ')}`);
         if (r.removed.length > 0) lines.push(`  removed: ${r.removed.join(', ')}`);
         if (r.kept.length > 0) lines.push(`  kept: ${r.kept.join(', ')}`);

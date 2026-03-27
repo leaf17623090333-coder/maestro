@@ -8,14 +8,14 @@ import { output } from '../../../../infra/utils/output.ts';
 import { handleCommandError, MaestroError } from '../../../../domain/errors.ts';
 import { readStdinText } from '../../../../infra/utils/stdin.ts';
 import * as fs from 'fs';
+import { requireFeature, FEATURE_HINT } from '../../../../infra/utils/resolve.ts';
 
 export default defineCommand({
   meta: { name: 'plan-comment', description: 'Add comment to feature plan\n\nExamples:\n  maestro plan-comment --feature my-feat --body "Consider edge case X"\n  maestro plan-comment --feature my-feat --file comment.md --line 42\n  maestro plan-comment --feature my-feat --body "Needs auth" --line 42' },
   args: {
     feature: {
       type: 'string',
-      description: 'Feature name',
-      required: true,
+      description: 'Feature name (defaults to active feature)',
     },
     body: {
       type: 'string',
@@ -41,7 +41,9 @@ export default defineCommand({
   },
   async run({ args }) {
     try {
-      const { planAdapter } = getServices();
+      const services = getServices();
+      const featureName = requireFeature(services, args.feature, [FEATURE_HINT]);
+      const { planAdapter } = services;
 
       let body = args.body;
       if (!body && args.file) {
@@ -56,7 +58,7 @@ export default defineCommand({
         ]);
       }
 
-      const result = planAdapter.addComment(args.feature, {
+      const result = planAdapter.addComment(featureName, {
         body,
         author: args.author ?? 'cli',
         line: args.line ? Number(args.line) : 0,

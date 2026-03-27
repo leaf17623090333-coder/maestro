@@ -9,14 +9,14 @@ import { output } from '../../../../infra/utils/output.ts';
 import { handleCommandError, MaestroError } from '../../../../domain/errors.ts';
 import { readStdinText } from '../../../../infra/utils/stdin.ts';
 import * as fs from 'fs';
+import { requireFeature, FEATURE_HINT } from '../../../../infra/utils/resolve.ts';
 
 export default defineCommand({
   meta: { name: 'plan-write', description: 'Write or update feature plan\n\nExamples:\n  maestro plan-write --feature my-feat --file plan.md\n  maestro plan-write --feature my-feat --content "## Tasks\\n- Setup auth"' },
   args: {
     feature: {
       type: 'string',
-      description: 'Feature name',
-      required: true,
+      description: 'Feature name (defaults to active feature)',
     },
     content: {
       type: 'string',
@@ -45,11 +45,12 @@ export default defineCommand({
   async run({ args }) {
     try {
       const services = getServices();
+      const featureName = requireFeature(services, args.feature, [FEATURE_HINT]);
 
       const dryRun = args['dry-run'];
 
       if (args.scaffold) {
-        const result = await writePlan(services, args.feature, '', { scaffold: true, dryRun });
+        const result = await writePlan(services, featureName, '', { scaffold: true, dryRun });
         output(result, (r) => `[ok] plan scaffold written for '${r.feature}'${dryRun ? ' (dry run)' : ''} -- edit ${r.path} then run plan-write with content`);
         return;
       }
@@ -67,7 +68,7 @@ export default defineCommand({
         ]);
       }
 
-      const result = await writePlan(services, args.feature, content, { dryRun });
+      const result = await writePlan(services, featureName, content, { dryRun });
       output(result, (r) => `[ok] plan written for '${r.feature}' (${r.taskCount} task headings)${dryRun ? ' (dry run)' : ''}`);
     } catch (err) {
       handleCommandError('plan-write', err);

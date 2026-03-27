@@ -20,10 +20,10 @@ export default defineCommand({
       description: 'Task ID (folder name)',
       required: true,
     },
-    targetAgent: {
+    'target-agent': {
       type: 'string',
       description: 'Target agent identifier',
-      alias: 'target-agent',
+      alias: 'targetAgent',
     },
     context: {
       type: 'string',
@@ -44,7 +44,7 @@ export default defineCommand({
         handoff.criticalContext = args.context;
       }
 
-      const result = await handoffPort.sendHandoff(featureName, handoff, args.targetAgent);
+      const result = await handoffPort.sendHandoff(featureName, handoff, args['target-agent']);
 
       const data = {
         feature: featureName,

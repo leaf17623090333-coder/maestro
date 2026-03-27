@@ -7,6 +7,7 @@ import { defineCommand } from 'citty';
 import { getServices } from '../../../../services.ts';
 import { output } from '../../../../infra/utils/output.ts';
 import { MaestroError, handleCommandError } from '../../../../domain/errors.ts';
+import { requireFeature, FEATURE_HINT } from '../../../../infra/utils/resolve.ts';
 import { selectMemories } from '../../../../app/dcp/selector.ts';
 import { resolveDcpConfig } from '../../../../app/dcp/config.ts';
 import { estimateTokens } from '../../../../infra/utils/tokens.ts';
@@ -38,8 +39,7 @@ export default defineCommand({
   args: {
     feature: {
       type: 'string',
-      description: 'Feature name',
-      required: true,
+      description: 'Feature name (defaults to active feature)',
     },
     task: {
       type: 'string',
@@ -54,19 +54,21 @@ export default defineCommand({
   },
   async run({ args }) {
     try {
-      const { memoryAdapter, taskPort, featureAdapter, settingsPort } = getServices();
+      const services = getServices();
+      const featureName = requireFeature(services, args.feature, [FEATURE_HINT]);
+      const { memoryAdapter, taskPort, featureAdapter, settingsPort } = services;
 
       if (args.task) {
         // DCP-scored compile
-        const task = await taskPort.get(args.feature, args.task);
+        const task = await taskPort.get(featureName, args.task);
         if (!task) {
-          throw new MaestroError(`task '${args.task}' not found in feature '${args.feature}'`);
+          throw new MaestroError(`task '${args.task}' not found in feature '${featureName}'`);
         }
-        const memories = memoryAdapter.listWithMeta(args.feature);
-        requireMemories(memories, args.feature);
+        const memories = memoryAdapter.listWithMeta(featureName);
+        requireMemories(memories, featureName);
         const cfg = resolveDcpConfig(settingsPort.get().dcp);
         const budget = args.budget ? parseBudget(args.budget) : cfg.memoryBudgetTokens;
-        const featureCreatedAt = featureAdapter.get(args.feature)?.createdAt;
+        const featureCreatedAt = featureAdapter.get(featureName)?.createdAt;
         const selected = selectMemories(
           memories, task, task.planTitle ?? null, budget,
           cfg.relevanceThreshold, featureCreatedAt,
@@ -77,8 +79,8 @@ export default defineCommand({
 
       if (args.budget) {
         // Budget-capped compile (no DCP scoring, newest first)
-        const memories = memoryAdapter.listWithMeta(args.feature);
-        requireMemories(memories, args.feature);
+        const memories = memoryAdapter.listWithMeta(featureName);
+        requireMemories(memories, featureName);
         const budget = parseBudget(args.budget);
         const sorted = [...memories].sort((a, b) =>
           new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
@@ -89,9 +91,9 @@ export default defineCommand({
       }
 
       // Legacy: full dump (backward compat)
-      const compiled = memoryAdapter.compile(args.feature);
+      const compiled = memoryAdapter.compile(featureName);
       if (!compiled) {
-        throw new MaestroError(`no memory files for feature '${args.feature}'`);
+        throw new MaestroError(`no memory files for feature '${featureName}'`);
       }
       output(compiled, (c) => c);
     } catch (err) {
