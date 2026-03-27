@@ -14,7 +14,7 @@
 import type { TaskInfo, TaskStatusType } from '../../../../../domain/types.ts';
 import type { TaskPort, CreateOpts, ListOpts, RichTaskFields } from '../../../../../domain/ports/task.ts';
 import type { VerificationReport } from '../../../../../domain/ports/verification.ts';
-import { isValidTransition, VALID_TRANSITIONS } from '../../../../../app/tasks/transitions.ts';
+import { isValidTransition, VALID_TRANSITIONS } from '../../../../../domain/task-transitions.ts';
 import { MaestroError } from '../../../../../domain/errors.ts';
 import { getFeaturePath, getTaskReportPath, getTaskVerificationPath, getTaskPath } from '../../../../utils/paths.ts';
 import { readJson, writeJsonAtomic, ensureDir, readText, writeText } from '../../../../utils/fs-io.ts';

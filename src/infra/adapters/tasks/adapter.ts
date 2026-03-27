@@ -11,7 +11,7 @@
 
 import type { TaskInfo, TaskStatus } from '../../../domain/types.ts';
 import type { TaskPort, CreateOpts, ListOpts, RichTaskFields } from '../../../domain/ports/task.ts';
-import { isDependencySatisfied } from '../../../app/tasks/transitions.ts';
+import { isDependencySatisfied } from '../../../domain/task-transitions.ts';
 import { MaestroError } from '../../../domain/errors.ts';
 import {
   getTasksPath,
