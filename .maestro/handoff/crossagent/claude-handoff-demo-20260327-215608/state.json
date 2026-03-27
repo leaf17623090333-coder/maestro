@@ -1,0 +1,8 @@
+{
+  "feature": "claude-handoff-demo-20260327-215608",
+  "status": "pending",
+  "fromHost": "codex",
+  "toAgent": "claude",
+  "createdAt": "2026-03-27T14:56:21.531Z",
+  "handoffPath": "/Users/reinamaccredy/Code/maestro/.maestro/handoff/crossagent/claude-handoff-demo-20260327-215608/handoff.md"
+}
