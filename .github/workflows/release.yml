@@ -128,6 +128,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - name: Download built assets
         uses: actions/download-artifact@v4
         with:
