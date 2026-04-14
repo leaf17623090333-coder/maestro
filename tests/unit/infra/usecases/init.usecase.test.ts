@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach } from "bun:test";
-import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { access, mkdtemp, mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { initMaestro } from "@/infra/usecases/init.usecase.js";
@@ -197,5 +197,52 @@ describe("initMaestro", () => {
 
     const raw = await readFile(principlesPath, "utf8");
     expect(raw).toBe('{"id":"custom"}\n');
+  });
+
+  it("syncs built-in maestro skills into project-local claude and codex folders", async () => {
+    const config = mockConfig();
+
+    const result = await initMaestro(config, { global: false, dir: tmpDir });
+
+    const claudeSkillPath = join(tmpDir, ".claude", "skills", "maestro:worker-base", "SKILL.md");
+    const codexSkillPath = join(tmpDir, ".codex", "skills", "maestro:worker-base", "SKILL.md");
+
+    expect(result.created).toContain(claudeSkillPath);
+    expect(result.created).toContain(codexSkillPath);
+    expect(await readFile(claudeSkillPath, "utf8")).toContain("# Worker Base Procedures");
+    expect(await readFile(codexSkillPath, "utf8")).toContain("# Worker Base Procedures");
+  });
+
+  it("overwrites existing synced maestro skills with the shipped version", async () => {
+    const config = mockConfig();
+    const claudeSkillPath = join(tmpDir, ".claude", "skills", "maestro:worker-base", "SKILL.md");
+
+    await mkdir(join(tmpDir, ".claude", "skills", "maestro:worker-base"), { recursive: true });
+    await writeFile(claudeSkillPath, "# old worker base\n");
+
+    const result = await initMaestro(config, { global: false, dir: tmpDir });
+
+    expect(result.created).toContain(claudeSkillPath);
+    expect(await readFile(claudeSkillPath, "utf8")).toContain("# Worker Base Procedures");
+  });
+
+  it("removes stale synced maestro skills without touching non-maestro skills", async () => {
+    const config = mockConfig();
+    const staleClaudeSkillPath = join(tmpDir, ".claude", "skills", "maestro:obsolete", "SKILL.md");
+    const staleCodexSkillPath = join(tmpDir, ".codex", "skills", "maestro:obsolete", "SKILL.md");
+    const customSkillPath = join(tmpDir, ".claude", "skills", "custom-skill", "SKILL.md");
+
+    await mkdir(join(tmpDir, ".claude", "skills", "maestro:obsolete"), { recursive: true });
+    await mkdir(join(tmpDir, ".codex", "skills", "maestro:obsolete"), { recursive: true });
+    await mkdir(join(tmpDir, ".claude", "skills", "custom-skill"), { recursive: true });
+    await writeFile(staleClaudeSkillPath, "# old skill\n");
+    await writeFile(staleCodexSkillPath, "# old skill\n");
+    await writeFile(customSkillPath, "# keep me\n");
+
+    await initMaestro(config, { global: false, dir: tmpDir });
+
+    await expect(access(staleClaudeSkillPath)).rejects.toThrow();
+    await expect(access(staleCodexSkillPath)).rejects.toThrow();
+    expect(await readFile(customSkillPath, "utf8")).toBe("# keep me\n");
   });
 });

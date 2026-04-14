@@ -5,10 +5,14 @@ import {
   PROJECT_BOOTSTRAP_TEMPLATES,
   type BootstrapTemplateFile,
 } from "../domain/bootstrap-templates.js";
+import {
+  BUILT_IN_SKILL_TEMPLATES,
+  type BuiltInSkillTemplate,
+} from "../domain/built-in-skill-templates.js";
 import { dirExists, ensureDir, readText, writeText } from "@/shared/lib/fs.js";
 import { homedir } from "node:os";
 import { dirname, join, relative, resolve, sep } from "node:path";
-import { chmod, lstat, readdir } from "node:fs/promises";
+import { chmod, lstat, readdir, rm } from "node:fs/promises";
 import { DEFAULT_PRINCIPLES } from "@/features/mission";
 
 const RUNTIME_GITIGNORE_COMMENT = "# Maestro runtime state";
@@ -17,6 +21,11 @@ const RUNTIME_GITIGNORE_LINES = [
   ".maestro/missions/",
   ".maestro/sessions/",
 ] as const;
+const MANAGED_AGENT_SKILL_ROOTS = [
+  [".claude", "skills"],
+  [".codex", "skills"],
+] as const;
+const MANAGED_SKILL_PREFIX = "maestro:";
 
 export interface InitResult {
   readonly created: string[];
@@ -111,6 +120,8 @@ export async function initMaestro(
     } else {
       skipped.push(principlesPath);
     }
+
+    await syncProjectAgentBuiltInSkills(opts.dir, created);
   }
 
   return {
@@ -238,6 +249,94 @@ async function ensureDirIfMissing(dir: string, created: string[]): Promise<void>
   }
 
   await ensureDir(dir);
+}
+
+async function syncProjectAgentBuiltInSkills(rootDir: string, created: string[]): Promise<void> {
+  for (const segments of MANAGED_AGENT_SKILL_ROOTS) {
+    const skillRoot = join(rootDir, ...segments);
+    await assertProjectLocalPathSafe(rootDir, skillRoot);
+    await ensureDirIfMissing(skillRoot, created);
+    await removeStaleManagedSkillDirs(rootDir, skillRoot);
+
+    for (const template of BUILT_IN_SKILL_TEMPLATES) {
+      await syncManagedSkillTemplate(rootDir, skillRoot, template, created);
+    }
+  }
+}
+
+async function removeStaleManagedSkillDirs(rootDir: string, skillRoot: string): Promise<void> {
+  const shippedSkillNames = new Set(BUILT_IN_SKILL_TEMPLATES.map((template) => template.name));
+  const entries = (await readdir(skillRoot, { withFileTypes: true }))
+    .sort((left, right) => left.name.localeCompare(right.name));
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) {
+      continue;
+    }
+
+    if (!isManagedSkillName(entry.name) || shippedSkillNames.has(entry.name)) {
+      continue;
+    }
+
+    const staleDir = join(skillRoot, entry.name);
+    await assertProjectLocalPathSafe(rootDir, staleDir);
+    await rm(staleDir, { recursive: true, force: true });
+  }
+}
+
+async function syncManagedSkillTemplate(
+  rootDir: string,
+  skillRoot: string,
+  template: BuiltInSkillTemplate,
+  created: string[],
+): Promise<void> {
+  const skillDir = join(skillRoot, template.name);
+  await assertProjectLocalPathSafe(rootDir, skillDir);
+
+  if (await skillDirMatchesTemplate(skillDir, template)) {
+    return;
+  }
+
+  await rm(skillDir, { recursive: true, force: true });
+  await ensureDir(skillDir);
+
+  for (const file of template.files) {
+    const target = join(skillDir, file.path);
+    await assertProjectLocalPathSafe(rootDir, target);
+    await ensureDir(dirname(target));
+    await writeText(target, file.content);
+    created.push(target);
+  }
+}
+
+async function skillDirMatchesTemplate(skillDir: string, template: BuiltInSkillTemplate): Promise<boolean> {
+  if (!(await dirExists(skillDir))) {
+    return false;
+  }
+
+  const expectedFiles = new Map(template.files.map((file) => [file.path, file.content]));
+  const actualFiles = await listFilesRecursive(skillDir);
+  if (actualFiles.length !== template.files.length) {
+    return false;
+  }
+
+  for (const file of actualFiles) {
+    const relativePath = relative(skillDir, file);
+    const expectedContent = expectedFiles.get(relativePath);
+    if (expectedContent === undefined) {
+      return false;
+    }
+
+    if (await readText(file) !== expectedContent) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function isManagedSkillName(name: string): boolean {
+  return name.startsWith(MANAGED_SKILL_PREFIX);
 }
 
 async function assertProjectLocalPathSafe(
