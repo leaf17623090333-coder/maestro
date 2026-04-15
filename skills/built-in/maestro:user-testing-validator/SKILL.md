@@ -157,6 +157,8 @@ Record results:
 maestro validation update --milestone <name> --status <passed|failed>
 ```
 
+**Next step**: return results to `maestro:conduct`. If status is `passed` and scrutiny validation also passed, the conductor proceeds to `maestro milestone seal`. If status is `failed`, the conductor re-opens the affected features for worker re-dispatch. Do not seal the milestone yourself -- that is the conductor's gate.
+
 ### Step 8: Produce Validation Report
 
 **Human format:**

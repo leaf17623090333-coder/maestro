@@ -113,6 +113,8 @@ Record results in validation state:
 maestro validation update --milestone <name> --status <passed|failed>
 ```
 
+**Next step**: return results to `maestro:conduct`. If status is `passed`, conduct proceeds to `maestro:user-testing-validator` (if applicable) or directly to `maestro milestone seal`. If status is `failed`, conduct re-opens the affected features for worker re-dispatch. Do not seal the milestone yourself -- that is the conductor's gate.
+
 ### Step 7: Produce Validation Report
 
 Generate human-readable and JSON reports:

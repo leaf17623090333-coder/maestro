@@ -98,6 +98,8 @@ That skill will guide you through the actual work procedure.
 
 All validators from `.maestro/bootstrap/services.yaml` must pass before handoff.
 
+**Scope note**: your responsibility here is the per-feature baseline only. Milestone-level validation (code scrutiny and user-flow testing) is run separately by the conductor via `maestro:scrutiny-validator` and `maestro:user-testing-validator` after all features in the milestone are complete. Do not attempt to run those skills yourself.
+
 ### 3.2 Environment Cleanup
 
 1. **Stop services**: Use manifest `stop` commands

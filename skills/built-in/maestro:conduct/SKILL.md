@@ -38,6 +38,8 @@ These are non-negotiable. Violating any one defeats the purpose of conductor mod
 
 Use when conducting a formal mission with milestones, features, and validation gates.
 
+**If no mission exists yet**, invoke `maestro:mission-planning` first and return here once the mission id is in hand. Do not attempt Path A without a persisted mission.
+
 ### A1. Load Mission State
 
 ```bash

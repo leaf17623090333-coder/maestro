@@ -59,7 +59,7 @@ Skip any step and the downstream worker either drifts off-scope or halts asking 
 **Trigger**: you have a decomposed plan from Step 2.
 
 **Action**:
-1. For each feature, pick a worker type from the allowed set: `codex-cli`, `claude-code`, `subagent`, `human`. Do not invent new worker types.
+1. For each feature, pick a worker type from the allowed set: `codex-cli`, `claude-code`, `subagent`, `human`. Do not invent new worker types. If the work genuinely requires a workerType outside the allowed set, invoke `maestro:define-mission-skills` to register the new skill, then return here to assign it.
 2. Apply the decision table in the reference file. Mechanical work goes to `codex-cli`, ambiguous work goes to `claude-code`, exploration goes to `subagent`, trust calls go to `human`.
 3. For any milestone with a `code-review` or `plan-review` profile, confirm the reviewer worker type is a different instance than whatever produced the artifact being reviewed. Self-review is pathologically lenient.
 4. Re-read each feature's worker-type choice and ask "would this worker actually succeed here?" If not, revise.
@@ -112,6 +112,8 @@ Skip any step and the downstream worker either drifts off-scope or halts asking 
 **Reference**: `reference/uki-cheatsheet.md`
 
 **Output**: a persisted mission under `.maestro/missions/{id}/` and a UKI v5.4 plan handoff string printed to stdout.
+
+**Next step**: once the mission is persisted and the handoff is emitted, invoke `maestro:conduct --mission <missionId>` to begin dispatching workers against the new mission. This skill ends at plan emission; execution is the conductor's job.
 
 ## Critical constraints
 

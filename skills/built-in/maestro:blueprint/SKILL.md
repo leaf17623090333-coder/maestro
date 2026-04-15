@@ -165,6 +165,8 @@ Open the HTML in the browser and tell the user both paths:
 - Plan spec: `.maestro/plans/{name}.md`
 - Visual: `~/.agent/diagrams/{name}-blueprint.html`
 
+**Next step**: if the user accepts the plan and wants to track it as a formal mission, invoke `maestro:mission-planning` with the plan content as input. The blueprint skill produces artifacts; mission-planning turns them into a tracked mission, then `maestro:conduct` executes it.
+
 ## Maestro Conventions
 
 Follow these when generating plans:

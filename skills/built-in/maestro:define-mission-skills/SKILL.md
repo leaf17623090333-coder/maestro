@@ -157,6 +157,8 @@ After creating a skill, validate it:
 1. **Frontmatter check**: YAML is valid, required fields present
 2. **Name consistency**: File path matches `name` in frontmatter
 3. **Procedures clear**: Work procedure has actionable steps
+
+**Next step**: after the skill passes validation, return to the caller that invoked you. If `maestro:mission-planning` sent you here, return to its Step 3 (Match worker types) to assign the new workerType to the feature that triggered this registration. If `maestro:conduct` sent you here mid-execution, return to conduct so it can dispatch the feature with the new workerType.
 4. **Handoff documented**: Clear what the handoff should contain
 
 ---
