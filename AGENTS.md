@@ -106,12 +106,13 @@ One-line summary: **mission answers "what are we building?", task answers "what 
 
 ```bash
 maestro task ready --json --limit 5               # find actionable work
-maestro task update tsk-abc --claim               # atomic assign + in_progress
+maestro task claim tsk-abc                        # atomic assign + in_progress
 # ... do the work, commit ...
 maestro task close tsk-abc --reason "shipped"     # finish
+# or: maestro task unclaim tsk-abc                # release without closing
 ```
 
-`--claim` is atomic: it sets `assignee` to the current session id AND `status` to `in_progress` in one write. Use it instead of a bare `--status in_progress` so concurrent agents do not clobber each other.
+`task claim` is atomic: it sets `assignee` to the current session id AND `status` to `in_progress` in one write. Use it instead of a bare `--status in_progress` so concurrent agents do not clobber each other. When session auto-detection is unavailable, use `maestro task claim <id> --force --session <id>` or `maestro task unclaim <id> --force --session <id>` as the explicit operator recovery path.
 
 ### Storage policy
 

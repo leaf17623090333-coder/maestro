@@ -102,6 +102,7 @@ export function taskAlreadyClaimed(id: string, assignee: string): MaestroError {
     [
       "Use 'maestro task show <id>' to inspect current ownership",
       "Use 'maestro task claim <id> --force' for an explicit takeover",
+      "Pass '--session <id>' when forcing takeover outside an agent session",
     ],
   );
 }
@@ -120,6 +121,7 @@ export function taskClaimOwnedByDifferentSession(id: string, assignee: string): 
     `Task ${id} is claimed by ${assignee}`,
     [
       "Use 'maestro task unclaim <id> --force' for an explicit admin release",
+      "Pass '--session <id>' when forcing release outside an agent session",
       "Or ask the current owner to release the task",
     ],
   );

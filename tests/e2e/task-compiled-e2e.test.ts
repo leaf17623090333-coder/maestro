@@ -201,6 +201,58 @@ describe("compiled task feature E2E", () => {
         );
         expect(claim.exitCode).not.toBe(0);
         expect(claim.stderr).toContain("Could not detect current session");
+        expect(claim.stderr).toContain("--session <id>");
+    },
+    SLOW_CLI_TIMEOUT_MS,
+  );
+
+  it(
+    "task force-claim supports explicit session override without agent env",
+    async () => {
+      const created = await runCompiled(["task", "q", "recoverable"], tmpDir);
+      const id = created.stdout;
+      const sessionA = await seedCodexSession("task-recovery-a");
+
+      const initialClaim = await runCompiled(
+        ["task", "claim", id, "--json"],
+        tmpDir,
+        { env: sessionA },
+      );
+      expect(expectJson<{ assignee: string }>(initialClaim).assignee).toBe("codex-task-recovery-a");
+
+      const takeover = await runCompiled(
+        ["task", "claim", id, "--force", "--session", "operator-recovery", "--json"],
+        tmpDir,
+        { env: { CLAUDECODE: "", CODEX_THREAD_ID: "" } },
+      );
+      const claimed = expectJson<{ assignee: string; status: string }>(takeover);
+      expect(claimed.assignee).toBe("operator-recovery");
+      expect(claimed.status).toBe("in_progress");
+    },
+    SLOW_CLI_TIMEOUT_MS,
+  );
+
+  it(
+    "task force-unclaim supports explicit session override without agent env",
+    async () => {
+      const created = await runCompiled(["task", "q", "recoverable release"], tmpDir);
+      const id = created.stdout;
+      const sessionA = await seedCodexSession("task-recovery-b");
+
+      await runCompiled(
+        ["task", "claim", id, "--json"],
+        tmpDir,
+        { env: sessionA },
+      );
+
+      const release = await runCompiled(
+        ["task", "unclaim", id, "--force", "--session", "operator-recovery", "--json"],
+        tmpDir,
+        { env: { CLAUDECODE: "", CODEX_THREAD_ID: "" } },
+      );
+      const unclaimed = expectJson<{ assignee?: string; status: string }>(release);
+      expect(unclaimed.assignee).toBeUndefined();
+      expect(unclaimed.status).toBe("open");
     },
     SLOW_CLI_TIMEOUT_MS,
   );

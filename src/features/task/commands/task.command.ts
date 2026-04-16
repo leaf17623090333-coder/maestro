@@ -238,11 +238,12 @@ function registerClaimCommand(taskCmd: Command, program: Command): void {
     .command("claim <id>")
     .description("Claim exclusive ownership of a task")
     .option("--force", "Take over a task already claimed by another session")
+    .option("--session <id>", "Use an explicit session id instead of auto-detection")
     .option("--json", "Output as JSON")
     .action(async (id: string, opts) => {
       const services = getServices();
       const isJson = resolveJsonFlag(opts, program);
-      const sessionId = await detectCurrentSessionId();
+      const sessionId = await resolveOwnershipSessionId(opts.session);
 
       const claimed = await claimTask(services.taskStore, id, {
         sessionId,
@@ -262,11 +263,12 @@ function registerUnclaimCommand(taskCmd: Command, program: Command): void {
     .command("unclaim <id>")
     .description("Release task ownership")
     .option("--force", "Release a task owned by another session")
+    .option("--session <id>", "Use an explicit session id instead of auto-detection")
     .option("--json", "Output as JSON")
     .action(async (id: string, opts) => {
       const services = getServices();
       const isJson = resolveJsonFlag(opts, program);
-      const sessionId = await detectCurrentSessionId();
+      const sessionId = await resolveOwnershipSessionId(opts.session);
 
       const unclaimed = await unclaimTask(services.taskStore, id, {
         sessionId,
@@ -346,13 +348,23 @@ function registerCloseCommand(taskCmd: Command, program: Command): void {
       });
   }
 
-async function detectCurrentSessionId(): Promise<string> {
+async function resolveOwnershipSessionId(explicitSessionId: string | undefined): Promise<string> {
+  if (explicitSessionId !== undefined) {
+    const trimmed = explicitSessionId.trim();
+    if (trimmed.length === 0) {
+      throw new MaestroError("Invalid --session value", [
+        "Pass a non-empty session id such as 'codex-1234' or 'operator-recovery'",
+      ]);
+    }
+    return trimmed;
+  }
+
   const services = getServices();
   const session = await services.sessionDetect.detect(process.cwd());
   if (!session) {
     throw new MaestroError("Could not detect current session for task ownership", [
       "Set CODEX_THREAD_ID or run from an agent environment",
-      "Ownership commands require a detectable agent session",
+      "Or pass --session <id> for an explicit operator or CI override",
     ]);
   }
   return `${session.agent}-${session.sessionId}`;
