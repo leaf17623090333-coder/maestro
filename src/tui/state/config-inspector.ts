@@ -2,8 +2,8 @@ import type { Feature } from "@/features/mission";
 import { listIgnoredProjectConfigKeys, isGlobalOnlyConfigKey } from "@/shared/domain/ui-config.js";
 import type { DoctorCheck } from "@/infra/domain/status-types.js";
 import type { MaestroConfig } from "@/infra/domain/config-types.js";
-import type { WorkerConfig } from "@/features/worker";
-import { formatWorkerLabel, getWorkerGuidance, recommendWorkerFit } from "@/features/worker";
+import type { WorkerConfig } from "@/features/agent";
+import { formatWorkerLabel, getWorkerGuidance, recommendWorkerFit } from "@/features/agent";
 import { cachedWhich } from "@/tui/lib/snapshot-poll-cache.js";
 import type { ConfigScope, ConfigLayers } from "@/infra/ports/config.port.js";
 import type {
@@ -221,42 +221,6 @@ function buildOverviewRows(
       availabilityBySlug,
     ),
     buildConfigValueRow(
-      "execution.stopOnFailure",
-      layers.effective.execution?.stopOnFailure,
-      layers.defaults.execution?.stopOnFailure,
-      layers.global?.execution?.stopOnFailure,
-      layers.project?.execution?.stopOnFailure,
-      Object.keys(layers.effective.workers ?? {}),
-      "overview",
-    ),
-    buildConfigValueRow(
-      "execution.retryBudget",
-      layers.effective.execution?.retryBudget,
-      layers.defaults.execution?.retryBudget,
-      layers.global?.execution?.retryBudget,
-      layers.project?.execution?.retryBudget,
-      Object.keys(layers.effective.workers ?? {}),
-      "overview",
-    ),
-    buildConfigValueRow(
-      "supervision.level",
-      layers.effective.supervision?.level,
-      layers.defaults.supervision?.level,
-      layers.global?.supervision?.level,
-      layers.project?.supervision?.level,
-      Object.keys(layers.effective.workers ?? {}),
-      "overview",
-    ),
-      buildConfigValueRow(
-        "parallel.enabled",
-        layers.effective.parallel?.enabled,
-        layers.defaults.parallel?.enabled,
-        layers.global?.parallel?.enabled,
-        layers.project?.parallel?.enabled,
-        Object.keys(layers.effective.workers ?? {}),
-        "overview",
-      ),
-      buildConfigValueRow(
         "ui.missionControl.backgroundMode",
         layers.effective.ui?.missionControl?.backgroundMode,
         layers.defaults.ui?.missionControl?.backgroundMode,
@@ -435,8 +399,8 @@ function buildPlanRows(
       keyPath: "plan.runMode",
       label: "Run mode",
       section: "What happens next",
-      rawValue: config.parallel?.enabled ? "parallel" : "sequential",
-      displayValue: config.parallel?.enabled ? "parallel" : "sequential",
+      rawValue: "sequential",
+      displayValue: "sequential",
       summary: "Shows whether Maestro would run tasks one at a time or in parallel.",
       impactText: "This changes how the next feature run will be scheduled.",
       source: "none",
@@ -559,8 +523,6 @@ function sectionForKey(keyPath: string): string {
   if (keyPath.startsWith("execution.")) return "Execution";
   if (keyPath.startsWith("ui.")) return "Interface";
   if (keyPath.startsWith("workers.")) return "Workers";
-  if (keyPath.startsWith("supervision.")) return "Supervision";
-  if (keyPath.startsWith("parallel.")) return "Parallel";
   if (keyPath.startsWith("sessionDetection.")) return "Session detection";
   return "General";
 }
@@ -599,14 +561,6 @@ function getEditMeta(
       editKind: "enum",
       options: [...KNOWN_AGENT_OPTIONS],
       description: "Choose the default agent slug.",
-    };
-  }
-
-  if (keyPath === "supervision.level") {
-    return {
-      editKind: "enum",
-      options: ["low", "mid", "high"],
-      description: "Adjust supervision aggressiveness.",
     };
   }
 
@@ -650,14 +604,6 @@ function getEditMeta(
     };
   }
 
-  if (keyPath === "execution.retryBudget") {
-    return {
-      editKind: "number-preset",
-      options: ["0", "1", "2", "3"],
-      description: "Retry attempts allowed for feature execution.",
-    };
-  }
-
   if (keyPath === "memory.learnings.compile_threshold") {
     return {
       editKind: "number-preset",
@@ -671,22 +617,6 @@ function getEditMeta(
       editKind: "number-preset",
       options: ["3", "7", "14", "30"],
       description: "How long compiled learnings remain fresh before Maestro warns that they are stale.",
-    };
-  }
-
-  if (keyPath === "parallel.maxConcurrent") {
-    return {
-      editKind: "number-preset",
-      options: ["1", "2", "3", "4"],
-      description: "Parallel worker cap for future execution modes.",
-    };
-  }
-
-  if (keyPath.endsWith(".outputMode")) {
-    return {
-      editKind: "enum",
-      options: ["raw", "stream-json"],
-      description: "How worker stdout should be interpreted.",
     };
   }
 
@@ -711,34 +641,6 @@ function getRowCopy(keyPath: string, tab: MissionControlConfigTab | "project" | 
         label: "Default worker",
         summary: "Maestro uses this worker unless you choose a different one for a run.",
         impactText: "This changes which worker runs the next task by default.",
-        section: tab === "overview" ? "Quick settings" : undefined,
-      };
-    case "execution.stopOnFailure":
-      return {
-        label: "Stop on failure",
-        summary: "Choose whether Maestro stops after the first failed task.",
-        impactText: "If this is on, the run stops on the first failure.",
-        section: tab === "overview" ? "Quick settings" : undefined,
-      };
-    case "execution.retryBudget":
-      return {
-        label: "Retry attempts",
-        summary: "How many retry attempts Maestro is allowed to make.",
-        impactText: "Higher numbers allow more retries before a task is marked blocked.",
-        section: tab === "overview" ? "Quick settings" : undefined,
-      };
-    case "supervision.level":
-      return {
-        label: "Watch level",
-        summary: "How closely Maestro watches running workers.",
-        impactText: "Higher levels check more aggressively for stale or failed workers.",
-        section: tab === "overview" ? "Quick settings" : undefined,
-      };
-    case "parallel.enabled":
-      return {
-        label: "Run in parallel",
-        summary: "Choose whether independent tasks can run at the same time.",
-        impactText: "Turning this on can speed up runs when tasks do not conflict.",
         section: tab === "overview" ? "Quick settings" : undefined,
       };
       case "ui.missionControl.backgroundMode":
@@ -875,7 +777,6 @@ function stringifyConfigValue(
   value: unknown,
 ): string {
     const raw = stringifyConfigValue(keyPath, editKind, value);
-      if (keyPath === "supervision.level" && raw === "mid") return "medium";
       if (keyPath === "ui.missionControl.backgroundMode" && raw === "terminal") return "terminal background";
       if (keyPath === "memory.learnings.compile_threshold" && raw !== "unset") return `${raw} entries`;
       if (keyPath === "memory.learnings.max_age_days" && raw !== "unset") return `${raw} days`;
