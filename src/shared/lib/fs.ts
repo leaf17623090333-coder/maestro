@@ -14,6 +14,18 @@ export async function readText(path: string): Promise<string | undefined> {
   }
 }
 
+/**
+ * Read text from a file, or from stdin when `path === "-"`. Returns undefined
+ * only for a missing file path; stdin never resolves to undefined (it resolves
+ * to an empty string on EOF with no input).
+ */
+export async function readTextOrStdin(path: string): Promise<string | undefined> {
+  if (path === "-") {
+    return new Response(Bun.stdin).text();
+  }
+  return readText(path);
+}
+
 export async function readJson<T>(path: string): Promise<T | undefined> {
   try {
     return await Bun.file(path).json() as T;

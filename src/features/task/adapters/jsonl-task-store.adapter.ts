@@ -107,20 +107,7 @@ export class JsonlTaskStoreAdapter implements TaskStorePort {
       }
       ensureTasksExist("<new task>", input.blockedBy ?? [], tasks);
 
-      let id: string | undefined;
-      for (let attempt = 0; attempt < MAX_ID_RETRIES; attempt++) {
-        const candidate = generateTaskId();
-        if (!tasks.has(candidate)) {
-          id = candidate;
-          break;
-        }
-      }
-      if (id === undefined) {
-        throw new MaestroError(`Failed to generate a unique task id after ${MAX_ID_RETRIES} attempts`, [
-          "Retry the command to generate a fresh task id",
-          "If the problem persists, inspect .maestro/tasks/tasks.jsonl for duplicate ids",
-        ]);
-      }
+      const id = generateUniqueIds(1, tasks)[0]!;
 
       const now = new Date().toISOString();
       const task: Task = {
@@ -153,15 +140,26 @@ export class JsonlTaskStoreAdapter implements TaskStorePort {
     });
   }
 
-  async createBatch(inputs: readonly CreateBatchInput[]): Promise<readonly Task[]> {
+  async createBatch(
+    inputs: readonly CreateBatchInput[],
+    receipt?: { readonly batchId: string; readonly names: readonly (string | undefined)[] },
+  ): Promise<readonly Task[]> {
     if (inputs.length === 0) return [];
 
     return this.withLock(async () => {
       const tasks = await this.readAll();
 
       const generatedIds = generateUniqueIds(inputs.length, tasks);
-      const resolveRef = (ref: number | string): string => {
-        if (typeof ref === "number") return generatedIds[ref]!;
+      const resolveRef = (ref: number | string, source: "parent" | "blockedBy"): string => {
+        if (typeof ref === "number") {
+          if (ref < 0 || ref >= inputs.length) {
+            throw new MaestroError(
+              `Batch ${source} index ${ref} out of bounds (0..${inputs.length - 1})`,
+              ["This indicates a bug in the caller that built the batch input"],
+            );
+          }
+          return generatedIds[ref]!;
+        }
         return ref;
       };
 
@@ -186,10 +184,10 @@ export class JsonlTaskStoreAdapter implements TaskStorePort {
         type: input.type ?? DEFAULT_TASK_TYPE,
         priority: input.priority ?? DEFAULT_TASK_PRIORITY,
         status: DEFAULT_TASK_STATUS,
-        parentId: input.parentRef === undefined ? undefined : resolveRef(input.parentRef),
+        parentId: input.parentRef === undefined ? undefined : resolveRef(input.parentRef, "parent"),
         labels: input.labels ?? [],
         blocks: [],
-        blockedBy: dedupeValues((input.blockedByRefs ?? []).map(resolveRef)),
+        blockedBy: dedupeValues((input.blockedByRefs ?? []).map((r) => resolveRef(r, "blockedBy"))),
         createdAt: now,
         updatedAt: now,
       }));
@@ -215,6 +213,18 @@ export class JsonlTaskStoreAdapter implements TaskStorePort {
         for (const blockerId of task.blockedBy) {
           assertNoBlockCycle(blockerId, [task.id], tasks);
         }
+      }
+
+      if (receipt !== undefined) {
+        await this.writeReceiptFile({
+          batchId: receipt.batchId,
+          created: proposed.map((task, idx) => ({
+            name: receipt.names[idx],
+            id: task.id,
+            status: task.status,
+            assignee: task.assignee,
+          })),
+        });
       }
 
       await this.writeAll(tasks);
@@ -438,7 +448,7 @@ export class JsonlTaskStoreAdapter implements TaskStorePort {
     }
   }
 
-  async writeBatchReceipt(result: BatchResult): Promise<void> {
+  private async writeReceiptFile(result: BatchResult): Promise<void> {
     if (!result.batchId) return;
     const path = this.batchReceiptPath(result.batchId);
     await ensureDir(this.batchesDir());

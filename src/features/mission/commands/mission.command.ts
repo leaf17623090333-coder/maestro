@@ -17,7 +17,7 @@ import {
 } from "../usecases/mission-lifecycle.usecase.js";
 import { generateMissionReport, type MissionReport } from "../usecases/mission-report.usecase.js";
 import { MaestroError } from "@/shared/errors.js";
-import { readText } from "@/shared/lib/fs.js";
+import { readTextOrStdin } from "@/shared/lib/fs.js";
 import type { Mission, UpdateMissionInput, MissionStatus } from "../domain/mission-types.js";
 
 const DEFAULT_TEXT_MISSION_LIST_LIMIT = 10;
@@ -51,31 +51,21 @@ export function registerMissionCommand(program: Command): void {
         ]);
       }
 
-      // Read plan file
+      const content = await readTextOrStdin(opts.file);
+      if (content === undefined) {
+        throw new MaestroError(`Plan file not found: ${opts.file}`);
+      }
       let planData: unknown;
-        if (opts.file === "-") {
-          // Read from stdin
-          const stdin = await new Response(Bun.stdin).text();
-          try {
-            planData = JSON.parse(stdin);
-          } catch {
-            throw new MaestroError("Invalid JSON from stdin", [
-              "Provide a valid mission plan JSON document on stdin",
-            ]);
-          }
-        } else {
-          const content = await readText(opts.file);
-          if (content === undefined) {
-            throw new MaestroError(`Plan file not found: ${opts.file}`);
-          }
-          try {
-            planData = JSON.parse(content);
-          } catch {
-            throw new MaestroError(`Invalid JSON in plan file: ${opts.file}`, [
-              "Fix the JSON syntax and retry mission creation",
-            ]);
-          }
-        }
+      try {
+        planData = JSON.parse(content);
+      } catch {
+        throw new MaestroError(
+          opts.file === "-"
+            ? "Invalid JSON from stdin"
+            : `Invalid JSON in plan file: ${opts.file}`,
+          ["Fix the JSON syntax and retry mission creation"],
+        );
+      }
 
       // Inject milestones from workflow template if specified
       if (opts.workflow) {

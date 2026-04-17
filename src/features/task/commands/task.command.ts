@@ -2,7 +2,7 @@ import { Command, Option } from "commander";
 import type { AgentSlug } from "@/features/session/domain/types.js";
 import { getServices } from "@/services.js";
 import { MaestroError } from "@/shared/errors.js";
-import { readText } from "@/shared/lib/fs.js";
+import { readTextOrStdin } from "@/shared/lib/fs.js";
 import { output, resolveJsonFlag, warn } from "@/shared/lib/output.js";
 import { createTask } from "../usecases/create-task.usecase.js";
 import { showTask } from "../usecases/show-task.usecase.js";
@@ -194,13 +194,12 @@ function registerPlanCommand(taskCmd: Command, program: Command): void {
       }
 
       const result = await planTasks(services.taskStore, batchInput);
-      const created = [...result.created];
 
       let startedTaskId: string | undefined;
+      let startedPatch: { status: Task["status"]; assignee?: string } | undefined;
       if (opts.start !== undefined && sessionId !== undefined) {
-        const targetIdx = created.findIndex((t) => t.name === opts.start);
-        if (targetIdx >= 0) {
-          const target = created[targetIdx]!;
+        const target = result.created.find((t) => t.name === opts.start);
+        if (target) {
           try {
             const { task: updated, autoClaimed } = await updateTask(
               services.taskStore,
@@ -208,12 +207,8 @@ function registerPlanCommand(taskCmd: Command, program: Command): void {
               { status: "in_progress" },
               { sessionId },
             );
-            created[targetIdx] = {
-              ...target,
-              status: updated.status,
-              assignee: updated.assignee,
-            };
             startedTaskId = updated.id;
+            startedPatch = { status: updated.status, assignee: updated.assignee };
             warnAutoClaimed(updated, autoClaimed);
           } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
@@ -222,6 +217,10 @@ function registerPlanCommand(taskCmd: Command, program: Command): void {
           }
         }
       }
+
+      const created = startedPatch
+        ? result.created.map((t) => (t.name === opts.start ? { ...t, ...startedPatch } : t))
+        : result.created;
 
       output(isJson, { ...result, created, startedTaskId }, (r) => {
         const lines = [`[ok] ${r.created.length} task(s) created`];
@@ -238,10 +237,7 @@ function registerPlanCommand(taskCmd: Command, program: Command): void {
 }
 
 async function readPlanSource(path: string): Promise<string> {
-  if (path === "-") {
-    return new Response(Bun.stdin).text();
-  }
-  const content = await readText(path);
+  const content = await readTextOrStdin(path);
   if (content === undefined) {
     throw new MaestroError(`Plan file not found: ${path}`, [
       "Check the path and retry",

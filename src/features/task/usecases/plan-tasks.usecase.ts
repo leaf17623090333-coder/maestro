@@ -54,7 +54,11 @@ export async function planTasks(
     buildCreateBatchInput(task, idx, nameToIndex),
   );
 
-  const created = await store.createBatch(createInputs);
+  const receiptMeta = input.batchId === undefined
+    ? undefined
+    : { batchId: input.batchId, names: input.tasks.map((t) => t.name) };
+
+  const created = await store.createBatch(createInputs, receiptMeta);
 
   const results: BatchCreatedTask[] = created.map((task, idx) => ({
     name: input.tasks[idx]!.name,
@@ -63,16 +67,10 @@ export async function planTasks(
     assignee: task.assignee,
   }));
 
-  const result: BatchResult = {
+  return {
     batchId: input.batchId,
     created: results,
   };
-
-  if (input.batchId !== undefined) {
-    await store.writeBatchReceipt(result);
-  }
-
-  return result;
 }
 
 async function tryReplayReceipt(

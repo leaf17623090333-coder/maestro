@@ -27,10 +27,19 @@ export interface TaskStorePort extends TaskQueryPort {
    * is a pre-validated real task id. The adapter generates ids for the batch
    * members and substitutes the numeric refs just before write.
    *
+   * When `receipt` is passed, the adapter writes a batch receipt file
+   * (`.maestro/tasks/batches/<batchId>.json`) inside the same lock, BEFORE
+   * the tasks.jsonl write. If the process dies between the two writes, the
+   * receipt points to ids that will not exist, and the replay path fails
+   * the drift check instead of silently double-creating the batch.
+   *
    * Rejects the whole batch on any cycle, unknown real-id reference, or id
    * generation failure. No partial writes.
    */
-  createBatch(inputs: readonly CreateBatchInput[]): Promise<readonly Task[]>;
+  createBatch(
+    inputs: readonly CreateBatchInput[],
+    receipt?: { readonly batchId: string; readonly names: readonly (string | undefined)[] },
+  ): Promise<readonly Task[]>;
 
   /**
    * Patch an existing task. Throws if id does not exist.
@@ -65,6 +74,4 @@ export interface TaskStorePort extends TaskQueryPort {
    */
   findBatchReceipt(batchId: string): Promise<BatchResult | undefined>;
 
-  /** Persist a batch receipt for future idempotent replay. */
-  writeBatchReceipt(result: BatchResult): Promise<void>;
 }
