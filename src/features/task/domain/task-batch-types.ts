@@ -1,0 +1,61 @@
+import type {
+  CreateTaskInput,
+  Task,
+  TaskPriority,
+  TaskStatus,
+  TaskType,
+} from "./task-types.js";
+
+/**
+ * One task entry inside a batch plan. Mirrors CreateTaskInput but allows
+ * `parent` / `blockedBy` to reference other members of the same batch by the
+ * optional local `name` slot. Resolution is by shape: a string matching
+ * TASK_ID_PATTERN is always treated as a real task id; any other string is
+ * always treated as a batch-local name. Name-slot values that happen to match
+ * TASK_ID_PATTERN are rejected at parse time.
+ */
+export interface BatchTaskInput {
+  readonly name?: string;
+  readonly title: string;
+  readonly description?: string;
+  readonly type?: TaskType;
+  readonly priority?: TaskPriority;
+  readonly parent?: string;
+  readonly labels?: readonly string[];
+  readonly blockedBy?: readonly string[];
+}
+
+export interface BatchInput {
+  readonly batchId?: string;
+  readonly tasks: readonly BatchTaskInput[];
+}
+
+/**
+ * Adapter-facing shape: references are already pre-resolved into either a real
+ * task id (string) or a numeric zero-based index into the batch array.
+ * Numeric indices become generated ids inside the adapter's locked write.
+ */
+export interface CreateBatchInput {
+  readonly title: string;
+  readonly description?: string;
+  readonly type?: TaskType;
+  readonly priority?: TaskPriority;
+  readonly labels?: readonly string[];
+  readonly parentRef?: number | string;
+  readonly blockedByRefs?: readonly (number | string)[];
+}
+
+export interface BatchCreatedTask {
+  readonly name?: string;
+  readonly id: string;
+  readonly status: TaskStatus;
+  readonly assignee?: string;
+}
+
+export interface BatchResult {
+  readonly batchId?: string;
+  readonly created: readonly BatchCreatedTask[];
+}
+
+/** Re-export to keep batch-type consumers from reaching across modules. */
+export type { CreateTaskInput, Task };

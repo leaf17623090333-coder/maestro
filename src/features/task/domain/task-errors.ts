@@ -238,3 +238,75 @@ export function parentDepthExceeded(id: string, depth: number): MaestroError {
     ],
   );
 }
+
+// ============================
+// Batch plan error factories
+// ============================
+
+export function batchInvalidJson(detail: string): MaestroError {
+  return new MaestroError(`Invalid JSON in plan file: ${detail}`, [
+    "Fix the JSON syntax and retry",
+    "Use 'maestro task plan --file plan.json' with a valid JSON document",
+  ]);
+}
+
+export function batchMalformedInput(reason: string): MaestroError {
+  return new MaestroError(`Invalid plan input: ${reason}`, [
+    "Plan must be a JSON object with a non-empty 'tasks' array",
+    "Each task needs at least a 'title' field",
+  ]);
+}
+
+export function batchSizeExceeded(count: number, max: number): MaestroError {
+  return new MaestroError(
+    `Plan has ${count} tasks; max ${max} per batch`,
+    [
+      "Split the plan into multiple batches of at most this size",
+      "For larger sustained work, consider a mission instead of a task batch",
+    ],
+  );
+}
+
+export function batchDuplicateName(name: string): MaestroError {
+  return new MaestroError(
+    `Duplicate name '${name}' in plan`,
+    [
+      "Each 'name' slot must be unique inside a batch",
+      "Name slots are local to the batch and used only for cross-references",
+    ],
+  );
+}
+
+export function batchNameLooksLikeTaskId(name: string): MaestroError {
+  return new MaestroError(
+    `Batch-local name '${name}' matches the reserved task id pattern`,
+    [
+      "Names must not look like 'tsk-xxxxxx' (six hex chars after tsk-)",
+      "Pick a plain label like 'first', 'deploy', or 'migrate-db'",
+    ],
+  );
+}
+
+export function batchUnknownReference(name: string, source: "parent" | "blockedBy"): MaestroError {
+  return new MaestroError(
+    `Unknown ${source} reference '${name}' in plan`,
+    [
+      "Names in the batch must match a 'name' slot on another task in the same plan",
+      "Real task ids must match '/^tsk-[0-9a-f]{6}$/' and point to an existing task",
+      "List existing tasks: maestro task list",
+    ],
+  );
+}
+
+export function batchValidationErrors(issues: readonly string[]): MaestroError {
+  const header = issues.length === 1
+    ? "Plan validation failed"
+    : `Plan validation failed with ${issues.length} issues`;
+  return new MaestroError(
+    `${header}:\n  ${issues.join("\n  ")}`,
+    [
+      "Fix every reported issue; the whole batch is rejected until every task is valid",
+      "No task was created -- tasks.jsonl is unchanged",
+    ],
+  );
+}

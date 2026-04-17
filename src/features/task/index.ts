@@ -59,6 +59,14 @@ export {
 } from "./usecases/ready-tasks.usecase.js";
 export { captureTaskCandidate } from "./usecases/capture-task-candidate.usecase.js";
 export { matchCandidates, type TaskHint } from "./usecases/match-candidates.usecase.js";
+export { planTasks } from "./usecases/plan-tasks.usecase.js";
+export type {
+  BatchTaskInput,
+  BatchInput,
+  BatchCreatedTask,
+  BatchResult,
+  CreateBatchInput,
+} from "./domain/task-batch-types.js";
 
 export { registerTaskCommand } from "./commands/task.command.js";
 export { buildTaskServices } from "./services.js";

@@ -2,6 +2,7 @@ import { Command, Option } from "commander";
 import type { AgentSlug } from "@/features/session/domain/types.js";
 import { getServices } from "@/services.js";
 import { MaestroError } from "@/shared/errors.js";
+import { readText } from "@/shared/lib/fs.js";
 import { output, resolveJsonFlag, warn } from "@/shared/lib/output.js";
 import { createTask } from "../usecases/create-task.usecase.js";
 import { showTask } from "../usecases/show-task.usecase.js";
@@ -13,6 +14,7 @@ import { blockTasks, unblockTasks } from "../usecases/manage-task-blockers.useca
 import { releaseOwnedTasks } from "../usecases/release-owned-tasks.usecase.js";
 import { readyTasks } from "../usecases/ready-tasks.usecase.js";
 import { captureTaskCandidate } from "../usecases/capture-task-candidate.usecase.js";
+import { planTasks } from "../usecases/plan-tasks.usecase.js";
 import type {
   ListTasksFilters,
   ReadyTasksFilters,
@@ -26,6 +28,7 @@ import {
   parseCreateStatus,
   parseLimit,
   parseList,
+  parsePlanInput,
   parsePriority,
   parseStatus,
   parseType,
@@ -61,6 +64,7 @@ export function registerTaskCommand(program: Command): void {
     .option("--json", "Output as JSON");
 
   registerCreateCommand(taskCmd, program);
+  registerPlanCommand(taskCmd, program);
   registerQuickCommand(taskCmd, program);
   registerShowCommand(taskCmd, program);
   registerListCommand(taskCmd, program);
@@ -144,6 +148,54 @@ function registerCreateCommand(taskCmd: Command, program: Command): void {
 
       output(isJson, task, formatTaskSummary);
     });
+}
+
+function registerPlanCommand(taskCmd: Command, program: Command): void {
+  taskCmd
+    .command("plan")
+    .description("Create a batch of tasks atomically from a JSON plan")
+    .requiredOption("--file <path>", "Plan file path ('-' to read JSON from stdin)")
+    .option("--dry-run", "Validate + resolve references without writing any tasks")
+    .option("--json", "Output as JSON")
+    .action(async (opts) => {
+      const services = getServices();
+      const isJson = resolveJsonFlag(opts, program);
+
+      const raw = await readPlanSource(opts.file);
+      const batchInput = parsePlanInput(raw);
+
+      if (opts.dryRun === true) {
+        output(isJson, { batchId: batchInput.batchId, taskCount: batchInput.tasks.length, dryRun: true }, (data) => [
+          `[ok] Dry run: ${data.taskCount} task(s) validated, nothing written`,
+        ]);
+        return;
+      }
+
+      const result = await planTasks(services.taskStore, batchInput);
+
+      output(isJson, result, (r) => {
+        const lines = [`[ok] ${r.created.length} task(s) created`];
+        for (const task of r.created) {
+          const label = task.name ? `${task.name}  --> ${task.id}` : `  --> ${task.id}`;
+          lines.push(`  ${label}`);
+        }
+        return lines;
+      });
+    });
+}
+
+async function readPlanSource(path: string): Promise<string> {
+  if (path === "-") {
+    return new Response(Bun.stdin).text();
+  }
+  const content = await readText(path);
+  if (content === undefined) {
+    throw new MaestroError(`Plan file not found: ${path}`, [
+      "Check the path and retry",
+      "Use '-' to read plan JSON from stdin",
+    ]);
+  }
+  return content;
 }
 
 function registerQuickCommand(taskCmd: Command, program: Command): void {

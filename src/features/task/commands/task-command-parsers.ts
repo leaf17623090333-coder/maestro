@@ -12,9 +12,12 @@ import {
 import { isTaskPriority, isTaskStatus, isTaskType } from "../domain/task-validators.js";
 import { isLegacyTaskStatus } from "../domain/task-state.js";
 import {
+  batchInvalidJson,
+  batchMalformedInput,
   taskCompletedViaUpdateStatus,
   taskCreateCompletedRejected,
 } from "../domain/task-errors.js";
+import type { BatchInput } from "../domain/task-batch-types.js";
 
 export interface CreateOpts {
   description?: string;
@@ -130,4 +133,28 @@ export function parseList(value: string | undefined): readonly string[] | undefi
     .split(",")
     .map((item) => item.trim())
     .filter((item) => item.length > 0);
+}
+
+export function parsePlanInput(raw: string): BatchInput {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw batchInvalidJson(detail);
+  }
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    throw batchMalformedInput("plan must be a JSON object");
+  }
+  const obj = parsed as Record<string, unknown>;
+  if (obj.batchId !== undefined && typeof obj.batchId !== "string") {
+    throw batchMalformedInput("'batchId' must be a string when provided");
+  }
+  if (!Array.isArray(obj.tasks)) {
+    throw batchMalformedInput("'tasks' must be an array");
+  }
+  return {
+    batchId: obj.batchId as string | undefined,
+    tasks: obj.tasks as BatchInput["tasks"],
+  };
 }

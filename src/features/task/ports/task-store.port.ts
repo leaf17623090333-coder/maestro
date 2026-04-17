@@ -5,6 +5,7 @@ import type {
   UpdateTaskInput,
   UpdateTaskResult,
 } from "../domain/task-types.js";
+import type { CreateBatchInput } from "../domain/task-batch-types.js";
 
 export interface TaskQueryPort {
   /** Read a single task by id. Returns undefined if not found. */
@@ -17,6 +18,19 @@ export interface TaskQueryPort {
 export interface TaskStorePort extends TaskQueryPort {
   /** Create a new task with a freshly generated id. Returns the stored task. */
   create(input: CreateTaskInput): Promise<Task>;
+
+  /**
+   * Create N tasks atomically under a single lock.
+   *
+   * References inside each input (`parentRef`, `blockedByRefs`) are already
+   * resolved: a number is a zero-based index into the batch array, a string
+   * is a pre-validated real task id. The adapter generates ids for the batch
+   * members and substitutes the numeric refs just before write.
+   *
+   * Rejects the whole batch on any cycle, unknown real-id reference, or id
+   * generation failure. No partial writes.
+   */
+  createBatch(inputs: readonly CreateBatchInput[]): Promise<readonly Task[]>;
 
   /**
    * Patch an existing task. Throws if id does not exist.

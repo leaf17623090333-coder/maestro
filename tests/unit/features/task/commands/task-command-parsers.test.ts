@@ -3,6 +3,7 @@ import { MaestroError } from "@/shared/errors.js";
 import {
   parseCreateStatus,
   parseLimit,
+  parsePlanInput,
   parsePriority,
 } from "@/features/task/commands/task-command-parsers.js";
 
@@ -55,6 +56,39 @@ describe("task command parsers", () => {
 
     it("rejects unknown status values", () => {
       expect(() => parseCreateStatus("wip")).toThrow(/Invalid --status 'wip'/);
+    });
+  });
+
+  describe("parsePlanInput", () => {
+    it("parses a well-formed plan JSON", () => {
+      const raw = JSON.stringify({
+        batchId: "abc",
+        tasks: [{ name: "a", title: "A" }],
+      });
+      const parsed = parsePlanInput(raw);
+      expect(parsed.batchId).toBe("abc");
+      expect(parsed.tasks).toHaveLength(1);
+    });
+
+    it("rejects malformed JSON with a pointed error", () => {
+      expect(() => parsePlanInput("{ not valid")).toThrow(/Invalid JSON in plan file/);
+    });
+
+    it("rejects non-object root", () => {
+      expect(() => parsePlanInput("[]")).toThrow(/must be a JSON object/);
+      expect(() => parsePlanInput("42")).toThrow(/must be a JSON object/);
+      expect(() => parsePlanInput("null")).toThrow(/must be a JSON object/);
+    });
+
+    it("rejects missing or non-array tasks", () => {
+      expect(() => parsePlanInput("{}")).toThrow(/'tasks' must be an array/);
+      expect(() => parsePlanInput('{"tasks":42}')).toThrow(/'tasks' must be an array/);
+    });
+
+    it("rejects non-string batchId", () => {
+      expect(() => parsePlanInput('{"batchId":42,"tasks":[]}')).toThrow(
+        /'batchId' must be a string/,
+      );
     });
   });
 });

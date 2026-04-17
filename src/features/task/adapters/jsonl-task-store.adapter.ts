@@ -19,6 +19,7 @@ import type {
   UpdateTaskInput,
   UpdateTaskResult,
 } from "../domain/task-types.js";
+import type { CreateBatchInput } from "../domain/task-batch-types.js";
 import type { TaskStorePort } from "../ports/task-store.port.js";
 import { MAESTRO_DIR } from "@/shared/domain/defaults.js";
 import { ensureDir, readText, removeIfExists, writeText } from "@/shared/lib/fs.js";
@@ -140,6 +141,75 @@ export class JsonlTaskStoreAdapter implements TaskStorePort {
 
       await this.writeAll(tasks);
       return tasks.get(id)!;
+    });
+  }
+
+  async createBatch(inputs: readonly CreateBatchInput[]): Promise<readonly Task[]> {
+    if (inputs.length === 0) return [];
+
+    return this.withLock(async () => {
+      const tasks = await this.readAll();
+
+      const generatedIds = generateUniqueIds(inputs.length, tasks);
+      const resolveRef = (ref: number | string): string => {
+        if (typeof ref === "number") return generatedIds[ref]!;
+        return ref;
+      };
+
+      for (const [idx, input] of inputs.entries()) {
+        if (input.parentRef !== undefined && typeof input.parentRef === "string") {
+          if (!tasks.has(input.parentRef)) {
+            throw taskNotFound(input.parentRef);
+          }
+        }
+        for (const blockerRef of input.blockedByRefs ?? []) {
+          if (typeof blockerRef === "string" && !tasks.has(blockerRef)) {
+            throw unknownBlocker(generatedIds[idx]!, [blockerRef]);
+          }
+        }
+      }
+
+      const now = new Date().toISOString();
+      const proposed: Task[] = inputs.map((input, idx) => ({
+        id: generatedIds[idx]!,
+        title: input.title,
+        description: input.description,
+        type: input.type ?? DEFAULT_TASK_TYPE,
+        priority: input.priority ?? DEFAULT_TASK_PRIORITY,
+        status: DEFAULT_TASK_STATUS,
+        parentId: input.parentRef === undefined ? undefined : resolveRef(input.parentRef),
+        labels: input.labels ?? [],
+        blocks: [],
+        blockedBy: dedupeValues((input.blockedByRefs ?? []).map(resolveRef)),
+        createdAt: now,
+        updatedAt: now,
+      }));
+
+      for (const task of proposed) {
+        tasks.set(task.id, task);
+      }
+      for (const task of proposed) {
+        for (const blockerId of task.blockedBy) {
+          const blocker = tasks.get(blockerId)!;
+          tasks.set(blockerId, {
+            ...blocker,
+            blocks: dedupeValues([...blocker.blocks, task.id]),
+            updatedAt: now,
+          });
+        }
+      }
+
+      for (const task of proposed) {
+        if (task.parentId !== undefined) {
+          assertNoParentCycle(task.id, task.parentId, tasks);
+        }
+        for (const blockerId of task.blockedBy) {
+          assertNoBlockCycle(blockerId, [task.id], tasks);
+        }
+      }
+
+      await this.writeAll(tasks);
+      return proposed.map((task) => tasks.get(task.id)!);
     });
   }
 
@@ -532,6 +602,36 @@ function ensureTasksExist(
   if (missing.length > 0) {
     throw unknownBlocker(id, missing);
   }
+}
+
+function generateUniqueIds(
+  count: number,
+  existing: ReadonlyMap<string, Task>,
+): readonly string[] {
+  const ids: string[] = [];
+  const claimed = new Set<string>();
+  for (let i = 0; i < count; i++) {
+    let id: string | undefined;
+    for (let attempt = 0; attempt < MAX_ID_RETRIES; attempt++) {
+      const candidate = generateTaskId();
+      if (!existing.has(candidate) && !claimed.has(candidate)) {
+        id = candidate;
+        break;
+      }
+    }
+    if (id === undefined) {
+      throw new MaestroError(
+        `Failed to generate a unique task id after ${MAX_ID_RETRIES} attempts`,
+        [
+          "Retry the batch to generate fresh task ids",
+          "If the problem persists, inspect .maestro/tasks/tasks.jsonl for id collisions",
+        ],
+      );
+    }
+    ids.push(id);
+    claimed.add(id);
+  }
+  return ids;
 }
 
 function normalizeGraph(tasks: Map<string, Task>): Map<string, Task> {
