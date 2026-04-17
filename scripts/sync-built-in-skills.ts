@@ -9,8 +9,10 @@
  * `bun scripts/sync-built-in-skills.ts --check` in CI to fail on drift.
  */
 
-import { readdir, readFile, stat } from "node:fs/promises";
-import { dirname, join, relative, sep } from "node:path";
+import { readdir, readFile } from "node:fs/promises";
+import { join, relative, sep } from "node:path";
+import { readText } from "@/shared/lib/fs.js";
+import { decodeSkillDirectoryName } from "@/shared/lib/skill-path.js";
 
 const ROOT = join(import.meta.dir, "..");
 const SOURCE_DIR = join(ROOT, "skills", "built-in");
@@ -50,7 +52,7 @@ async function collectTemplates(): Promise<SkillTemplate[]> {
   const templates: SkillTemplate[] = [];
   for (const dirName of skillDirs) {
     const skillDir = join(SOURCE_DIR, dirName);
-    const name = dirName.replaceAll("%3A", ":");
+    const name = decodeSkillDirectoryName(dirName);
     const absolutePaths = await listFilesRecursive(skillDir);
     const files: SkillFile[] = [];
     for (const absolute of absolutePaths) {
@@ -84,34 +86,17 @@ function renderModule(templates: readonly SkillTemplate[]): string {
   return `${header}\n${body};\n`;
 }
 
-async function readCurrent(): Promise<string | undefined> {
-  try {
-    return await readFile(TARGET_FILE, "utf8");
-  } catch (err: unknown) {
-    if ((err as NodeJS.ErrnoException).code === "ENOENT") return undefined;
-    throw err;
-  }
-}
-
-async function main(): Promise<void> {
-  const checkMode = process.argv.includes("--check");
-
-  const sourceStat = await stat(SOURCE_DIR).catch(() => undefined);
-  if (!sourceStat?.isDirectory()) {
-    console.error(`[!] Source directory not found: ${SOURCE_DIR}`);
-    process.exit(1);
-  }
-
+export async function syncBuiltInSkills(options: { check?: boolean } = {}): Promise<void> {
   const templates = await collectTemplates();
   const rendered = renderModule(templates);
-  const current = await readCurrent();
+  const current = await readText(TARGET_FILE);
 
   if (current === rendered) {
     console.log(`[ok] ${relative(ROOT, TARGET_FILE)} is in sync with skills/built-in/`);
     return;
   }
 
-  if (checkMode) {
+  if (options.check) {
     console.error(
       `[!] ${relative(ROOT, TARGET_FILE)} is out of sync with skills/built-in/.`,
     );
@@ -124,4 +109,6 @@ async function main(): Promise<void> {
   console.log(`[ok] ${action} ${relative(ROOT, TARGET_FILE)} from skills/built-in/`);
 }
 
-await main();
+if (import.meta.main) {
+  await syncBuiltInSkills({ check: process.argv.includes("--check") });
+}

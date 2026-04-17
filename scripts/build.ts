@@ -2,20 +2,14 @@ import { rm } from "node:fs/promises";
 import { join } from "node:path";
 import { removeRootBunBuildArtifacts } from "./build-lib";
 import { getGitShortSha } from "./git-short-sha";
+import { syncBuiltInSkills } from "./sync-built-in-skills";
 
 const root = join(import.meta.dir, "..");
 
 // Keep the embedded built-in skill templates in sync with skills/built-in/
 // before compile. The binary ships the embedded copy; drift here would mean
 // users get stale skills on `maestro init`.
-const syncSkills = Bun.spawn(["bun", join(root, "scripts", "sync-built-in-skills.ts")], {
-  cwd: root,
-  stdout: "inherit",
-  stderr: "inherit",
-});
-if ((await syncSkills.exited) !== 0) {
-  process.exit(1);
-}
+await syncBuiltInSkills();
 
 const gitSha = await getGitShortSha(root);
 const buildUnix = Math.floor(Date.now() / 1_000).toString();
