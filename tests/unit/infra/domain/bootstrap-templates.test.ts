@@ -15,6 +15,14 @@ describe("AGENT_INSTRUCTION_BLOCK", () => {
     );
   });
 
+  it("teaches the task plan batch pattern with name-slot references", () => {
+    expect(AGENT_INSTRUCTION_BLOCK).toContain("Plan a batch of tasks upfront");
+    expect(AGENT_INSTRUCTION_BLOCK).toContain("maestro task plan --file");
+    expect(AGENT_INSTRUCTION_BLOCK).toContain('"blockedBy": ["first"]');
+    expect(AGENT_INSTRUCTION_BLOCK).toContain("--start <name>");
+    expect(AGENT_INSTRUCTION_BLOCK).toContain("batchId");
+  });
+
   it("keeps the two non-obvious rules agents can't derive from --help", () => {
     expect(AGENT_INSTRUCTION_BLOCK).toContain("blockedBy");
     expect(AGENT_INSTRUCTION_BLOCK).toContain("persisted verbatim");

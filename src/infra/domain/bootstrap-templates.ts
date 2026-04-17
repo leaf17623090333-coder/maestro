@@ -57,6 +57,21 @@ maestro task block <blockerId> <blockedId...>                # blockerId must fi
 maestro task unblock <blockerId> <blockedId...>
 \`\`\`
 
+**Plan a batch of tasks upfront (one write, atomic):**
+\`\`\`bash
+cat <<'JSON' | maestro task plan --file - --start first --session $CODEX_THREAD_ID
+{
+  "batchId": "optional-string-for-idempotent-retry",
+  "tasks": [
+    {"name": "first",  "title": "Scaffold feature", "priority": 1},
+    {"name": "second", "title": "Wire tests",       "blockedBy": ["first"]},
+    {"name": "third",  "title": "Ship PR",          "blockedBy": ["second"]}
+  ]
+}
+JSON
+\`\`\`
+The whole batch is created under one lock. Name slots in the same batch reference each other via \`blockedBy\` / \`parent\`; strings matching \`tsk-xxxxxx\` point to existing tasks. \`--start <name>\` claims and moves the named task to \`in_progress\` in the same command. Any validation error rejects the whole batch -- nothing is written unless every task is valid. Pass \`batchId\` to make retries idempotent (receipt persists under \`.maestro/tasks/batches/\`).
+
 **Task contract (the two non-obvious rules):**
 - A task cannot move to \`in_progress\` or \`completed\` while any id in its \`blockedBy\` list is unresolved. Resolve blockers first or create them as \`completed\` upstream.
 - Completion \`--reason\` is persisted verbatim as shared context for future sessions. Keep it terse, factual, and free of secrets.
