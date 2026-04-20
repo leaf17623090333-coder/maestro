@@ -61,17 +61,17 @@ export type AssertionResult =
 export type AssertionSurface = "browser" | "cli" | "api" | (string & {});
 
 // ============================
-// Worker Report Sub-types
+// Agent Report Sub-types
 // ============================
 
-/** Record of a command executed during worker verification */
+/** Record of a command executed during agent verification */
 export interface CommandRun {
   readonly command: string;
   readonly exitCode: number;
   readonly observation: string;
 }
 
-/** Record of an interactive check performed by a worker */
+/** Record of an interactive check performed by an agent */
 export interface InteractiveCheck {
   readonly action: string;
   readonly observed: string;
@@ -83,13 +83,13 @@ export interface TestCase {
   readonly verifies: string;
 }
 
-/** A test file added by a worker */
+/** A test file added by an agent */
 export interface TestFile {
   readonly file: string;
   readonly cases: readonly TestCase[];
 }
 
-/** An issue discovered during worker execution */
+/** An issue discovered during agent execution */
 export interface DiscoveredIssue {
   readonly severity: string;
   readonly description: string;
@@ -121,8 +121,8 @@ export interface MilestoneInput {
   readonly profile?: MilestoneProfile;
 }
 
-/** Structured worker report attached to a feature */
-export interface WorkerReport {
+/** Structured agent report attached to a feature */
+export interface AgentReport {
   readonly salientSummary: string;
   readonly whatWasImplemented: string;
   readonly whatWasLeftUndone: string;
@@ -150,7 +150,7 @@ export interface Feature {
   readonly fulfills: readonly string[];
   readonly preconditions?: string;
   readonly expectedBehavior?: string;
-  readonly report?: WorkerReport;
+  readonly report?: AgentReport;
   readonly createdAt: string;
   readonly updatedAt: string;
 }
@@ -265,7 +265,7 @@ export interface UpdateAssertionInput {
 /** Input for updating a feature */
 export interface UpdateFeatureInput {
   readonly status?: FeatureStatus;
-  readonly report?: WorkerReport;
+  readonly report?: AgentReport;
   readonly retryReason?: string;
 }
 

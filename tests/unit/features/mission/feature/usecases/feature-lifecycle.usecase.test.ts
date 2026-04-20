@@ -5,7 +5,7 @@ import { describe, expect, it, beforeEach } from "bun:test";
 import {
   listFeatures,
   updateFeature,
-  parseWorkerReport,
+  parseAgentReport,
 } from "@/features/mission/feature/usecases/feature-lifecycle.usecase.js";
 import { FsMissionStoreAdapter } from "@/features/mission/adapters/mission-store.adapter.js";
 import { FsFeatureStoreAdapter } from "@/features/mission/feature/adapters/feature-store.adapter.js";
@@ -241,10 +241,10 @@ describe("feature lifecycle usecases", () => {
       expect(result.feature.status).toBe("pending");
     });
 
-    it("attaches and persists worker report", async () => {
+    it("attaches and persists agent report", async () => {
       const { missionId } = await createSampleMission(missionStore, featureStore, assertionStore, tmpDir);
 
-      const report = await parseWorkerReport(JSON.stringify({
+      const report = await parseAgentReport(JSON.stringify({
         content: "Feature implementation complete",
         timestamp: new Date().toISOString(),
         agent: "test-agent",
@@ -255,7 +255,7 @@ describe("feature lifecycle usecases", () => {
         report,
       });
 
-      // parseWorkerReport converts legacy {content} to rich format
+      // parseAgentReport converts legacy {content} to rich format
       expect(result.feature.report).toEqual({
         salientSummary: "Feature implementation complete",
         whatWasImplemented: "Feature implementation complete",
@@ -265,14 +265,14 @@ describe("feature lifecycle usecases", () => {
         discoveredIssues: [],
       });
       expect(result.reportPersisted).toBeDefined();
-      expect(result.reportPersisted).toContain(join("workers", "f1", "report.json"));
+      expect(result.reportPersisted).toContain(join("agents", "f1", "report.json"));
     });
 
     it("preserves existing report when retrying without new report", async () => {
       const { missionId } = await createSampleMission(missionStore, featureStore, assertionStore, tmpDir);
 
       // First attach a report (legacy format -- converted on parse)
-      const report = await parseWorkerReport(JSON.stringify({
+      const report = await parseAgentReport(JSON.stringify({
         content: "Initial implementation",
         timestamp: new Date().toISOString(),
         agent: "agent-1",
@@ -320,7 +320,7 @@ describe("feature lifecycle usecases", () => {
       });
 
       const { readFile } = await import("node:fs/promises");
-      const retryLogPath = join(tmpDir, ".maestro", "missions", missionId, "workers", "f1", "retry-log.json");
+      const retryLogPath = join(tmpDir, ".maestro", "missions", missionId, "agents", "f1", "retry-log.json");
       const retryLog = JSON.parse(await readFile(retryLogPath, "utf8"));
 
       expect(retryLog).toHaveLength(1);
@@ -363,7 +363,7 @@ describe("feature lifecycle usecases", () => {
 
   });
 
-  describe("parseWorkerReport", () => {
+  describe("parseAgentReport", () => {
     it("parses inline JSON report", async () => {
       const reportData = {
         content: "Test report content",
@@ -371,7 +371,7 @@ describe("feature lifecycle usecases", () => {
         agent: "test-agent",
       };
 
-      const result = await parseWorkerReport(JSON.stringify(reportData));
+      const result = await parseAgentReport(JSON.stringify(reportData));
 
       // Legacy content is promoted to salientSummary and whatWasImplemented
       expect(result.salientSummary).toBe("Test report content");
@@ -387,7 +387,7 @@ describe("feature lifecycle usecases", () => {
         content: "Test report content",
       };
 
-      const result = await parseWorkerReport(JSON.stringify(reportData));
+      const result = await parseAgentReport(JSON.stringify(reportData));
 
       // Legacy content-only report is promoted to rich format
       expect(result.salientSummary).toBe("Test report content");
@@ -403,7 +403,7 @@ describe("feature lifecycle usecases", () => {
       };
       await writeFile(reportPath, JSON.stringify(reportData));
 
-      const result = await parseWorkerReport(`@${reportPath}`);
+      const result = await parseAgentReport(`@${reportPath}`);
 
       // Legacy format from file is promoted to rich format
       expect(result.salientSummary).toBe("File-based report");
@@ -412,14 +412,14 @@ describe("feature lifecycle usecases", () => {
 
     it("throws for missing file with @ syntax", async () => {
       expect(
-        parseWorkerReport("@/nonexistent/path/report.json"),
+        parseAgentReport("@/nonexistent/path/report.json"),
       ).rejects.toThrow("Report file not found");
     });
 
     it("throws for invalid JSON", async () => {
       expect(
-        parseWorkerReport("not valid json"),
-      ).rejects.toThrow("Invalid JSON in worker report");
+        parseAgentReport("not valid json"),
+      ).rejects.toThrow("Invalid JSON in agent report");
     });
 
     it("throws for missing content field", async () => {
@@ -428,8 +428,8 @@ describe("feature lifecycle usecases", () => {
       };
 
       expect(
-        parseWorkerReport(JSON.stringify(reportData)),
-      ).rejects.toThrow("Worker report must have 'salientSummary' (preferred) or 'content' (legacy) field");
+        parseAgentReport(JSON.stringify(reportData)),
+      ).rejects.toThrow("Agent report must have 'salientSummary' (preferred) or 'content' (legacy) field");
     });
 
     it("throws for empty content field", async () => {
@@ -438,17 +438,17 @@ describe("feature lifecycle usecases", () => {
       };
 
       expect(
-        parseWorkerReport(JSON.stringify(reportData)),
-      ).rejects.toThrow("Worker report must have 'salientSummary' (preferred) or 'content' (legacy) field");
+        parseAgentReport(JSON.stringify(reportData)),
+      ).rejects.toThrow("Agent report must have 'salientSummary' (preferred) or 'content' (legacy) field");
     });
 
     it("throws for non-object JSON", async () => {
       expect(
-        parseWorkerReport("123"),
+        parseAgentReport("123"),
       ).rejects.toThrow("must be a JSON object");
 
       expect(
-        parseWorkerReport("\"string\""),
+        parseAgentReport("\"string\""),
       ).rejects.toThrow("must be a JSON object");
     });
   });

@@ -133,6 +133,6 @@ describe("reply command integration", () => {
 
     expect(result.exitCode).toBe(1);
     expect(result.stderr).toContain("--report-file is not valid JSON");
-    expect(result.stderr).toContain("Provide a JSON file matching the WorkerReport schema");
+    expect(result.stderr).toContain("Provide a JSON file matching the AgentReport schema");
   });
 });

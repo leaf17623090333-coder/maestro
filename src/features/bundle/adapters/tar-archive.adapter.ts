@@ -41,7 +41,7 @@ const BundleManifestSchema = z.object({
     features: z.number().int().nonnegative(),
     milestones: z.number().int().nonnegative(),
     assertions: z.number().int().nonnegative(),
-    workers: z.number().int().nonnegative(),
+    agents: z.number().int().nonnegative(),
     replies: z.number().int().nonnegative(),
     launches: z.number().int().nonnegative(),
     checkpoints: z.number().int().nonnegative(),

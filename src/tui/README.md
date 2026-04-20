@@ -85,7 +85,7 @@ Safe inspection paths:
 Interactive mode can still trigger specific workflows, but those writes happen in the interactive layer, not in the snapshot projection layer. Current examples include:
 
 - updating a feature status with `updateFeature`
-- generating a worker prompt from the dispatch modal
+- generating an agent prompt from the dispatch modal
 - previewing and applying config edits
 
 If you add a new interactive action, keep the write in `interactive.tsx` or another explicit use-case boundary. Do not hide it inside snapshot construction or preview rendering.

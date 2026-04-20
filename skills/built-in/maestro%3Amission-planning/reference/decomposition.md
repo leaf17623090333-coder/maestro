@@ -2,17 +2,17 @@
 
 This is the second step of mission planning. You have a clarified goal from the brainstorm opening. You need to turn it into a structured plan that a Maestro mission file can hold and that a later `maestro handoff` command can launch cleanly.
 
-The output of this step is a draft plan with 3-7 milestones, each with 1-5 features. No worker types yet, no constraints yet — those come in later steps.
+The output of this step is a draft plan with 3-7 milestones, each with 1-5 features. No agent types yet, no constraints yet — those come in later steps.
 
 ## The rule of 3-7 milestones
 
 Plans with fewer than 3 milestones usually hide missing phases ("it's just implementation"). Plans with more than 7 exceed working memory — the human coordinating terminals cannot hold 8+ distinct phases in their head. If you end up with 8+, collapse adjacent phases or push some to a follow-up mission.
 
-A milestone is sprint-sized: a worker (or a small chain of workers) should be able to finish one milestone's features before the human needs to step in and redirect. If a single milestone has 15 features, it is not one milestone.
+A milestone is sprint-sized: an agent (or a small chain of agents) should be able to finish one milestone's features before the human needs to step in and redirect. If a single milestone has 15 features, it is not one milestone.
 
 ## Milestone profiles
 
-Every milestone has a `profile` that tells workers what mode they are in. Use one of these exactly — do not invent new ones.
+Every milestone has a `profile` that tells agents what mode they are in. Use one of these exactly — do not invent new ones.
 
 - **`planning`**: design and decomposition work. Output is a plan, not code. Example: "sketch the data model" or "write the ADR for the auth change."
 - **`plan-review`**: another agent reviews a plan before implementation starts. Catches ambiguity, missing deps, unrealistic scope. Different instance than the planner.
@@ -37,7 +37,7 @@ Work in this order. Skipping ahead produces plans that look complete but do not 
 
 ## Feature sizing: 30 minutes to 2 hours
 
-A feature is a worker's unit of attention. If a feature would take a worker more than 2 hours of focused effort, split it. If it would take less than 30 minutes, merge it with a neighbor or promote it to a verification step.
+A feature is an agent's unit of attention. If a feature would take an agent more than 2 hours of focused effort, split it. If it would take less than 30 minutes, merge it with a neighbor or promote it to a verification step.
 
 Common split points:
 - "Implement X and document it" -> two features: implement, then document
@@ -46,7 +46,7 @@ Common split points:
 
 ## `verificationSteps`: 2-5 concrete, observable checks per feature
 
-Verification steps are what the worker runs to prove the feature is done. They must be observable — a human or another agent has to be able to repeat the check and get the same answer.
+Verification steps are what the agent runs to prove the feature is done. They must be observable — a human or another agent has to be able to repeat the check and get the same answer.
 
 Good verification:
 - `bun test tests/unit/auth/login.test.ts passes`
@@ -64,7 +64,7 @@ Bad verification:
 
 - **Label-milestones instead of profile-milestones.** A milestone called "auth stuff" is a label, not a phase. Ask what profile it would have — if you cannot pick one, the milestone is not real.
 - **Implementation-descriptions instead of outcomes.** "Add a function that calls X" describes how. "Users can log in with email" describes what. Features are outcomes.
-- **Missing dependencies.** If feature B reads state that feature A writes, B must `dependsOn` A. Missing deps manifest as workers blocked mid-stream because something they assumed is absent.
+- **Missing dependencies.** If feature B reads state that feature A writes, B must `dependsOn` A. Missing deps manifest as agents blocked mid-stream because something they assumed is absent.
 - **The 15-feature monster milestone.** If one milestone has more than 5 features, it is actually two or three milestones that were collapsed to hide scope. Uncollapse them.
 - **Plans that start with `implementation`.** Almost no real mission starts cold on implementation. There is always at least a planning or plan-review phase hiding.
 

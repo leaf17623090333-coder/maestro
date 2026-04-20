@@ -102,16 +102,11 @@ export async function launchHandoff(
       ...(launchResult.exitCode !== undefined ? { exitCode: launchResult.exitCode } : {}),
     });
 
-    if (input.wait && waitedExitCode === undefined) {
-      throw new MaestroError(`${input.provider} handoff did not report an exit code`, [
-        `Launch record: ${finalRecord.id}`,
-        `Prompt: ${finalRecord.promptPath}`,
-        `Log: ${finalRecord.outputPath}`,
-      ]);
-    }
-
     if (input.wait && waitedExitCode !== 0) {
-      throw new MaestroError(`${input.provider} handoff exited with code ${launchResult.exitCode}`, [
+      const message = waitedExitCode === undefined
+        ? `${input.provider} handoff did not report an exit code`
+        : `${input.provider} handoff exited with code ${waitedExitCode}`;
+      throw new MaestroError(message, [
         `Launch record: ${finalRecord.id}`,
         `Prompt: ${finalRecord.promptPath}`,
         `Log: ${finalRecord.outputPath}`,

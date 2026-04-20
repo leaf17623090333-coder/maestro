@@ -11,7 +11,7 @@ import {
 function makeLayers(projectDir: string): ConfigLayers {
   const effective: MaestroConfig = {
     execution: {
-      defaultWorker: projectDir,
+      defaultAgent: projectDir,
     },
   };
 
@@ -47,9 +47,9 @@ describe("CachingConfigPort", () => {
     const second = await port.loadLayers("/tmp/project-b");
     const third = await port.loadLayers("/tmp/project-a");
 
-    expect(first.effective.execution?.defaultWorker).toBe("/tmp/project-a");
-    expect(second.effective.execution?.defaultWorker).toBe("/tmp/project-b");
-    expect(third.effective.execution?.defaultWorker).toBe("/tmp/project-a");
+    expect(first.effective.execution?.defaultAgent).toBe("/tmp/project-a");
+    expect(second.effective.execution?.defaultAgent).toBe("/tmp/project-b");
+    expect(third.effective.execution?.defaultAgent).toBe("/tmp/project-a");
     expect(loadLayersCalls).toBe(2);
   });
 

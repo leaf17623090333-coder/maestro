@@ -227,8 +227,8 @@ describe("buildPreviewState", () => {
       });
     });
 
-  // Phase 3 strip: the runtime, workers, and output previews were
-  // deleted. Their data was removed with the worker execution layer
+  // Phase 3 strip: the runtime, agents, and output previews were
+  // deleted. Their data was removed with the agent execution layer
   // in Phase 1 and the screens are removed from the preview set in
   // Commit 3.2.
 

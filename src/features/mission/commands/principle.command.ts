@@ -42,7 +42,7 @@ export function registerPrincipleCommand(program: Command): void {
     .description("Add a new behavioral principle")
     .requiredOption("--id <id>", "Principle id (lowercase, dashes)")
     .requiredOption("--name <name>", "Human-readable name")
-    .requiredOption("--rule <rule>", "Rule text injected into worker prompts")
+    .requiredOption("--rule <rule>", "Rule text injected into agent prompts")
     .requiredOption("--profiles <profiles...>", "Milestone profiles this applies to")
     .requiredOption("--mode <mode>", "advisory or gate")
     .option("--gate-field <field>", "Handoff content field name (required for gate mode)")

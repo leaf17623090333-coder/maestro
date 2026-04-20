@@ -1,16 +1,16 @@
 # Droid Bootstrap Reference
 
-Use this directory as committed bootstrap and worker-reference infrastructure for Droid-compatible workflows.
+Use this directory as committed bootstrap and agent-reference infrastructure for Droid-compatible workflows.
 
 ## Canonical Separation
 
-- `.maestro/` is runtime state: missions, features, assertions, workers, checkpoints, sessions
-- `.factory/` is committed repo infrastructure: init scripts, service manifests, worker-reference docs, and shared guidance
+- `.maestro/` is runtime state: missions, features, assertions, agents, checkpoints, sessions
+- `.factory/` is committed repo infrastructure: init scripts, service manifests, agent-reference docs, and shared guidance
 - `skills/built-in/` contains shipped built-in skills
 
 ## Skill Lookup
 
-- Runtime worker prompt lookup resolves `.maestro/skills/{agentType}/SKILL.md` first
+- Runtime agent prompt lookup resolves `.maestro/skills/{agentType}/SKILL.md` first
 - If no project-local skill exists, runtime falls back to `skills/built-in/{agentType}/SKILL.md`
 - `.factory/skills/` is reference material for authors and reviewers, not the runtime lookup path
 

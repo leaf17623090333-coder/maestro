@@ -1,12 +1,12 @@
 ---
-name: maestro:worker-base
-description: "Base procedures for all mission workers: startup, cleanup, and handoff. REQUIRED skill for all mission feature implementations."
+name: maestro:agent-base
+description: "Base procedures for all mission agents: startup, cleanup, and handoff. REQUIRED skill for all mission feature implementations."
 argument-hint: "[--no-baseline]"
 ---
 
-# Worker Base Procedures
+# Agent Base Procedures
 
-You are a worker in a multi-agent mission. This skill defines the procedures that ALL workers must follow. After completing startup, you'll invoke your specific worker skill for the actual work procedure.
+You are an agent in a multi-agent mission. This skill defines the procedures that ALL agents must follow. After completing startup, you'll invoke your specific agent skill for the actual work procedure.
 
 ## Your Assigned Feature
 
@@ -24,13 +24,13 @@ Your feature has been pre-assigned by the system and is shown in your bootstrap 
 
 ## CRITICAL: `.maestro/bootstrap/` is the project bootstrap layer
 
-Do not remove or corrupt `.maestro/bootstrap/` while a project relies on Maestro bootstrap assets. This subtree contains the committed project-local setup files workers depend on.
+Do not remove or corrupt `.maestro/bootstrap/` while a project relies on Maestro bootstrap assets. This subtree contains the committed project-local setup files agents depend on.
 
 **The `.maestro/bootstrap/` subtree should be committed to the repository** while `.maestro/missions/`, `.maestro/sessions/`, and other runtime state remain ignored.
 
 You MAY read and update these files:
 - `.maestro/bootstrap/services.yaml` - Add new services/commands if discovered during work
-- `.maestro/bootstrap/library/` - Add knowledge for future workers
+- `.maestro/bootstrap/library/` - Add knowledge for future agents
 
 ---
 
@@ -69,7 +69,7 @@ jq --arg m "YOUR_MILESTONE" '.features | map(select(.milestone == $m)) | map({id
 
 ### 1.5 Check Library
 
-Refer to `.maestro/bootstrap/library/` for knowledge from previous workers (organized by topic).
+Refer to `.maestro/bootstrap/library/` for knowledge from previous agents (organized by topic).
 
 ### 1.6 Start Services
 
@@ -112,7 +112,7 @@ If you discovered reusable services/commands, ADD them to `.maestro/bootstrap/se
 
 ---
 
-## Worker Report Contract
+## Agent Report Contract
 
 When completing work, your handoff via `EndFeatureRun` must include:
 
@@ -179,7 +179,7 @@ Set `returnToOrchestrator: true` when:
 - **Service won't start or healthcheck fails** - Manifest may be broken
 - **Dependency that SHOULD exist is inaccessible** - After investigation
 - **Blocked by missing dependency, unsatisfied preconditions, or unclear requirements**
-- **Previous worker left broken state you can't fix**
+- **Previous agent left broken state you can't fix**
 - **Decision or input needed from human/orchestrator**
 - **Your skill type requires it**
 

@@ -150,9 +150,9 @@ export class FsMissionStoreAdapter implements MissionStorePort {
       }
     }
 
-    // Create subdirectories for features, workers, reports, checkpoints
+    // Create subdirectories for features, agents, reports, checkpoints
     await ensureDir(join(finalPath, "features"));
-    await ensureDir(join(finalPath, "workers"));
+    await ensureDir(join(finalPath, "agents"));
     await ensureDir(join(finalPath, "checkpoints"));
   }
 

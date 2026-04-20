@@ -4,8 +4,8 @@ import type { MissionControlSnapshot } from "../state/types.js";
 
 /**
  * Phase 3 strip: the mission-control preview set no longer includes
- * `runtime`, `workers`, or `output`. Those screens were backed by the
- * worker execution layer deleted in Phase 1 and the intermediate stubs
+ * `runtime`, `agents`, or `output`. Those screens were backed by the
+ * agent execution layer deleted in Phase 1 and the intermediate stubs
  * were kept until Commit 3.1 removed their snapshot data and Commit
  * 3.2 removes them outright.
  */

@@ -7,15 +7,15 @@
  * next poll cycle. The adapter's `write()` invalidates any prior
  * `.ingested` sidecar so overwrites re-run ingest automatically.
  */
-import type { WorkerReport } from "@/features/mission/index.js";
+import type { AgentReport } from "@/features/mission/index.js";
 import type { ReplyStorePort } from "../ports/reply-store.port.js";
-import type { ReplyAuthor, ReplyOutcome, WorkerReply } from "../domain/reply-types.js";
+import type { ReplyAuthor, ReplyOutcome, AgentReply } from "../domain/reply-types.js";
 
 export interface WriteReplyInput {
   readonly missionId: string;
   readonly featureId: string;
   readonly outcome: ReplyOutcome;
-  readonly report?: WorkerReport;
+  readonly report?: AgentReport;
   readonly notes?: string;
   readonly writtenBy?: ReplyAuthor;
   readonly source?: string;
@@ -23,11 +23,11 @@ export interface WriteReplyInput {
   readonly writtenAt?: string;
 }
 
-export async function writeWorkerReply(
+export async function writeAgentReply(
   store: ReplyStorePort,
   input: WriteReplyInput,
-): Promise<WorkerReply> {
-  const reply: WorkerReply = {
+): Promise<AgentReply> {
+  const reply: AgentReply = {
     missionId: input.missionId,
     featureId: input.featureId,
     outcome: input.outcome,

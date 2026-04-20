@@ -14,7 +14,7 @@ Define and register custom skills for use in Mission Control missions. Create sk
 
 The skill name and optional scope flag.
 
-- `<skill-name>`: The skill identifier (e.g., `my-feature-worker`)
+- `<skill-name>`: The skill identifier (e.g., `my-feature-agent`)
 - `--project`: Store skill in project `.maestro/skills/` (default runtime lookup path)
 - `--global`: Store skill in personal `~/.maestro/skills/`
 
@@ -61,7 +61,7 @@ List skills this one depends on:
 ```markdown
 ## Required Skills
 
-- `maestro:worker-base` - For standard worker procedures
+- `maestro:agent-base` - For standard agent procedures
 - `other-skill` - Description of dependency
 ```
 
@@ -162,7 +162,7 @@ After creating a skill, validate it:
 2. **Name consistency**: File path matches `name` in frontmatter
 3. **Procedures clear**: Work procedure has actionable steps
 
-**Next step**: after the skill passes validation, return to the caller that invoked you. If `maestro:mission-planning` sent you here, return to its Step 3 (Match worker types) to assign the new agentType to the feature that triggered this registration. If `maestro:conduct` sent you here mid-execution, return to conduct so it can dispatch the feature with the new agentType.
+**Next step**: after the skill passes validation, return to the caller that invoked you. If `maestro:mission-planning` sent you here, return to its Step 3 (Match agent types) to assign the new agentType to the feature that triggered this registration. If `maestro:conduct` sent you here mid-execution, return to conduct so it can dispatch the feature with the new agentType.
 4. **Handoff documented**: Clear what the handoff should contain
 
 ---
@@ -180,8 +180,8 @@ After creating a skill, validate it:
 ## Best Practices
 
 1. **Reuse existing skills**: Check if a built-in skill already covers your need
-2. **Extend, don't duplicate**: Inherit from `maestro:worker-base` for workers
+2. **Extend, don't duplicate**: Inherit from `maestro:agent-base` for agents
 3. **Document return conditions**: Clearly state when to return to orchestrator
 4. **Include verification**: Every skill should specify how to verify its work
 5. **Keep skills focused**: One skill = one responsibility
-6. **Document lookup order**: Runtime workers load `.maestro/skills/{agentType with : replaced by %3A}/SKILL.md` first, then fall back to `skills/built-in/{agentType with : replaced by %3A}/SKILL.md`
+6. **Document lookup order**: Runtime agents load `.maestro/skills/{agentType with : replaced by %3A}/SKILL.md` first, then fall back to `skills/built-in/{agentType with : replaced by %3A}/SKILL.md`

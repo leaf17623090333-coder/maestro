@@ -24,13 +24,13 @@ Use during Mission Control validation checkpoints:
 - After completing a milestone
 - Before sealing a milestone
 - During `maestro validation show` review
-- When `maestro:worker-base` instructs final validation
+- When `maestro:agent-base` instructs final validation
 
 ---
 
 ## Required Skills
 
-- `maestro:worker-base` - For startup/cleanup procedures
+- `maestro:agent-base` - For startup/cleanup procedures
 
 ---
 
@@ -113,7 +113,7 @@ Record results in validation state:
 maestro validation update --milestone <name> --status <passed|failed>
 ```
 
-**Next step**: return results to `maestro:conduct`. If status is `passed`, conduct proceeds to `maestro:user-testing-validator` (if applicable) or directly to `maestro milestone seal`. If status is `failed`, conduct re-opens the affected features for worker re-dispatch. Do not seal the milestone yourself -- that is the conductor's gate.
+**Next step**: return results to `maestro:conduct`. If status is `passed`, conduct proceeds to `maestro:user-testing-validator` (if applicable) or directly to `maestro milestone seal`. If status is `failed`, conduct re-opens the affected features for agent re-dispatch. Do not seal the milestone yourself -- that is the conductor's gate.
 
 ### Step 7: Produce Validation Report
 
@@ -179,7 +179,7 @@ proposed → approved → in_progress → implemented → validated
 
 States map to CLI commands:
 - `maestro feature approve` → `approved`
-- Worker completes → `implemented`
+- Agent completes → `implemented`
 - `maestro:scrutiny-validator` passes → `validated`
 - `maestro:scrutiny-validator` fails → `validation_failed`
 

@@ -8,13 +8,13 @@ import { output, resolveJsonFlag } from "@/shared/lib/output.js";
 import {
   listFeatures,
   updateFeature,
-  parseWorkerReport,
+  parseAgentReport,
   type ListFeaturesResult,
   type UpdateFeatureResult,
 } from "../usecases/feature-lifecycle.usecase.js";
 import {
-  generateWorkerPrompt,
-  type GenerateWorkerPromptResult,
+  generateAgentPrompt,
+  type GenerateAgentPromptResult,
 } from "@/features/agent";
 import { MaestroError } from "@/shared/errors.js";
 
@@ -58,10 +58,10 @@ export function registerFeatureCommand(program: Command): void {
 
   featureCmd
     .command("update <featureId>")
-    .description("Update feature status and/or attach a worker report")
+    .description("Update feature status and/or attach an agent report")
     .requiredOption("--mission <id>", "Mission ID (required)")
     .option("--status <status>", "New status (pending, assigned, in-progress, review, done, blocked)")
-    .option("--report <value>", "Worker report as inline JSON or @file.json")
+    .option("--report <value>", "Agent report as inline JSON or @file.json")
     .option("--retry-reason <reason>", "Reason for retrying (when status is pending)")
     .option("--json", "Output as JSON")
     .action(async (featureId: string, opts) => {
@@ -84,9 +84,9 @@ export function registerFeatureCommand(program: Command): void {
       }
 
       // Parse report if provided
-      let report: Awaited<ReturnType<typeof parseWorkerReport>> | undefined;
+      let report: Awaited<ReturnType<typeof parseAgentReport>> | undefined;
       if (opts.report) {
-        report = await parseWorkerReport(opts.report);
+        report = await parseAgentReport(opts.report);
       }
 
       const result = await updateFeature(
@@ -107,9 +107,9 @@ export function registerFeatureCommand(program: Command): void {
 
     featureCmd
       .command("prompt <featureId>")
-    .description("Generate a worker prompt for a feature")
+    .description("Generate an agent prompt for a feature")
     .requiredOption("--mission <id>", "Mission ID (required)")
-    .option("--out <path>", "Write prompt to specified path (also writes to workers/{featureId}/prompt.md)")
+    .option("--out <path>", "Write prompt to specified path (also writes to agents/{featureId}/prompt.md)")
     .option("--json", "Output as JSON")
     .action(async (featureId: string, opts) => {
       const services = getServices();
@@ -122,7 +122,7 @@ export function registerFeatureCommand(program: Command): void {
         ]);
       }
 
-      const result = await generateWorkerPrompt(
+      const result = await generateAgentPrompt(
         services.missionStore,
         services.featureStore,
         services.assertionStore,
@@ -185,9 +185,9 @@ function formatFeatureUpdate(result: UpdateFeatureResult): string[] {
 }
 
 /** Format prompt generation result for text output */
-function formatPromptResult(result: GenerateWorkerPromptResult): string[] {
+function formatPromptResult(result: GenerateAgentPromptResult): string[] {
   const lines: string[] = [
-    `[ok] Worker prompt generated for: ${result.featureId}`,
+    `[ok] Agent prompt generated for: ${result.featureId}`,
     `  Agent type: ${result.agentType}`,
   ];
 

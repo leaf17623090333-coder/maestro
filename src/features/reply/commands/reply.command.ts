@@ -11,16 +11,16 @@ import { readFile } from "node:fs/promises";
 import { getServices } from "@/services.js";
 import { output, resolveJsonFlag } from "@/shared/lib/output.js";
 import { MaestroError } from "@/shared/errors.js";
-import { writeWorkerReply } from "../usecases/write-reply.usecase.js";
-import type { ReplyOutcome, WorkerReply } from "../domain/reply-types.js";
+import { writeAgentReply } from "../usecases/write-reply.usecase.js";
+import type { ReplyOutcome, AgentReply } from "../domain/reply-types.js";
 import { REPLY_OUTCOMES } from "../domain/reply-types.js";
-import type { WorkerReport } from "@/features/mission/index.js";
-import { WorkerReportSchema } from "@/features/mission/index.js";
+import type { AgentReport } from "@/features/mission/index.js";
+import { AgentReportSchema } from "@/features/mission/index.js";
 
 export function registerReplyCommand(program: Command): void {
   const replyCmd = program
     .command("reply")
-    .description("Record a worker reply for a feature (outcome + optional report)")
+    .description("Record an agent reply for a feature (outcome + optional report)")
     .option("--json", "Output as JSON");
 
   replyCmd
@@ -29,7 +29,7 @@ export function registerReplyCommand(program: Command): void {
     .requiredOption("--mission <id>", "Mission id for the reply (YYYY-MM-DD-NNN)")
     .option("--outcome <outcome>", `Outcome (${REPLY_OUTCOMES.join("|")})`)
     .option("--note <text>", "Free-form notes")
-    .option("--report-file <path>", "Path to a JSON file containing a WorkerReport")
+    .option("--report-file <path>", "Path to a JSON file containing an AgentReport")
     .option("--source <tag>", "Free-form origin marker, e.g. 'cli' or 'agent:claude'")
     .option("--agent", "Mark this reply as agent-authored (default is human)")
     .option("--json", "Output as JSON")
@@ -39,7 +39,7 @@ export function registerReplyCommand(program: Command): void {
       const outcome = parseOutcome(opts.outcome);
       const report = await loadReport(opts.reportFile);
 
-      const reply = await writeWorkerReply(services.replyStore, {
+      const reply = await writeAgentReply(services.replyStore, {
         missionId: opts.mission,
         featureId,
         outcome,
@@ -81,7 +81,7 @@ function parseOutcome(raw: unknown): ReplyOutcome {
   return raw as ReplyOutcome;
 }
 
-async function loadReport(reportFile: unknown): Promise<WorkerReport | undefined> {
+async function loadReport(reportFile: unknown): Promise<AgentReport | undefined> {
   if (typeof reportFile !== "string" || reportFile.length === 0) return undefined;
   let raw: string;
   try {
@@ -98,21 +98,21 @@ async function loadReport(reportFile: unknown): Promise<WorkerReport | undefined
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new MaestroError(`--report-file is not valid JSON: ${message}`, [
-      "Provide a JSON file matching the WorkerReport schema",
+      "Provide a JSON file matching the AgentReport schema",
     ]);
   }
-  const result = WorkerReportSchema.safeParse(parsed);
+  const result = AgentReportSchema.safeParse(parsed);
   if (!result.success) {
     const first = result.error.issues[0];
     const path = first?.path.join(".") || "<root>";
-    throw new MaestroError(`--report-file does not match WorkerReport: ${path}: ${first?.message ?? "invalid"}`, [
-      "See WorkerReport in src/features/mission/domain/mission-types.ts",
+    throw new MaestroError(`--report-file does not match AgentReport: ${path}: ${first?.message ?? "invalid"}`, [
+      "See AgentReport in src/features/mission/domain/mission-types.ts",
     ]);
   }
-  return result.data as WorkerReport;
+  return result.data as AgentReport;
 }
 
-function formatReplyList(replies: readonly WorkerReply[]): string[] {
+function formatReplyList(replies: readonly AgentReply[]): string[] {
   if (replies.length === 0) {
     return ["(no replies on disk)"];
   }

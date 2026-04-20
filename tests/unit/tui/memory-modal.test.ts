@@ -38,14 +38,14 @@ function makeSnapshot(): MissionControlSnapshot {
     pendingHandoffs: [],
     configSummary: null,
     configInspector: {
-      tabs: ["overview", "effective", "project", "global", "defaults", "workers", "plan", "doctor", "memory"],
+      tabs: ["overview", "effective", "project", "global", "defaults", "agents", "plan", "doctor", "memory"],
       rowsByTab: {
         overview: [],
         effective: [],
         project: [],
         global: [],
         defaults: [],
-        workers: [],
+        agents: [],
         plan: [],
         doctor: [],
         memory: [

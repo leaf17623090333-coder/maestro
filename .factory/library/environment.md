@@ -20,16 +20,16 @@ Environment variables, dependencies, and repository-scoped setup notes for the M
 ## Product Runtime Storage
 
 - Mission Control runtime state belongs under `.maestro/missions/{missionId}/`
-- Per-project worker skills for generated prompts belong under `.maestro/skills/{agentType}/SKILL.md`
+- Per-project agent skills for generated prompts belong under `.maestro/skills/{agentType}/SKILL.md`
 - Native handoff launch artifacts live under `.maestro/launches/`
 - Legacy handoff artifacts may still exist under `.maestro/handoffs/`, but they are no longer read
 
 ## Repository Infrastructure
 
-- `.factory/` in this repository is mission infrastructure for workers and validators, not product runtime storage
+- `.factory/` in this repository is mission infrastructure for agents and validators, not product runtime storage
 - `.factory/` should stay committed; `.maestro/missions/` should stay ignored
-- `.factory/skills/` is authoring/reference material for repo-local worker guidance
-- Runtime worker prompt lookup should resolve `.maestro/skills/{agentType}/SKILL.md` first, then `skills/built-in/{agentType}/SKILL.md`
+- `.factory/skills/` is authoring/reference material for repo-local agent guidance
+- Runtime agent prompt lookup should resolve `.maestro/skills/{agentType}/SKILL.md` first, then `skills/built-in/{agentType}/SKILL.md`
 
 ## Environment Variables
 

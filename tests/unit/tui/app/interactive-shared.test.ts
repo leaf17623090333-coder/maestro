@@ -36,7 +36,7 @@ function makeSnapshot(overrides?: Partial<MissionControlSnapshot>): MissionContr
 
 describe("getSnapshotPollIntervalMs", () => {
   // Phase 3 strip: the "faster polling when a runtime is active" path
-  // read `snapshot.runtimeProcesses` which was deleted with the worker
+  // read `snapshot.runtimeProcesses` which was deleted with the agent
   // execution layer. The TUI now polls at a single cadence.
   it("returns the default polling interval", () => {
     const interval = getSnapshotPollIntervalMs(makeSnapshot());

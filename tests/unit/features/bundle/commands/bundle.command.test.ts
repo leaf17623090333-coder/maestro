@@ -19,7 +19,7 @@ import type {
   MissionStorePort,
 } from "@/features/mission/index.js";
 import type { HandoffLaunchRecord, LaunchStorePort } from "@/features/handoff/index.js";
-import type { ReplyStorePort, WorkerReply } from "@/features/reply/index.js";
+import type { ReplyStorePort, AgentReply } from "@/features/reply/index.js";
 
 const originalConsoleLog = console.log;
 const originalConsoleError = console.error;
@@ -88,7 +88,7 @@ const checkpointStore: CheckpointStorePort = {
 
 const replyStore: ReplyStorePort = {
   async get() { return undefined; },
-  async list(): Promise<readonly WorkerReply[]> { return []; },
+  async list(): Promise<readonly AgentReply[]> { return []; },
   async listSince() { return []; },
   async write() { throw new Error("nope"); },
   async isIngested() { return false; },
@@ -265,7 +265,7 @@ describe("bundle commands", () => {
         features: 0,
         milestones: 0,
         assertions: 0,
-        workers: 0,
+        agents: 0,
         replies: 0,
         launches: 0,
         checkpoints: 0,

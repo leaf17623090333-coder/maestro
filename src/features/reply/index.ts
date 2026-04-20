@@ -1,17 +1,17 @@
 export type {
-  WorkerReply,
+  AgentReply,
   ReplyOutcome,
   ReplyAuthor,
   ReplyIngestResult,
 } from "./domain/reply-types.js";
 export { REPLY_OUTCOMES } from "./domain/reply-types.js";
-export { validateWorkerReply } from "./domain/reply-validators.js";
+export { validateAgentReply } from "./domain/reply-validators.js";
 
 export type { ReplyStorePort } from "./ports/reply-store.port.js";
 export { FsReplyStoreAdapter } from "./adapters/fs-reply-store.adapter.js";
 
 export {
-  writeWorkerReply,
+  writeAgentReply,
   type WriteReplyInput,
 } from "./usecases/write-reply.usecase.js";
 

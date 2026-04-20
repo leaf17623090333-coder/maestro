@@ -81,7 +81,7 @@ interface ExportManifest {
     features: number;
     milestones: number;
     assertions: number;
-    workers: number;
+    agents: number;
     replies: number;
     launches: number;
     checkpoints: number;

@@ -2,8 +2,8 @@
  * Mission bundle domain types.
  *
  * A mission bundle is a portable, auditable `.tar.gz` that packages everything
- * the conductor and workers produced for a single mission: mission plan,
- * features, assertions, worker prompts + reports, replies, launches,
+ * the conductor and agents produced for a single mission: mission plan,
+ * features, assertions, agent prompts + reports, replies, launches,
  * principles snapshot, and optional memory + git patch.
  *
  * Phase 1 scope: export + inspect only. Import/replay is phase 2.
@@ -35,7 +35,7 @@ export interface BundleStats {
   readonly features: number;
   readonly milestones: number;
   readonly assertions: number;
-  readonly workers: number;
+  readonly agents: number;
   readonly replies: number;
   readonly launches: number;
   readonly checkpoints: number;

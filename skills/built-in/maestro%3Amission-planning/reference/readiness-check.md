@@ -1,18 +1,18 @@
 # Readiness Check: Is the Plan Ready to Launch?
 
-This is the final checkpoint before you draft the first `maestro handoff` command. You already have a decomposed plan, worker assignments, and explicit constraints. Now you need to decide whether the plan is actually launchable.
+This is the final checkpoint before you draft the first `maestro handoff` command. You already have a decomposed plan, agent assignments, and explicit constraints. Now you need to decide whether the plan is actually launchable.
 
 The output of this step is binary:
 
 - **ready** — the mission can be persisted and you can draft the first handoff command
-- **not ready** — go back and fix the plan before you hand anything to an external worker
+- **not ready** — go back and fix the plan before you hand anything to an external agent
 
 ## The launchability checklist
 
 Every item below must be true before you draft the command.
 
 1. **The mission has a clear done sentence.**
-   If you cannot state "when this mission is done, X is true," the worker will inherit that ambiguity.
+   If you cannot state "when this mission is done, X is true," the agent will inherit that ambiguity.
 
 2. **The first launchable feature is explicit.**
    You should be able to point at one specific feature and say "this is the next fresh Codex or Claude run."
@@ -29,7 +29,7 @@ Every item below must be true before you draft the command.
    The first feature has 2-5 observable verification steps. "Run the relevant tests" is not specific enough.
 
 6. **Constraints are visible.**
-   The worker can read what not to touch and why from `preconditions`, the feature description, or another plain-language field that will survive into the handoff prompt.
+   The agent can read what not to touch and why from `preconditions`, the feature description, or another plain-language field that will survive into the handoff prompt.
 
 ## Fast failure signals
 
@@ -59,4 +59,4 @@ Counterexample:
 - `agentType`: `subagent`
 - No concrete verification beyond "write notes"
 
-Result: **not ready for `maestro handoff`**. Either add a later implementation feature as the first external worker launch, or re-decompose the mission.
+Result: **not ready for `maestro handoff`**. Either add a later implementation feature as the first external agent launch, or re-decompose the mission.

@@ -1,11 +1,11 @@
 ---
-name: backend-worker
+name: backend-agent
 description: Implement Mission Control domain logic, runtime-state persistence, recovery orchestration, and cross-CLI adapters in the Maestro CLI
 ---
 
-# Backend Worker
+# Backend Agent
 
-NOTE: startup and cleanup are handled by `worker-base`. This skill defines the work procedure for backend-heavy Mission Control reliability features.
+NOTE: startup and cleanup are handled by `agent-base`. This skill defines the work procedure for backend-heavy Mission Control reliability features.
 
 ## When to Use This Skill
 
@@ -39,7 +39,7 @@ None.
 
 ```json
 {
-  "salientSummary": "Added explicit runtime-state persistence plus automatic recovery bookkeeping for stale worker ownership. Session normalization and checkpoint semantics were extended without regressing existing Claude/Codex flows.",
+  "salientSummary": "Added explicit runtime-state persistence plus automatic recovery bookkeeping for stale agent ownership. Session normalization and checkpoint semantics were extended without regressing existing Claude/Codex flows.",
   "whatWasImplemented": "Introduced runtime-state domain types and filesystem storage, expanded session-detection adapters for additional hosts, implemented recovery logic that requeues features with preserved report and retry history, and extended checkpoint save/load so runtime recovery metadata is captured and restored safely.",
   "whatWasLeftUndone": "",
   "verification": {
@@ -68,7 +68,7 @@ None.
         "file": "tests/unit/usecases/recovery-runtime.test.ts",
         "cases": [
           {
-            "name": "recoverable worker failure requeues feature with preserved report and appended retry history",
+            "name": "recoverable agent failure requeues feature with preserved report and appended retry history",
             "verifies": "VAL-RECOVERY-001"
           },
           {

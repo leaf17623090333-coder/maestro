@@ -20,16 +20,28 @@ maestro mission list --json
 maestro feature list --mission <id> --json
 \`\`\`
 
-**Read a worker prompt (with injected memory):**
+**Read an agent prompt (with injected memory):**
 \`\`\`bash
 maestro feature prompt <featureId> --mission <id>
 \`\`\`
 
 **Launch a fresh Codex or Claude handoff:**
 \`\`\`bash
-maestro handoff "Implement <featureId> for mission <id>" [--provider codex|claude] [--worktree [slug]] [--wait]
+maestro handoff "Implement <featureId> for mission <id>" \\
+  [--provider codex|claude]  # default: codex
+  [--model <model>]          # default: codex=gpt-5.4, claude=opus
+  [--worktree [slug]]        # create/reuse sibling git worktree
+  [--base <branch>]          # base branch for --worktree
+  [--name <title>]           # display name for the launch
+  [--wait]                   # foreground: block until the agent exits
+  [--json]                   # machine-readable launch descriptor
 \`\`\`
-Maestro persists the briefing and launch log under \`.maestro/launches/<id>/\`.
+Handoffs run detached by default: the launcher returns immediately with a launch id and the external agent keeps running in the background. Use \`--wait\` only when you need to block until the agent exits (e.g. scripts that consume its final report).
+
+Every launch persists under \`.maestro/launches/<id>/\`:
+- \`prompt.md\` -- the self-contained briefing sent to the provider
+- \`output.log\` -- live stdout/stderr from the agent process
+- \`launch.json\` -- status, timing, provider, model, and worktree metadata
 
 **Capture a correction rule for future sessions:**
 \`\`\`bash
@@ -91,11 +103,11 @@ This project uses Maestro for local bootstrap and runtime orchestration.
 ## Layout
 
 - \`.maestro/bootstrap/\` contains committed project bootstrap assets
-- \`.maestro/skills/\` contains project-local worker skills
+- \`.maestro/skills/\` contains project-local agent skills
 - \`.maestro/missions/\`, \`.maestro/sessions/\`, and \`.maestro/launches/\` contain runtime state
 - \`skills/built-in/\` contains shipped built-in fallback skills
 
-## Worker Skill Lookup
+## Agent Skill Lookup
 
 1. \`.maestro/skills/{agentType}/SKILL.md\`
 2. \`skills/built-in/{agentType}/SKILL.md\`
@@ -152,7 +164,7 @@ services: {}
     path: ".maestro/bootstrap/library/architecture.md",
     content: `# Architecture
 
-Use this document for project-specific architecture notes that workers should read before implementation.
+Use this document for project-specific architecture notes that agents should read before implementation.
 
 ## System Overview
 
@@ -217,7 +229,7 @@ Use this document for project-specific validation guidance.
     path: ".maestro/bootstrap/validation/README.md",
     content: `# Validation References
 
-Store reusable validation notes, reference flows, or review artifacts here when they help future workers.
+Store reusable validation notes, reference flows, or review artifacts here when they help future agents.
 
 Suggested contents:
 

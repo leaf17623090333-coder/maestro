@@ -7,7 +7,7 @@ export interface InteractiveOptions {
   reloadSnapshot: (options?: SnapshotBuildOptions) => Promise<MissionControlSnapshot>;
 }
 
-// Phase 3 strip: Mission Control no longer tracks live worker runtimes,
+// Phase 3 strip: Mission Control no longer tracks live agent runtimes,
 // so the poll interval is simply the long interval. The function is
 // retained as the only poll-cadence hook so future callers can slow or
 // speed up polling without touching interactive.tsx directly.

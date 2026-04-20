@@ -1,4 +1,4 @@
-# Worker Brief Templates
+# Agent Brief Templates
 
 Three ready-to-use templates for common conductor dispatch scenarios. Each follows the five-section format (Goal, Scope, Context, Constraints, Output).
 
@@ -6,7 +6,7 @@ Three ready-to-use templates for common conductor dispatch scenarios. Each follo
 
 ## Template 1: Mission Feature Implementation
 
-Use when dispatching a worker for a mission feature. The `maestro feature prompt` command generates most of the content -- this template shows how to augment it with conductor notes.
+Use when dispatching an agent for a mission feature. The `maestro feature prompt` command generates most of the content -- this template shows how to augment it with conductor notes.
 
 ```
 ## Goal
@@ -29,14 +29,14 @@ Prior decisions:
 - {decision from brainstorm or earlier milestone that constrains this feature}
 
 Related features in this milestone:
-- {featureId}: {status} -- {brief description, so worker knows what siblings are doing}
+- {featureId}: {status} -- {brief description, so agent knows what siblings are doing}
 
 Relevant code:
-- {function signature or file path the worker needs to know about}
+- {function signature or file path the agent needs to know about}
 - {error message or test output that motivated this feature}
 
 ## Constraints
-- Follow maestro:worker-base startup/cleanup procedures
+- Follow maestro:agent-base startup/cleanup procedures
 - Do NOT commit -- conductor commits after verification
 - Do NOT modify .maestro/ files
 - Do NOT touch files outside the Scope section
@@ -129,7 +129,7 @@ Report back with:
 
 ## Template 3: Exploration / Research
 
-Use when you need information before making decisions. Workers read and report; they do not edit.
+Use when you need information before making decisions. Agents read and report; they do not edit.
 
 ```
 ## Goal

@@ -1,3 +1,5 @@
+@CLAUDE.md
+
 # PROJECT KNOWLEDGE BASE
 
 **Generated:** 2026-04-21 01:56:37 +07

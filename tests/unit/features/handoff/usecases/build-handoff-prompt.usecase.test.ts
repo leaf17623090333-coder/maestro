@@ -108,12 +108,12 @@ describe("buildHandoffPrompt", () => {
       updatedAt: "2026-04-20T00:00:00.000Z",
     };
 
-    const workersDir = join(cwd, ".maestro", "missions", mission.id, "workers", feature.id);
+    const agentsDir = join(cwd, ".maestro", "missions", mission.id, "agents", feature.id);
     const repliesDir = join(cwd, ".maestro", "replies", mission.id);
-    await mkdir(workersDir, { recursive: true });
+    await mkdir(agentsDir, { recursive: true });
     await mkdir(repliesDir, { recursive: true });
-    await writeFile(join(workersDir, "prompt.md"), "# existing prompt\n");
-    await writeFile(join(workersDir, "report.json"), "{}\n");
+    await writeFile(join(agentsDir, "prompt.md"), "# existing prompt\n");
+    await writeFile(join(agentsDir, "report.json"), "{}\n");
     await writeFile(join(repliesDir, `${feature.id}.yaml`), "outcome: completed\n");
 
     const result = await buildHandoffPrompt({

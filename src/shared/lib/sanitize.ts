@@ -1,9 +1,4 @@
-/**
- * Escape markdown headers and HTML-comment boundaries at line starts so
- * injected content cannot break out of the surrounding document structure.
- * Shared between `sanitizePromptContent` (full XML wrapper) and
- * `escapeMarkdownBoundaries` callers that only need the lightweight variant.
- */
+// Escape so injected content cannot break out of the surrounding document structure.
 export function escapeMarkdownBoundaries(content: string): string {
   return content
     .replace(/^(#{1,6})\s/gm, "\\$1 ")
@@ -60,10 +55,6 @@ export function sanitizeInlineCodeContent(content: string): string {
     .join(" / ");
 }
 
-/**
- * Sanitize user-provided content for inclusion in agent prompts.
- * Wraps content in XML delimiters and strips known injection patterns.
- */
 export function sanitizePromptContent(content: string, label?: string): string {
   if (!content || content.trim().length === 0) {
     return "_(no content)_";
@@ -71,18 +62,13 @@ export function sanitizePromptContent(content: string, label?: string): string {
 
   const tag = label ?? "user-content";
 
-  // Strip known injection patterns
   let sanitized = stripPromptMarkup(content);
-
   sanitized = escapeMarkdownBoundaries(sanitized);
-
-  // Encode markup characters so user content remains literal within the wrapper.
   sanitized = sanitized
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 
-  // Wrap in XML delimiters
   return `<${tag}>\n${sanitized}\n</${tag}>`;
 }
 

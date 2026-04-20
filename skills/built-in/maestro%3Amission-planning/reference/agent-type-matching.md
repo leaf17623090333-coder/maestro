@@ -1,10 +1,10 @@
-# Worker Type Matching: Feature to Executor
+# Agent Type Matching: Feature to Executor
 
-This is the third step of mission planning. You have a decomposed plan with milestones and features from Step 2. You need to assign each feature to a worker type that can actually execute it.
+This is the third step of mission planning. You have a decomposed plan with milestones and features from Step 2. You need to assign each feature to an agent type that can actually execute it.
 
-Workers are the external processes that implement features. Maestro is the conductor — it holds the score, drafts the next handoff, and validates results, but it does not write code itself. The four worker types below cover every real execution pattern.
+Agents are the external processes that implement features. Maestro is the conductor — it holds the score, drafts the next handoff, and validates results, but it does not write code itself. The four agent types below cover every real execution pattern.
 
-## The four worker types
+## The four agent types
 
 **`codex-cli`** — mechanical implementation against a spec. Cheap, fast, runs in a fresh context with no carryover. No judgment, no taste, no pushback. Best when the feature reads like a to-do list: the decision work is already done and someone just needs to type it in. If a feature would benefit from "what if we did X instead," `codex-cli` is the wrong choice — it will do exactly what the prompt says, even when the prompt is wrong.
 
@@ -12,11 +12,11 @@ Workers are the external processes that implement features. Maestro is the condu
 
 **`subagent`** — native Claude Code Task tool. Shares the parent context, so it can see what the parent has already read without re-exploring. Fast and cheap for research and exploration. Best for "survey the codebase for X" or "find every caller of Y" — things where the answer is discoverable from existing files and the parent wants a summary back, not a patch. Not appropriate for multi-hour implementation work; subagents lose coherence as their scope grows.
 
-**`human`** — ideation, approval, trust calls, final taste judgments. The only worker type that can say "this is ugly, do it differently" without a formal rubric. Best for brainstorm opening, final go/no-go decisions, and any milestone where the question is "is this what I actually want?" not "does this match the spec?"
+**`human`** — ideation, approval, trust calls, final taste judgments. The only agent type that can say "this is ugly, do it differently" without a formal rubric. Best for brainstorm opening, final go/no-go decisions, and any milestone where the question is "is this what I actually want?" not "does this match the spec?"
 
 ## Decision table
 
-| Feature characteristic | Worker type |
+| Feature characteristic | Agent type |
 |---|---|
 | Mechanical code following a spec | `codex-cli` |
 | Bug fix with clear reproduction and fix direction | `codex-cli` |
@@ -39,7 +39,7 @@ Self-review is pathologically lenient. The Anthropic harness-engineering article
 
 `codex-cli` — matches:
 - "Add a `--format json` flag to `maestro mission list` that emits the existing data through `JSON.stringify`." Clear spec, clear location, zero decisions left.
-- "Rename `WorkerKind` to `WorkerType` across `src/` and `tests/`." Pure mechanical rewrite.
+- "Rename `AgentKind` to `AgentType` across `src/` and `tests/`." Pure mechanical rewrite.
 
 `codex-cli` — anti-example:
 - "Design a provider-selection policy for the handoff launcher." Requires taste and judgment. Hand to `claude-code`.

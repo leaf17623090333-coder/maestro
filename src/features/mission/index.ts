@@ -4,7 +4,7 @@ export type {
   Milestone,
   Assertion,
   Checkpoint,
-  WorkerReport,
+  AgentReport,
   MissionStatus,
   MilestoneStatus,
   FeatureStatus,
@@ -43,7 +43,7 @@ export {
   MISSION_ID_PATTERN,
   AGENT_TYPE_PATTERN,
   FEATURE_ID_PATTERN,
-  WorkerReportSchema,
+  AgentReportSchema,
 } from "./domain/mission-validators.js";
 
 export { BUILT_IN_WORKFLOWS } from "./domain/workflows.js";
@@ -115,7 +115,7 @@ export {
 export {
   listFeatures,
   updateFeature,
-  parseWorkerReport,
+  parseAgentReport,
 } from "./feature/usecases/feature-lifecycle.usecase.js";
 export type { ListFeaturesResult, UpdateFeatureResult } from "./feature/usecases/feature-lifecycle.usecase.js";
 export {

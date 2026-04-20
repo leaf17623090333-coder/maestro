@@ -202,31 +202,31 @@ describe("initMaestro", () => {
 
   it("syncs built-in maestro skills into project-local claude and codex folders", async () => {
     const config = mockConfig();
-    const workerBaseDir = resolveSkillDirectoryName("maestro:worker-base");
+    const agentBaseDir = resolveSkillDirectoryName("maestro:agent-base");
 
     const result = await initMaestro(config, { global: false, dir: tmpDir });
 
-    const claudeSkillPath = join(tmpDir, ".claude", "skills", workerBaseDir, "SKILL.md");
-    const codexSkillPath = join(tmpDir, ".codex", "skills", workerBaseDir, "SKILL.md");
+    const claudeSkillPath = join(tmpDir, ".claude", "skills", agentBaseDir, "SKILL.md");
+    const codexSkillPath = join(tmpDir, ".codex", "skills", agentBaseDir, "SKILL.md");
 
     expect(result.created).toContain(claudeSkillPath);
     expect(result.created).toContain(codexSkillPath);
-    expect(await readFile(claudeSkillPath, "utf8")).toContain("# Worker Base Procedures");
-    expect(await readFile(codexSkillPath, "utf8")).toContain("# Worker Base Procedures");
+    expect(await readFile(claudeSkillPath, "utf8")).toContain("# Agent Base Procedures");
+    expect(await readFile(codexSkillPath, "utf8")).toContain("# Agent Base Procedures");
   });
 
   it("overwrites existing synced maestro skills with the shipped version", async () => {
     const config = mockConfig();
-    const workerBaseDir = resolveSkillDirectoryName("maestro:worker-base");
-    const claudeSkillPath = join(tmpDir, ".claude", "skills", workerBaseDir, "SKILL.md");
+    const agentBaseDir = resolveSkillDirectoryName("maestro:agent-base");
+    const claudeSkillPath = join(tmpDir, ".claude", "skills", agentBaseDir, "SKILL.md");
 
-    await mkdir(join(tmpDir, ".claude", "skills", workerBaseDir), { recursive: true });
-    await writeFile(claudeSkillPath, "# old worker base\n");
+    await mkdir(join(tmpDir, ".claude", "skills", agentBaseDir), { recursive: true });
+    await writeFile(claudeSkillPath, "# old agent base\n");
 
     const result = await initMaestro(config, { global: false, dir: tmpDir });
 
     expect(result.created).toContain(claudeSkillPath);
-    expect(await readFile(claudeSkillPath, "utf8")).toContain("# Worker Base Procedures");
+    expect(await readFile(claudeSkillPath, "utf8")).toContain("# Agent Base Procedures");
   });
 
   it("removes stale synced maestro skills without touching non-maestro skills", async () => {

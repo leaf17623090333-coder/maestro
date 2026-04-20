@@ -16,10 +16,7 @@ export interface LoggedCommandResult {
   readonly exitCode?: number;
 }
 
-/**
- * Execute a shell command and capture output.
- * Uses Bun.spawnSync because repeated async pipe reads leak memory under Bun.
- */
+// Uses Bun.spawnSync because repeated async pipe reads leak memory under Bun.
 export async function execArgv(
   argv: string[],
   opts: { cwd?: string; timeout?: number } = {},

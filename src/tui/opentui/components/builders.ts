@@ -585,7 +585,7 @@ function featureTone(status: MissionControlFeatureRow["status"]): string {
 }
 
 function eventTone(event: MissionControlEvent): string {
-  // Phase 3 strip: `worker` events no longer exist; the event kind
+  // Phase 3 strip: `agent` events no longer exist; the event kind
   // union now covers mission / feature / milestone / assertion /
   // checkpoint only.
   if (event.kind === "checkpoint") return OPEN_TUI_THEME.warning;

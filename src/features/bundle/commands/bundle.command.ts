@@ -119,7 +119,7 @@ function formatExportResult(result: BundleExportResult): string[] {
     `  Status:  ${manifest.mission.status}`,
     `  Output:  ${outputPath}`,
     `  Size:    ${formatBytes(bytes)}`,
-    `  Stats:   ${manifest.stats.features} feat / ${manifest.stats.assertions} asrt / ${manifest.stats.workers} work / ${manifest.stats.replies} reply / ${manifest.stats.launches} launch / ${manifest.stats.checkpoints} chkpt`,
+    `  Stats:   ${manifest.stats.features} feat / ${manifest.stats.assertions} asrt / ${manifest.stats.agents} work / ${manifest.stats.replies} reply / ${manifest.stats.launches} launch / ${manifest.stats.checkpoints} chkpt`,
     `  Principles: ${manifest.stats.principlesSnapshot} principles, ${manifest.stats.outcomesSnapshot} outcomes`,
   ];
   if (manifest.stats.memorySnapshot) {
@@ -148,7 +148,7 @@ function formatInspectResult(manifest: BundleManifest): string[] {
     `  Maestro: ${manifest.maestroVersion}`,
     `  Mission: ${manifest.mission.id} (${manifest.mission.title})`,
     `  Status:  ${manifest.mission.status}`,
-    `  Stats:   ${manifest.stats.features} feat / ${manifest.stats.milestones} mile / ${manifest.stats.assertions} asrt / ${manifest.stats.workers} work / ${manifest.stats.replies} reply / ${manifest.stats.launches} launch / ${manifest.stats.checkpoints} chkpt`,
+    `  Stats:   ${manifest.stats.features} feat / ${manifest.stats.milestones} mile / ${manifest.stats.assertions} asrt / ${manifest.stats.agents} work / ${manifest.stats.replies} reply / ${manifest.stats.launches} launch / ${manifest.stats.checkpoints} chkpt`,
     `  Principles: ${manifest.stats.principlesSnapshot} principles, ${manifest.stats.outcomesSnapshot} outcomes`,
   ];
   if (manifest.stats.memorySnapshot) {

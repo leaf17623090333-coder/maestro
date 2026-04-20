@@ -1,5 +1,44 @@
 # Changelog
 
+## 0.46.0 - Rename worker to agent (runtime role) (BREAKING)
+
+- Rename the runtime-role concept "worker" (the thing that executes a
+  Feature brief) to "agent" across the code, shipped skills, on-disk
+  paths, and user-facing CLI/TUI strings. The brand-classifier rename
+  (`Feature.workerType` -> `Feature.agentType`) in 0.38.0 only touched
+  one field; this release finishes the rename everywhere else.
+- On-disk change: `.maestro/missions/<id>/workers/<featureId>/` moves to
+  `.maestro/missions/<id>/agents/<featureId>/`. Run
+  `bun scripts/migrate-worker-path-to-agent.ts` once to rename existing
+  local directories. The script is idempotent.
+- Skill slug rename: `maestro:worker-base` -> `maestro:agent-base`.
+  Projects that override this slug in `.maestro/skills/` need to rename
+  the local override directory; the migration script handles this too.
+- Factory skill slug renames: `.factory/skills/cli-worker` ->
+  `cli-agent`, `.factory/skills/backend-worker` -> `backend-agent`.
+- Source API renames (breaking for anything importing maestro internals):
+  `WorkerReport` -> `AgentReport`, `WorkerReply` -> `AgentReply`,
+  `generateWorkerPrompt` -> `generateAgentPrompt`,
+  `parseWorkerReport` -> `parseAgentReport`,
+  `writeWorkerReply` -> `writeAgentReply`,
+  `validateWorkerReply` -> `validateAgentReply`,
+  `workerSkillNotFound` -> `agentSkillNotFound`.
+- Bundle stats JSON field `workers` renamed to `agents`.
+- Generated prompt H1 changes from `# Worker Assignment:` to
+  `# Agent Assignment:`; error message `Worker skill '...' not found`
+  becomes `Agent skill '...' not found`.
+- Expanded the `AGENT_INSTRUCTION_BLOCK` handoff section injected by
+  `maestro install`: documents all flags (`--provider`, `--model`,
+  `--worktree`, `--base`, `--name`, `--wait`, `--json`), the detached-
+  by-default behavior, persisted launch artifacts, and default models
+  (`codex=gpt-5.4`, `claude=opus`).
+- Intentionally preserved: the legacy-field migration glue
+  (`LegacyWorkerTypeMigration`, `migrateLegacyWorkerType`, `workerType`
+  key) in `src/features/mission/feature/feature-migration.ts` -- these
+  describe the old on-disk field being migrated and renaming them
+  would erase the signal. `hooks/pre-agent.mjs:WORKER_RULES` is a
+  distinct pre-agent hook concept, unchanged.
+
 ## 0.44.3 - Native handoff launcher
 
 - Replace the old UKI queue-based handoff flow with `maestro handoff <task>`,

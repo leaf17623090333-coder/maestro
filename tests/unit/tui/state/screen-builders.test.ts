@@ -12,7 +12,7 @@ import type { Feature, Milestone, Principle, PrincipleOutcomeRecord } from "@/fe
 import type { HandoffLaunchRecord } from "@/features/handoff";
 import type { MissionControlEvent } from "@/tui/state/types.js";
 import type { Task, TaskQueryPort } from "@/features/task";
-import type { WorkerReply } from "@/features/reply";
+import type { AgentReply } from "@/features/reply";
 
 function makeFeature(overrides: Partial<Feature> & { id: string }): Feature {
   return {
@@ -106,7 +106,7 @@ describe("buildAgentGrid", () => {
     expect(grid[2]!.agentType).toBe("a-completed");
   });
 
-  it("does not mark completed workers waiting for another worker's pending work", () => {
+  it("does not mark completed agents waiting for another agent's pending work", () => {
     const features = [
       makeFeature({ id: "f1", agentType: "claude-code", status: "done" }),
       makeFeature({ id: "f2", agentType: "claude-code", status: "done" }),
@@ -294,7 +294,7 @@ describe("buildTimelineMilestones", () => {
 // buildReplyInbox
 // ---------------------------------------------------------------------------
 
-function makeReply(overrides: Partial<WorkerReply> & { featureId: string }): WorkerReply {
+function makeReply(overrides: Partial<AgentReply> & { featureId: string }): AgentReply {
   return {
     missionId: "2026-04-13-001",
     outcome: "completed",

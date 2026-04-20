@@ -35,12 +35,14 @@ export async function buildHandoffPrompt(
     readonly extraConstraints?: readonly string[];
   },
 ): Promise<BuildHandoffPromptResult> {
-  const gitState = await loadGitState(deps.git, input.cwd);
-  const missionContext = await resolveMissionContext(
-    deps.missionStore,
-    deps.featureStore,
-    deps.assertionStore,
-  );
+  const [gitState, missionContext] = await Promise.all([
+    loadGitState(deps.git, input.cwd),
+    resolveMissionContext(
+      deps.missionStore,
+      deps.featureStore,
+      deps.assertionStore,
+    ),
+  ]);
 
   const promptContext = missionContext
     ? await buildMissionPromptContext(input.cwd, input.task, gitState, missionContext)
@@ -77,7 +79,10 @@ async function resolveMissionContext(
 
   if (!mission) return undefined;
 
-  const features = await featureStore.list(mission.id);
+  const [features, allAssertions] = await Promise.all([
+    featureStore.list(mission.id),
+    assertionStore.list(mission.id),
+  ]);
   const actionable = features.filter((feature) => feature.status !== "done" && feature.status !== "blocked");
   if (actionable.length !== 1) return undefined;
 
@@ -85,7 +90,7 @@ async function resolveMissionContext(
   const milestone = mission.milestones.find((item) => item.id === feature.milestoneId);
   if (!milestone) return undefined;
 
-  const assertions = (await assertionStore.list(mission.id)).filter((item) => item.featureId === feature.id);
+  const assertions = allAssertions.filter((item) => item.featureId === feature.id);
   return { mission, milestone, feature, assertions };
 }
 
@@ -147,7 +152,7 @@ function buildRepositoryPromptContext(
     relevantFiles: buildRepositoryRelevantFiles(gitState),
     currentState: buildCurrentState(gitState),
     whatWasTried: [
-      "No structured mission or worker report was available for this handoff.",
+      "No structured mission or agent report was available for this handoff.",
       "Start by inspecting the changed files and recent commits before editing.",
     ],
     decisions: [
@@ -170,25 +175,31 @@ async function collectMissionRelevantFiles(
   gitState: GitState | undefined,
 ): Promise<readonly HandoffRelevantFile[]> {
   const files: HandoffRelevantFile[] = [];
-  const workerPromptPath = join(MAESTRO_DIR, "missions", missionId, "workers", featureId, "prompt.md");
-  const workerReportPath = join(MAESTRO_DIR, "missions", missionId, "workers", featureId, "report.json");
+  const agentPromptPath = join(MAESTRO_DIR, "missions", missionId, "agents", featureId, "prompt.md");
+  const agentReportPath = join(MAESTRO_DIR, "missions", missionId, "agents", featureId, "report.json");
   const replyPath = join(MAESTRO_DIR, "replies", missionId, `${featureId}.yaml`);
 
-  if (await fileExists(join(cwd, workerPromptPath))) {
+  const [hasPrompt, hasReport, hasReply] = await Promise.all([
+    fileExists(join(cwd, agentPromptPath)),
+    fileExists(join(cwd, agentReportPath)),
+    fileExists(join(cwd, replyPath)),
+  ]);
+
+  if (hasPrompt) {
     files.push({
-      path: workerPromptPath,
-      reason: "Current worker brief for the active feature.",
+      path: agentPromptPath,
+      reason: "Current agent brief for the active feature.",
     });
   }
 
-  if (await fileExists(join(cwd, workerReportPath))) {
+  if (hasReport) {
     files.push({
-      path: workerReportPath,
-      reason: "Most recent structured worker report for the active feature.",
+      path: agentReportPath,
+      reason: "Most recent structured agent report for the active feature.",
     });
   }
 
-  if (await fileExists(join(cwd, replyPath))) {
+  if (hasReply) {
     files.push({
       path: replyPath,
       reason: "Latest reply artifact for the active feature.",
@@ -238,7 +249,7 @@ function buildCurrentState(
 
 function buildWhatWasTried(feature: Feature): readonly string[] {
   if (!feature.report) {
-    return ["No structured worker report is attached to this feature yet."];
+    return ["No structured agent report is attached to this feature yet."];
   }
 
   const lines = [
@@ -253,12 +264,12 @@ function buildWhatWasTried(feature: Feature): readonly string[] {
     ),
   ].filter((line) => line.trim().length > 0);
 
-  return lines.length > 0 ? lines : ["A prior worker touched this feature, but no reusable notes were recorded."];
+  return lines.length > 0 ? lines : ["A prior agent touched this feature, but no reusable notes were recorded."];
 }
 
 function buildMissionDecisions(feature: Feature, milestone: Milestone): readonly string[] {
   const decisions = [
-    `Assigned worker type: ${feature.agentType}`,
+    `Assigned agent type: ${feature.agentType}`,
     milestone.profile ? `Milestone profile: ${milestone.profile}` : undefined,
     feature.fulfills.length > 0 ? `Feature fulfills: ${feature.fulfills.join(", ")}` : undefined,
   ].filter((line): line is string => line !== undefined);

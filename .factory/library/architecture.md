@@ -2,7 +2,7 @@
 
 High-level architecture for the Mission Control reliability and cross-CLI orchestration mission.
 
-**What belongs here:** Component relationships, runtime-state boundaries, recovery data flow, and invariants workers need before editing code.
+**What belongs here:** Component relationships, runtime-state boundaries, recovery data flow, and invariants agents need before editing code.
 
 ---
 
@@ -17,7 +17,7 @@ The product remains a CLI/TUI application. It still does not become a full auton
 ### 1. Runtime state becomes first-class
 
 Feature status is not enough to represent real execution. The mission should introduce a dedicated runtime-state record for feature execution concerns such as:
-- ownership / worker identity
+- ownership / agent identity
 - host or session attribution
 - last-seen / lease / freshness timestamps
 - runtime condition (`live`, `stale`, `failed`, `recoverable`, etc.)
@@ -38,7 +38,7 @@ Key rule:
 Automatic recovery must not silently mutate state. Every recovery action should leave a paper trail across:
 - runtime-state metadata
 - retry history
-- preserved worker report state
+- preserved agent report state
 - event/audit records
 
 Recovery should requeue work safely without producing duplicate active ownership records.
@@ -101,11 +101,11 @@ This mission may extend that layout with additional runtime-oriented files/direc
 
 ### Repo mission infrastructure
 
-`.factory/` in this repository is worker/validator infrastructure and mission knowledge. It is not product runtime state.
+`.factory/` in this repository is agent/validator infrastructure and mission knowledge. It is not product runtime state.
 
 ## Proposed Data Shape Boundaries
 
-At a high level, workers should expect these concerns to remain separate:
+At a high level, agents should expect these concerns to remain separate:
 
 - **feature state**: lifecycle of planned work (`pending`, `assigned`, `in-progress`, etc.)
 - **runtime state**: who owns active work, freshness, failure, recovery, audit links
@@ -125,7 +125,7 @@ At a high level, workers should expect these concerns to remain separate:
 
 ## Verification Focus
 
-Workers should verify changes through:
+Agents should verify changes through:
 - temp git repo CLI flows
 - persisted runtime/checkpoint file inspection
 - `mission-control --json`

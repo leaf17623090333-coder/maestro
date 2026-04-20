@@ -1,13 +1,13 @@
 /**
  * Reply feature domain types.
  *
- * A reply is the agent's (or human's) inbound half of the worker contract:
- * after maestro publishes a worker prompt, the agent writes
+ * A reply is the agent's (or human's) inbound half of the agent contract:
+ * after maestro publishes an agent prompt, the agent writes
  * `.maestro/replies/<mission-id>/<feature-id>.yaml` to signal completion,
  * kickback, or abandonment. Ingest then advances feature state and records
  * principle outcomes.
  */
-import type { WorkerReport } from "@/features/mission/index.js";
+import type { AgentReport } from "@/features/mission/index.js";
 
 /** How the caller claims the work resolved. Cross-checked against objective state on ingest. */
 export const REPLY_OUTCOMES = ["completed", "kicked-back", "abandoned"] as const;
@@ -17,11 +17,11 @@ export type ReplyOutcome = (typeof REPLY_OUTCOMES)[number];
 export type ReplyAuthor = "agent" | "human";
 
 /** Canonical reply record persisted at `.maestro/replies/<mission-id>/<feature-id>.yaml`. */
-export interface WorkerReply {
+export interface AgentReply {
   readonly missionId: string;
   readonly featureId: string;
   readonly outcome: ReplyOutcome;
-  readonly report?: WorkerReport;
+  readonly report?: AgentReport;
   readonly notes?: string;
   readonly writtenAt: string;
   readonly writtenBy: ReplyAuthor;
@@ -31,7 +31,7 @@ export interface WorkerReply {
 
 /** Outcome of ingesting a reply: what maestro did in response. */
 export interface ReplyIngestResult {
-  readonly reply: WorkerReply;
+  readonly reply: AgentReply;
   readonly featureAdvanced: boolean;
   readonly principlesRecorded: number;
   readonly kickedBack: boolean;

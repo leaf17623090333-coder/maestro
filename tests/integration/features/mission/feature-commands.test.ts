@@ -346,10 +346,10 @@ describe("feature CLI commands", () => {
       expect(stdout).toContain("Status: pending");
     }, SLOW_CLI_TIMEOUT_MS);
 
-    it("feature update with --report attaches worker report", async () => {
+    it("feature update with --report attaches agent report", async () => {
       const missionId = await createMission(tmpDir);
 
-      // Legacy format input -- parseWorkerReport converts to rich format
+      // Legacy format input -- parseAgentReport converts to rich format
       const report = {
         content: "Feature implementation complete",
         timestamp: "2026-03-28T10:00:00.000Z",
@@ -449,7 +449,7 @@ describe("feature CLI commands", () => {
       expect(output).toContain("No update specified");
     }, SLOW_CLI_TIMEOUT_MS);
 
-    it("worker report persists after retry update without replacement report", async () => {
+    it("agent report persists after retry update without replacement report", async () => {
       const missionId = await createMission(tmpDir);
 
       // First attach a report
@@ -549,7 +549,7 @@ describe("feature CLI commands", () => {
       );
     }
 
-    it("feature prompt generates a worker prompt to stdout", async () => {
+    it("feature prompt generates an agent prompt to stdout", async () => {
       const missionId = await createMission(tmpDir);
       await createSkill(tmpDir, "test-skill");
 
@@ -559,11 +559,11 @@ describe("feature CLI commands", () => {
       );
 
       expect(exitCode).toBe(0);
-      expect(stdout).toContain("Worker prompt generated for: f1");
+      expect(stdout).toContain("Agent prompt generated for: f1");
       expect(stdout).toContain("Agent type: test-skill");
       expect(stdout).toContain("--- PROMPT BEGIN ---");
       expect(stdout).toContain("--- PROMPT END ---");
-      expect(stdout).toContain("Worker Assignment: Feature 1");
+      expect(stdout).toContain("Agent Assignment: Feature 1");
       expect(stdout).toContain("# test-skill");
     }, SLOW_CLI_TIMEOUT_MS);
 
@@ -583,8 +583,8 @@ describe("feature CLI commands", () => {
       expect(result.agentType).toBe("test-skill");
       expect(result.writtenTo).toBeDefined();
       expect(result.writtenTo.length).toBe(1);
-      expect(result.writtenTo[0]).toContain(join("workers", "f1", "prompt.md"));
-      expect(result.prompt).toContain("# Worker Assignment: Feature 1");
+      expect(result.writtenTo[0]).toContain(join("agents", "f1", "prompt.md"));
+      expect(result.prompt).toContain("# Agent Assignment: Feature 1");
       expect(result.prompt).toContain("## Skill Instructions");
     }, SLOW_CLI_TIMEOUT_MS);
 
@@ -605,10 +605,10 @@ describe("feature CLI commands", () => {
       // Verify file was written
       const fs = await import("node:fs/promises");
       const fileContent = await fs.readFile(outPath, "utf-8");
-      expect(fileContent).toContain("Worker Assignment: Feature 1");
+      expect(fileContent).toContain("Agent Assignment: Feature 1");
     }, SLOW_CLI_TIMEOUT_MS);
 
-    it("feature prompt writes to workers/{featureId}/prompt.md", async () => {
+    it("feature prompt writes to agents/{featureId}/prompt.md", async () => {
       const missionId = await createMission(tmpDir);
       await createSkill(tmpDir, "test-skill");
 
@@ -620,10 +620,10 @@ describe("feature CLI commands", () => {
       expect(exitCode).toBe(0);
 
       // Verify file was written
-      const promptPath = join(tmpDir, ".maestro", "missions", missionId, "workers", "f1", "prompt.md");
+      const promptPath = join(tmpDir, ".maestro", "missions", missionId, "agents", "f1", "prompt.md");
       const fs = await import("node:fs/promises");
       const fileContent = await fs.readFile(promptPath, "utf-8");
-      expect(fileContent).toContain("Worker Assignment: Feature 1");
+      expect(fileContent).toContain("Agent Assignment: Feature 1");
       expect(fileContent).toContain("## Mission Context");
       expect(fileContent).toContain("## Feature Assignment");
       expect(fileContent).toContain("## Skill Instructions");
@@ -641,7 +641,7 @@ describe("feature CLI commands", () => {
       );
 
       expect(exitCode).toBe(0);
-      expect(stdout).toContain("Worker prompt generated for: f1");
+      expect(stdout).toContain("Agent prompt generated for: f1");
       expect(stdout).toContain("built-in test skill");
     }, SLOW_CLI_TIMEOUT_MS);
 
@@ -656,7 +656,7 @@ describe("feature CLI commands", () => {
 
       expect(exitCode).toBe(1);
       const output = stdout + stderr;
-      expect(output).toContain("Worker skill 'test-skill' not found");
+      expect(output).toContain("Agent skill 'test-skill' not found");
       expect(output).toContain(join(".maestro", "skills", "test-skill", "SKILL.md"));
       expect(output).toContain(join("skills", "built-in", "test-skill", "SKILL.md"));
     }, SLOW_CLI_TIMEOUT_MS);

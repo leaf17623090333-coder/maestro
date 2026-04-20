@@ -3,7 +3,7 @@ import { createRoot, flushSync } from "@opentui/react";
 import { useState } from "react";
 
 import { getValidFeatureTransitions, updateFeature } from "@/features/mission";
-import { generateWorkerPrompt } from "@/features/agent";
+import { generateAgentPrompt } from "@/features/agent";
 import { applyConfigEdit, previewConfigEdit } from "@/infra/usecases/config-edit.usecase.js";
 import {
   getCommandPaletteSelectionAction,
@@ -443,7 +443,7 @@ const RESIZE_RENDER_INTERVAL_MS = 16;
     markDirty();
 
     try {
-      const result = await generateWorkerPrompt(
+      const result = await generateAgentPrompt(
         opts.snapshotDeps.missionStore,
         opts.snapshotDeps.featureStore,
         opts.snapshotDeps.assertionStore,

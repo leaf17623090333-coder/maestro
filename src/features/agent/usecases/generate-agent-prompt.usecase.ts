@@ -1,6 +1,6 @@
 /**
- * Worker prompt generation usecase
- * Composes a self-contained markdown worker assignment using mission context,
+ * Agent prompt generation usecase
+ * Composes a self-contained markdown agent assignment using mission context,
  * milestone context, feature verification details, and skill documentation.
  */
 import type {
@@ -15,7 +15,7 @@ import type {
   Principle,
   MilestoneProfile,
 } from "@/features/mission";
-import { AGENT_TYPE_PATTERN, parseWorkerReport } from "@/features/mission";
+import { AGENT_TYPE_PATTERN, parseAgentReport } from "@/features/mission";
 import {
   recallMemory,
   type CorrectionStorePort,
@@ -45,8 +45,8 @@ const REVIEW_PROFILES = new Set<MilestoneProfile>([
   "validation",
 ]);
 
-/** Result of generating a worker prompt */
-export interface GenerateWorkerPromptResult {
+/** Result of generating an agent prompt */
+export interface GenerateAgentPromptResult {
   /** The generated markdown prompt */
   readonly prompt: string;
   /** The feature ID */
@@ -58,18 +58,18 @@ export interface GenerateWorkerPromptResult {
 }
 
 /**
- * Generate a self-contained worker prompt for a feature.
+ * Generate a self-contained agent prompt for a feature.
  * The prompt includes mission context, milestone context, feature details,
- * verification expectations, and the worker skill instructions.
+ * verification expectations, and the agent skill instructions.
  */
-/** Optional enrichment stores for worker prompt generation. */
-export interface WorkerPromptStores {
+/** Optional enrichment stores for agent prompt generation. */
+export interface AgentPromptStores {
   readonly correctionStore?: CorrectionStorePort;
   readonly learningStore?: LearningStorePort;
   readonly principleStore?: PrincipleStorePort;
 }
 
-export async function generateWorkerPrompt(
+export async function generateAgentPrompt(
   missionStore: MissionStorePort,
   featureStore: FeatureStorePort,
   assertionStore: AssertionStorePort,
@@ -77,10 +77,10 @@ export async function generateWorkerPrompt(
   missionId: string,
   featureId: string,
   outPath?: string,
-  stores?: WorkerPromptStores,
-): Promise<GenerateWorkerPromptResult>;
+  stores?: AgentPromptStores,
+): Promise<GenerateAgentPromptResult>;
 
-export async function generateWorkerPrompt(
+export async function generateAgentPrompt(
   missionStore: MissionStorePort,
   featureStore: FeatureStorePort,
   assertionStore: AssertionStorePort,
@@ -90,9 +90,9 @@ export async function generateWorkerPrompt(
   outPath?: string,
   correctionStore?: CorrectionStorePort,
   learningStore?: LearningStorePort,
-): Promise<GenerateWorkerPromptResult>;
+): Promise<GenerateAgentPromptResult>;
 
-export async function generateWorkerPrompt(
+export async function generateAgentPrompt(
   missionStore: MissionStorePort,
   featureStore: FeatureStorePort,
   assertionStore: AssertionStorePort,
@@ -100,10 +100,10 @@ export async function generateWorkerPrompt(
   missionId: string,
   featureId: string,
   outPath?: string,
-  storesOrCorrectionStore?: WorkerPromptStores | CorrectionStorePort,
+  storesOrCorrectionStore?: AgentPromptStores | CorrectionStorePort,
   learningStore?: LearningStorePort,
-): Promise<GenerateWorkerPromptResult> {
-  const stores = normalizeWorkerPromptStores(storesOrCorrectionStore, learningStore);
+): Promise<GenerateAgentPromptResult> {
+  const stores = normalizeAgentPromptStores(storesOrCorrectionStore, learningStore);
   // Verify mission exists
   const mission = await missionStore.get(missionId);
   if (!mission) {
@@ -135,17 +135,17 @@ export async function generateWorkerPrompt(
   const featureAssertions = assertions.filter((a) => a.featureId === featureId);
 
   // Read skill file
-  const skillContent = await readWorkerSkill(baseDir, feature.agentType);
+  const skillContent = await readAgentSkill(baseDir, feature.agentType);
 
   // Load all features for sibling context in prompt
   const allFeatures = await featureStore.list(missionId);
 
-  // Read handoff protocol (worker-base skill) -- optional, don't error if missing
+  // Read handoff protocol (agent-base skill) -- optional, don't error if missing
   let handoffProtocol: string | undefined;
   try {
-    handoffProtocol = await readWorkerSkill(baseDir, "maestro:worker-base");
+    handoffProtocol = await readAgentSkill(baseDir, "maestro:agent-base");
   } catch {
-    // worker-base skill not found -- skip handoff protocol section
+    // agent-base skill not found -- skip handoff protocol section
   }
 
   // All three reads are independent filesystem operations -- run in parallel.
@@ -163,17 +163,17 @@ export async function generateWorkerPrompt(
   // Track written paths
   const writtenPaths: string[] = [];
 
-  // Write to mission workers directory
-  const workersDir = join(
+  // Write to mission agents directory
+  const agentsDir = join(
     baseDir,
     MAESTRO_DIR,
     "missions",
     missionId,
-    "workers",
+    "agents",
     featureId,
   );
-  await ensureDir(workersDir);
-  const promptPath = join(workersDir, "prompt.md");
+  await ensureDir(agentsDir);
+  const promptPath = join(agentsDir, "prompt.md");
   await writeText(promptPath, prompt);
   writtenPaths.push(promptPath);
 
@@ -191,15 +191,15 @@ export async function generateWorkerPrompt(
   };
 }
 
-function normalizeWorkerPromptStores(
-  storesOrCorrectionStore: WorkerPromptStores | CorrectionStorePort | undefined,
+function normalizeAgentPromptStores(
+  storesOrCorrectionStore: AgentPromptStores | CorrectionStorePort | undefined,
   learningStore: LearningStorePort | undefined,
-): WorkerPromptStores | undefined {
+): AgentPromptStores | undefined {
   if (!storesOrCorrectionStore) {
     return learningStore ? { learningStore } : undefined;
   }
 
-  if (isWorkerPromptStores(storesOrCorrectionStore)) {
+  if (isAgentPromptStores(storesOrCorrectionStore)) {
     return storesOrCorrectionStore;
   }
 
@@ -209,7 +209,7 @@ function normalizeWorkerPromptStores(
   };
 }
 
-function isWorkerPromptStores(value: WorkerPromptStores | CorrectionStorePort): value is WorkerPromptStores {
+function isAgentPromptStores(value: AgentPromptStores | CorrectionStorePort): value is AgentPromptStores {
   return typeof value === "object" && value !== null && (
     "correctionStore" in value
     || "learningStore" in value
@@ -218,11 +218,11 @@ function isWorkerPromptStores(value: WorkerPromptStores | CorrectionStorePort): 
 }
 
 /**
- * Read worker skill markdown from either:
+ * Read agent skill markdown from either:
  * 1. .maestro/skills/{agentType}/SKILL.md in the current workspace or any ancestor
  * 2. skills/built-in/{agentType}/SKILL.md in the current workspace or any ancestor
  */
-async function readWorkerSkill(baseDir: string, agentType: string): Promise<string> {
+async function readAgentSkill(baseDir: string, agentType: string): Promise<string> {
   assertSafeSegment(agentType, "agent type", AGENT_TYPE_PATTERN, "letters, numbers, colons, dashes, and underscores");
   const skillDirName = resolveSkillDirectoryName(agentType);
   const searchedPaths: string[] = [];
@@ -257,7 +257,7 @@ async function readWorkerSkill(baseDir: string, agentType: string): Promise<stri
     "Workspace skill path",
   );
   throw new MaestroError(
-    `Worker skill '${agentType}' not found at ${primaryPath}`,
+    `Agent skill '${agentType}' not found at ${primaryPath}`,
     [
       `Create workspace skill file: ${primaryPath}`,
       `Or add built-in skill file: skills/built-in/${skillDirName}/SKILL.md`,
@@ -309,7 +309,7 @@ async function loadPreviousMilestoneReports(
       MAESTRO_DIR,
       "missions",
       missionId,
-      "workers",
+      "agents",
       feature.id,
       "report.json",
     );
@@ -326,7 +326,7 @@ async function loadPreviousMilestoneReports(
     }
 
       try {
-        const parsed = await parseWorkerReport(reportContent);
+        const parsed = await parseAgentReport(reportContent);
         const rawSummary = parsed.salientSummary || parsed.whatWasImplemented || "(no summary)";
         return {
           featureId: feature.id,
@@ -372,7 +372,7 @@ function truncatePreviousReportSummary(summary: string): string {
 }
 
 /**
- * Best-effort memory recall for worker prompt injection.
+ * Best-effort memory recall for agent prompt injection.
  *
  * Returns undefined (no section rendered) in any of these cases:
  *   - memory stores are not provided (backward compatibility)
@@ -421,7 +421,7 @@ const PROFILE_PREAMBLE: Partial<Record<MilestoneProfile, string>> = {
 };
 
 /**
- * Compose the complete worker prompt.
+ * Compose the complete agent prompt.
  * Sanitizes mission text to ensure prompt structure remains stable.
  */
 function composePrompt(
@@ -439,7 +439,7 @@ function composePrompt(
   const parts: string[] = [];
 
   // Header
-  parts.push(`# Worker Assignment: ${feature.title}`);
+  parts.push(`# Agent Assignment: ${feature.title}`);
   parts.push("");
 
   // Feature identification
@@ -585,7 +585,7 @@ function composePrompt(
   }
 
   // Relevant Memory - auto-injected corrections and compiled learnings.
-  // Placed before the skill block so the worker reads prior rules before
+  // Placed before the skill block so the agent reads prior rules before
   // the generic skill instructions. safeRecallMemory() already filters out
   // empty results, so a non-undefined value always has something to render.
   if (recalledMemory) {
@@ -593,7 +593,7 @@ function composePrompt(
   }
 
   // Behavioral Principles -- injected between memory and skill so the
-  // worker sees constraints before the generic skill instructions.
+  // agent sees constraints before the generic skill instructions.
   if (principles && principles.length > 0) {
     appendPrincipleSection(parts, principles);
   }
@@ -608,7 +608,7 @@ function composePrompt(
   parts.push("<!-- END SKILL -->");
   parts.push("");
 
-  // Handoff Protocol (A4) -- worker-base skill content
+  // Handoff Protocol (A4) -- agent-base skill content
   if (handoffProtocol) {
     parts.push("## Handoff Protocol");
     parts.push("");
@@ -665,7 +665,7 @@ function buildReplyContractSection(missionId: string, featureId: string): string
     `source: agent:<your-name>     # optional free-form origin marker`,
     `notes: |                      # optional free-form notes`,
     `  What changed, what was tricky, what you could not verify.`,
-    `report:                       # optional structured WorkerReport`,
+    `report:                       # optional structured AgentReport`,
     `  salientSummary: ...`,
     `  whatWasImplemented: ...`,
     `  whatWasLeftUndone: ...`,
@@ -692,7 +692,7 @@ function buildReplyContractSection(missionId: string, featureId: string): string
 
 /**
  * Render the auto-injected "Relevant Memory" section from recalled corrections
- * and compiled learnings. Hard rules are flagged inline so the worker treats
+ * and compiled learnings. Hard rules are flagged inline so the agent treats
  * them as non-negotiable. Content is sanitized to prevent prompt structure
  * breaking via embedded markdown headers or HTML comment tokens.
  */
@@ -733,7 +733,7 @@ function appendMemorySection(parts: string[], recalled: RecallResult): void {
 }
 
 /**
- * Best-effort principle loading for worker prompt injection.
+ * Best-effort principle loading for agent prompt injection.
  * Returns undefined when the store is absent or the store throws.
  * Principles enhance the prompt; they must never block it.
  */

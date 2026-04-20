@@ -1,6 +1,6 @@
 # Handoff Command Cheatsheet
 
-This is the final reference for mission planning. Once the mission exists and the readiness check passes, your job is to draft the exact `maestro handoff` command for the first external worker. Do not run it from the planning skill.
+This is the final reference for mission planning. Once the mission exists and the readiness check passes, your job is to draft the exact `maestro handoff` command for the first external agent. Do not run it from the planning skill.
 
 ## The command shape
 
@@ -51,7 +51,7 @@ The bad version throws away the mission anchor, the feature anchor, the outcome,
 
 ## When to add flags
 
-- Add `--worktree [slug]` when the worker should operate in an isolated sibling checkout.
+- Add `--worktree [slug]` when the agent should operate in an isolated sibling checkout.
 - Add `--base <branch>` only when you are also using `--worktree`.
 - Add `--wait` when the operator wants a synchronous run that returns an exit code before the command exits.
 - Add `--json` when the next step is automation or structured inspection.

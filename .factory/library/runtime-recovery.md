@@ -11,10 +11,10 @@ Mission-specific notes for runtime supervision, automatic recovery, and checkpoi
 - Staleness and failure must be derived from explicit runtime metadata, not guessed from feature timestamps alone.
 - Recovery paths must be safe to run more than once and must avoid duplicate live ownership records.
 
-## Worker Expectations
+## Agent Expectations
 
-- Backend workers should add narrow unit/usecase tests first for recovery invariants.
-- CLI workers should prove recovery state is operator-visible through supported surfaces.
+- Backend agents should add narrow unit/usecase tests first for recovery invariants.
+- CLI agents should prove recovery state is operator-visible through supported surfaces.
 - Any new command/path for recovery should have both JSON and human-readable verification where applicable.
 
 ## Resume / Checkpoint Safety

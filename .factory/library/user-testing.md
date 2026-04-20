@@ -31,7 +31,7 @@ Mission Control remains a CLI/TUI feature. Validators should exercise it through
 - Core commands remain `bun test`, `bun run typecheck`, and `bun run build`.
 - PTY/interactive Mission Control tests already exist in the repo and should be reused/extended.
 - No browser tooling, auth setup, or external services are required for this mission.
-- Planning encountered unstable custom Task-based droid delegation; workers and validators should treat agent-launch failures as environment blockers and return to the orchestrator instead of baking workarounds into product behavior.
+- Planning encountered unstable custom Task-based droid delegation; agents and validators should treat agent-launch failures as environment blockers and return to the orchestrator instead of baking workarounds into product behavior.
 
 ## Validator Tooling
 

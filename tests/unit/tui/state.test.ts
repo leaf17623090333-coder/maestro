@@ -80,7 +80,7 @@ function makeState(overrides?: Partial<AppState>): AppState {
     });
 
     // Phase 3 strip: the "follows the live feature immediately" test
-    // relied on runtimeProcesses / activeWorker to auto-select a live
+    // relied on runtimeProcesses / activeAgent to auto-select a live
     // feature index. Both stores were deleted so auto-follow is gone.
   });
 
@@ -271,7 +271,7 @@ describe("reduce", () => {
         const state = makeState({
           snapshot: makeSnapshot({
             configInspector: {
-              tabs: ["overview", "effective", "project", "global", "defaults", "workers", "plan", "doctor", "memory"],
+              tabs: ["overview", "effective", "project", "global", "defaults", "agents", "plan", "doctor", "memory"],
               rowsByTab: {
                 overview: [],
                 effective: [{
@@ -294,7 +294,7 @@ describe("reduce", () => {
                 project: [],
                 global: [],
                 defaults: [],
-                workers: [],
+                agents: [],
                 plan: [],
                 doctor: [],
                 memory: [],
@@ -333,7 +333,7 @@ describe("reduce", () => {
               selectedRowIndex: 1,
               phase: "browse",
               selectedScope: "project",
-              findQuery: "worker",
+              findQuery: "agent",
             },
           });
           const next = reduce(state, { type: "escape" });
@@ -459,9 +459,9 @@ describe("reduce", () => {
         });
       });
 
-      // Phase 3 strip: open-processes, open-workers, and open-runtime-output
+      // Phase 3 strip: open-processes, open-agents, and open-runtime-output
       // modals are deleted in Commit 3.2. Their tests referenced
-      // runtimeProcesses/workerHealth/activeWorker fields that were
+      // runtimeProcesses/agentHealth/activeAgent fields that were
       // removed from MissionControlSnapshot in Commit 3.1.
 
       describe("open-dependencies", () => {
@@ -720,7 +720,7 @@ describe("reduce", () => {
       });
 
       // Phase 3 strip: auto-follow of live runtime features is gone.
-      // It relied on runtimeProcesses + activeWorker to detect that a
+      // It relied on runtimeProcesses + activeAgent to detect that a
       // previously pending feature moved into a running state. Without
       // those stores there is no live-feature signal to follow.
 
@@ -760,7 +760,7 @@ describe("reduce", () => {
         const state = makeState({
           snapshot: makeSnapshot({
             configInspector: {
-              tabs: ["overview", "effective", "project", "global", "defaults", "workers", "plan", "doctor", "memory"],
+              tabs: ["overview", "effective", "project", "global", "defaults", "agents", "plan", "doctor", "memory"],
               rowsByTab: {
                 overview: [{
                   keyPath: "execution.stopOnFailure",
@@ -783,7 +783,7 @@ describe("reduce", () => {
                 project: [],
                 global: [],
                 defaults: [],
-                workers: [],
+                agents: [],
                 plan: [],
                 doctor: [],
                 memory: [],
@@ -817,7 +817,7 @@ describe("reduce", () => {
         const state = makeState({
           snapshot: makeSnapshot({
             configInspector: {
-              tabs: ["overview", "effective", "project", "global", "defaults", "workers", "plan", "doctor", "memory"],
+              tabs: ["overview", "effective", "project", "global", "defaults", "agents", "plan", "doctor", "memory"],
               rowsByTab: {
                 overview: [{
                   keyPath: "ui.missionControl.backgroundMode",
@@ -840,7 +840,7 @@ describe("reduce", () => {
                 project: [],
                 global: [],
                 defaults: [],
-                workers: [],
+                agents: [],
                 plan: [],
                 doctor: [],
                 memory: [],
@@ -874,7 +874,7 @@ describe("reduce", () => {
         const state = makeState({
           snapshot: makeSnapshot({
             configInspector: {
-              tabs: ["overview", "effective", "project", "global", "defaults", "workers", "plan", "doctor", "memory"],
+              tabs: ["overview", "effective", "project", "global", "defaults", "agents", "plan", "doctor", "memory"],
               rowsByTab: {
                 overview: [{
                   keyPath: "execution.stopOnFailure",
@@ -897,7 +897,7 @@ describe("reduce", () => {
                 project: [],
                 global: [],
                 defaults: [],
-                workers: [],
+                agents: [],
                 plan: [],
                 doctor: [],
                 memory: [],
@@ -932,7 +932,7 @@ describe("reduce", () => {
         const state = makeState({
           snapshot: makeSnapshot({
             configInspector: {
-              tabs: ["overview", "effective", "project", "global", "defaults", "workers", "plan", "doctor", "memory"],
+              tabs: ["overview", "effective", "project", "global", "defaults", "agents", "plan", "doctor", "memory"],
               rowsByTab: {
                 overview: [{
                   keyPath: "ui.missionControl.backgroundMode",
@@ -955,7 +955,7 @@ describe("reduce", () => {
                 project: [],
                 global: [],
                 defaults: [],
-                workers: [],
+                agents: [],
                 plan: [],
                 doctor: [],
                 memory: [],

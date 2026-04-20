@@ -51,9 +51,9 @@ If you only remember one distinction: `mission` is for planned execution; `task`
 | Assertion | A validation target tied to a feature. Assertions are updated to `passed`, `failed`, `blocked`, or `waived`. |
 | Handoff | A persisted launch record plus markdown brief for starting a fresh Codex or Claude session from current mission or repo context. |
 | Task | A Claude-style blocker-graph work item for the daily loop; lives at `.maestro/tasks/tasks.jsonl` independent of missions. |
-| Reply | A worker's structured outcome record for a feature, optionally gated by behavioral principles. |
-| Principle | A behavioral rule injected into worker prompts and scored against replies. Stored at `.maestro/principles.jsonl`. |
-| Memory | Corrections, learnings, and compiled guidance that feed back into future worker prompts. |
+| Reply | A agent's structured outcome record for a feature, optionally gated by behavioral principles. |
+| Principle | A behavioral rule injected into agent prompts and scored against replies. Stored at `.maestro/principles.jsonl`. |
+| Memory | Corrections, learnings, and compiled guidance that feed back into future agent prompts. |
 | Checkpoint | A timestamped mission snapshot you can save and later restore. |
 | Bundle | A portable `.mission.tar.gz` archive of a mission plus its artifacts for review or transfer. |
 | Mission Control | A read-only dashboard for previewing mission state interactively or as JSON. |
@@ -206,10 +206,10 @@ maestro mission approve <mission-id>
 
 ```bash
 maestro feature list --mission <mission-id>
-maestro feature prompt <feature-id> --mission <mission-id> --out worker-prompt.md
+maestro feature prompt <feature-id> --mission <mission-id> --out agent-prompt.md
 ```
 
-This writes the prompt to `worker-prompt.md` and also stores it under `.maestro/missions/<mission-id>/workers/<feature-id>/prompt.md`. `maestro handoff` does not require this step, but it is useful when you want to inspect the current feature context before launching a fresh agent run.
+This writes the prompt to `agent-prompt.md` and also stores it under `.maestro/missions/<mission-id>/agents/<feature-id>/prompt.md`. `maestro handoff` does not require this step, but it is useful when you want to inspect the current feature context before launching a fresh agent run.
 
 ### 5. Launch a handoff
 
@@ -269,7 +269,7 @@ The prompt itself is stored separately as markdown. Maestro always renders the s
 
 ### How prompt context is chosen
 
-- If exactly one actionable feature exists in the active mission, Maestro anchors the brief to that mission, milestone, feature, assertions, worker prompt or report artifacts, and the current git state.
+- If exactly one actionable feature exists in the active mission, Maestro anchors the brief to that mission, milestone, feature, assertions, agent prompt or report artifacts, and the current git state.
 - Otherwise it falls back to repository context: current branch, recent commits, and changed files.
 - When `--worktree` is used, Maestro creates the sibling worktree first and appends that worktree path and branch information to the `Constraints` section.
 
@@ -324,9 +324,9 @@ Use `--model` to override the provider default (`gpt-5.4` for Codex, `opus` for 
 | `maestro doctor` | Check whether the local environment is configured correctly. |
 | `maestro status` | Inspect the current Maestro state quickly. |
 | `maestro mission create --file plan.json` | Create a mission from a plan file. |
-| `maestro feature prompt <feature-id> --mission <mission-id>` | Generate the next worker prompt. |
+| `maestro feature prompt <feature-id> --mission <mission-id>` | Generate the next agent prompt. |
 | `maestro feature update <feature-id> --mission <mission-id> --status <status>` | Advance a feature through `pending`, `assigned`, `in-progress`, `review`, `done`, or `blocked`. |
-| `maestro reply write <feature-id>` | Record a worker reply (outcome + optional report) for a feature. |
+| `maestro reply write <feature-id>` | Record an agent reply (outcome + optional report) for a feature. |
 | `maestro handoff "<task>" --provider <provider>` | Build a markdown brief from current repo or mission context and launch a fresh agent run. |
 | `maestro handoff "<task>" --worktree [slug] --wait --json` | Launch in a sibling worktree, wait for completion, and return structured metadata. |
 | `maestro mission-control --preview` | Render a read-only dashboard preview in the terminal. |
@@ -406,7 +406,7 @@ Maestro stores project-local state in `.maestro/` and user-level defaults in `~/
 │       ├── assertions.json
 │       ├── checkpoints/
 │       ├── features/
-│       └── workers/
+│       └── agents/
 ├── tasks/
 │   ├── tasks.jsonl
 │   └── candidates/
@@ -425,7 +425,7 @@ The design is intentionally transparent: state is inspectable, diffable, and eas
 
 Maestro is organized as a feature-first hexagonal codebase:
 
-- `src/features/<name>/` -- each feature is a bounded context containing its own `commands/`, `usecases/`, `domain/`, `ports/`, `adapters/`, plus a `services.ts` composition factory and `index.ts` public surface. Current features: `ratchet`, `handoff` (markdown prompt building plus Codex or Claude launch orchestration), `notes`, `graph`, `session`, `memory`, `mission` (with `feature/`, `validation/`, `checkpoint/` subfolders and behavioral principles), `agent` (library-only; composes worker prompts and manages harness config injection), `task` (Claude-style blocker graph for the daily loop), `reply` (worker reply ingest with principle gating), and `bundle` (portable mission archive).
+- `src/features/<name>/` -- each feature is a bounded context containing its own `commands/`, `usecases/`, `domain/`, `ports/`, `adapters/`, plus a `services.ts` composition factory and `index.ts` public surface. Current features: `ratchet`, `handoff` (markdown prompt building plus Codex or Claude launch orchestration), `notes`, `graph`, `session`, `memory`, `mission` (with `feature/`, `validation/`, `checkpoint/` subfolders and behavioral principles), `agent` (library-only; composes agent prompts and manages harness config injection), `task` (Claude-style blocker graph for the daily loop), `reply` (agent reply ingest with principle gating), and `bundle` (portable mission archive).
 - `src/infra/` -- plumbing that isn't a feature: init, doctor, status, install, update, uninstall, and mission-control commands, config and git ports/adapters, and infra-owned domain types.
 - `src/shared/` -- generic utilities with no domain knowledge: filesystem, YAML, shell, path safety, and output formatting under `lib/`; cross-cutting primitives like IDs and UI config under `domain/`; plus top-level `errors.ts`, `version.ts`, and `version-format.ts`.
 - `src/tui/` -- read-only rendering and input for Mission Control; consumes features through their public surfaces. See `src/tui/README.md` for the contributor-oriented TUI architecture walkthrough.

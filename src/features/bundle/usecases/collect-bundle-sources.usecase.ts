@@ -101,20 +101,20 @@ export async function collectBundleSources(
     content: stringifyJson(assertions),
   });
 
-  // workers/{featureId}/*
+  // agents/{featureId}/*
   const missionDir = join(projectDir, MAESTRO_DIR, "missions", missionId);
-  const workersDir = join(missionDir, "workers");
-  const workerFeatureIds = await listSubdirectories(workersDir);
+  const agentsDir = join(missionDir, "agents");
+  const agentFeatureIds = await listSubdirectories(agentsDir);
   const redactPrompts = redact.has("prompts");
-  for (const featureId of workerFeatureIds) {
-    const featureDir = join(workersDir, featureId);
+  for (const featureId of agentFeatureIds) {
+    const featureDir = join(agentsDir, featureId);
     const entries = await safeReaddir(featureDir);
     for (const entry of entries) {
       if (redactPrompts && entry.endsWith(".md")) continue;
       const text = await readText(join(featureDir, entry));
       if (text === undefined) continue;
       files.push({
-        path: `${root}/mission/workers/${featureId}/${entry}`,
+        path: `${root}/mission/agents/${featureId}/${entry}`,
         content: text,
       });
     }
@@ -194,7 +194,7 @@ export async function collectBundleSources(
     features: features.length,
     milestones: mission.milestones.length,
     assertions: assertions.length,
-    workers: workerFeatureIds.length,
+    agents: agentFeatureIds.length,
     replies: replyCount,
     launches: missionLaunches.length,
     checkpoints: checkpoints.length,

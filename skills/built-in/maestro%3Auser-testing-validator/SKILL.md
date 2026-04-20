@@ -25,13 +25,13 @@ Use during Mission Control validation checkpoints when:
 - CLI commands or UI flows need verification
 - Integration with external systems must be tested
 - End-to-end workflows need validation
-- `maestro:worker-base` instructs final validation
+- `maestro:agent-base` instructs final validation
 
 ---
 
 ## Required Skills
 
-- `maestro:worker-base` - For startup/cleanup procedures
+- `maestro:agent-base` - For startup/cleanup procedures
 - `maestro:scrutiny-validator` - Often runs in sequence (code review first, then user testing)
 
 ---
@@ -60,7 +60,7 @@ From the validation contract, identify assertions that:
 Example assertions:
 ```markdown
 - **VAL-CLI-001**: `maestro mission list` outputs valid JSON with `--json`
-- **VAL-FEAT-003**: Feature handoff creates worker artifact directory
+- **VAL-FEAT-003**: Feature handoff creates agent artifact directory
 - **VAL-INT-005**: Integration test passes with temp git repo
 ```
 
@@ -157,7 +157,7 @@ Record results:
 maestro validation update --milestone <name> --status <passed|failed>
 ```
 
-**Next step**: return results to `maestro:conduct`. If status is `passed` and scrutiny validation also passed, the conductor proceeds to `maestro milestone seal`. If status is `failed`, the conductor re-opens the affected features for worker re-dispatch. Do not seal the milestone yourself -- that is the conductor's gate.
+**Next step**: return results to `maestro:conduct`. If status is `passed` and scrutiny validation also passed, the conductor proceeds to `maestro milestone seal`. If status is `failed`, the conductor re-opens the affected features for agent re-dispatch. Do not seal the milestone yourself -- that is the conductor's gate.
 
 ### Step 8: Produce Validation Report
 
@@ -171,8 +171,8 @@ Assertions Passed: 6/8
 Flow Results:
 ✓ mission-creation-flow (2 assertions)
 ✗ feature-prompt-flow (1 failed)
-  - VAL-FEAT-003: Worker artifact not created
-    Expected: .maestro/missions/{id}/workers/...
+  - VAL-FEAT-003: Agent artifact not created
+    Expected: .maestro/missions/{id}/agents/...
     Actual: Directory missing
 
 Status: FAILED (1 blocking issue)

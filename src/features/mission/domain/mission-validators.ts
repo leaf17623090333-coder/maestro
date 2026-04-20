@@ -98,8 +98,8 @@ const DiscoveredIssueSchema = z.object({
   suggestedFix: z.string().optional(),
 }).strict();
 
-/** Rich worker report (plan spec) */
-const RichWorkerReportSchema = z.object({
+/** Rich agent report (plan spec) */
+const RichAgentReportSchema = z.object({
   salientSummary: z.string().min(1),
   whatWasImplemented: z.string(),
   whatWasLeftUndone: z.string(),
@@ -113,8 +113,8 @@ const RichWorkerReportSchema = z.object({
   discoveredIssues: z.array(DiscoveredIssueSchema),
 }).strict();
 
-/** Legacy worker report (backward compat -- transforms to rich format) */
-const LegacyWorkerReportSchema = z.object({
+/** Legacy agent report (backward compat -- transforms to rich format) */
+const LegacyAgentReportSchema = z.object({
   content: z.string().min(1),
   timestamp: z.string().optional(),
   agent: z.string().optional(),
@@ -127,8 +127,8 @@ const LegacyWorkerReportSchema = z.object({
   discoveredIssues: [] as readonly z.infer<typeof DiscoveredIssueSchema>[],
 }));
 
-/** Accepts rich or legacy worker report, normalizes to rich format */
-export const WorkerReportSchema = z.union([RichWorkerReportSchema, LegacyWorkerReportSchema]);
+/** Accepts rich or legacy agent report, normalizes to rich format */
+export const AgentReportSchema = z.union([RichAgentReportSchema, LegacyAgentReportSchema]);
 
 export const FeatureSchema = z.object({
   id: z.string().regex(FEATURE_ID_PATTERN),
@@ -143,7 +143,7 @@ export const FeatureSchema = z.object({
   fulfills: z.array(z.string()).default([]),
   preconditions: z.string().optional(),
   expectedBehavior: z.string().optional(),
-  report: WorkerReportSchema.optional(),
+  report: AgentReportSchema.optional(),
   createdAt: z.string().regex(ISO_DATE_PATTERN),
   updatedAt: z.string().regex(ISO_DATE_PATTERN),
 }).strict();

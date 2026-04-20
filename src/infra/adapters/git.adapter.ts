@@ -66,8 +66,11 @@ export class ShellGitAdapter implements GitPort {
       const effectiveSlug = `${input.slug}${suffix}`;
       const branch = `${input.branchPrefix}/${effectiveSlug}`;
       const path = join(parentDir, `${repoName}-${effectiveSlug}`);
-      const branchExists = await this.branchExists(repoRoot, branch);
-      if (branchExists || await dirExists(path)) {
+      const [branchTaken, dirTaken] = await Promise.all([
+        this.branchExists(repoRoot, branch),
+        dirExists(path),
+      ]);
+      if (branchTaken || dirTaken) {
         continue;
       }
 

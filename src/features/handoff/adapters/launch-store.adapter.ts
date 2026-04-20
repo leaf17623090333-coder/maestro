@@ -1,10 +1,9 @@
-import { readdir } from "node:fs/promises";
-import { join } from "node:path";
-import type { HandoffLaunchRecord, LaunchStorePort } from "../domain/launch-types.js";
+import { basename, join } from "node:path";
+import type { HandoffLaunchRecord, HandoffProvider, HandoffRefs, HandoffWorktree, LaunchStorePort } from "../domain/launch-types.js";
 import { MAESTRO_DIR } from "@/shared/domain/defaults.js";
 import { generateHandoffId, HANDOFF_ID_PATTERN } from "@/shared/domain/id.js";
 import { assertSafeSegment } from "@/shared/lib/path-safety.js";
-import { ensureDir, readJson, writeJson, writeText } from "@/shared/lib/fs.js";
+import { ensureDir, listDirs, readJson, writeJson, writeText } from "@/shared/lib/fs.js";
 
 const LAUNCHES_DIR = "launches";
 
@@ -14,13 +13,13 @@ export class FsLaunchStoreAdapter implements LaunchStorePort {
   async create(input: {
     readonly task: string;
     readonly name: string;
-    readonly provider: "codex" | "claude";
+    readonly provider: HandoffProvider;
     readonly model: string;
     readonly wait: boolean;
     readonly sourceDir: string;
     readonly targetDir: string;
-    readonly refs: HandoffLaunchRecord["refs"];
-    readonly worktree?: HandoffLaunchRecord["worktree"];
+    readonly refs: HandoffRefs;
+    readonly worktree?: HandoffWorktree;
     readonly prompt: string;
   }): Promise<HandoffLaunchRecord> {
     const existingIds = await this.listIds();
@@ -49,9 +48,11 @@ export class FsLaunchStoreAdapter implements LaunchStorePort {
 
     const launchDir = this.resolveLaunchDir(id);
     await ensureDir(launchDir);
-    await writeText(join(this.projectDir, promptPath), input.prompt);
-    await writeText(join(this.projectDir, outputPath), "");
-    await writeJson(join(launchDir, "launch.json"), record);
+    await Promise.all([
+      writeText(join(this.projectDir, promptPath), input.prompt),
+      writeText(join(this.projectDir, outputPath), ""),
+      writeJson(join(launchDir, "launch.json"), record),
+    ]);
     return record;
   }
 
@@ -77,16 +78,12 @@ export class FsLaunchStoreAdapter implements LaunchStorePort {
   }
 
   private async listIds(): Promise<string[]> {
-    try {
-      const entries = await readdir(this.launchesDir(), { withFileTypes: true });
-      return entries
-        .filter((entry) => entry.isDirectory() && HANDOFF_ID_PATTERN.test(entry.name))
-        .map((entry) => entry.name)
-        .sort()
-        .reverse();
-    } catch {
-      return [];
-    }
+    const dirs = await listDirs(this.launchesDir());
+    return dirs
+      .map((dir) => basename(dir))
+      .filter((name) => HANDOFF_ID_PATTERN.test(name))
+      .sort()
+      .reverse();
   }
 
   private launchesDir(): string {

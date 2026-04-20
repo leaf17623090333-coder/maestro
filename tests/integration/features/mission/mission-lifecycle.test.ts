@@ -162,7 +162,7 @@ describe("full mission lifecycle", () => {
     );
     expect(f1Review.exitCode).toBe(0);
 
-    // Attach a worker report
+    // Attach an agent report
     const report = {
       content: "Setup feature completed successfully",
       timestamp: new Date().toISOString(),
@@ -356,7 +356,7 @@ describe("full mission lifecycle", () => {
     expect(finalData.completedAt).toBeDefined();
   }, SLOW_CLI_TIMEOUT_MS);
 
-  it("preserves worker reports through checkpoint save/load", async () => {
+  it("preserves agent reports through checkpoint save/load", async () => {
     const missionId = await createMission(tmpDir);
     await run(["mission", "approve", missionId], tmpDir);
 
@@ -364,7 +364,7 @@ describe("full mission lifecycle", () => {
     const report = {
       content: "Implementation report with detailed findings",
       timestamp: "2026-03-28T12:00:00.000Z",
-      agent: "test-worker",
+      agent: "test-agent",
     };
     await run(
       [
@@ -422,12 +422,12 @@ describe("full mission lifecycle", () => {
       ".maestro",
       "missions",
       missionId,
-      "workers",
+      "agents",
       "f1",
       "prompt.md",
     );
     const promptContent = await readFile(promptPath, "utf-8");
-    expect(promptContent).toContain("Worker Assignment: Setup Feature");
+    expect(promptContent).toContain("Agent Assignment: Setup Feature");
     expect(promptContent).toContain("Foundation"); // milestone title
   }, SLOW_CLI_TIMEOUT_MS);
 });

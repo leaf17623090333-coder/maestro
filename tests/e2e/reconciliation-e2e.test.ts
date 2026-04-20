@@ -341,8 +341,8 @@ describe("reconciliation E2E: blocked -> waived assertion", () => {
   }, SLOW_CLI_TIMEOUT_MS);
 });
 
-describe("reconciliation E2E: rich WorkerReport via CLI", () => {
-  it("roundtrips rich worker report format", async () => {
+describe("reconciliation E2E: rich AgentReport via CLI", () => {
+  it("roundtrips rich agent report format", async () => {
     const missionId = await createMission(tmpDir);
     await run(["mission", "approve", missionId], tmpDir);
 
@@ -431,7 +431,7 @@ describe("reconciliation E2E: feature with new plan fields", () => {
     expect(f1.expectedBehavior).toBe("Returns 200 OK with JSON body containing user data");
   }, SLOW_CLI_TIMEOUT_MS);
 
-  it("includes preconditions and expectedBehavior in worker prompt", async () => {
+  it("includes preconditions and expectedBehavior in agent prompt", async () => {
     const missionId = await createMission(tmpDir, createRichFieldsPlan());
 
     const promptResult = await run(
@@ -620,7 +620,7 @@ describe("reconciliation E2E: milestone validating -> executing retry", () => {
 
     // Verify retry log file exists
     const { readFile } = await import("node:fs/promises");
-    const retryLogPath = join(tmpDir, ".maestro", "missions", missionId, "workers", "f1", "retry-log.json");
+    const retryLogPath = join(tmpDir, ".maestro", "missions", missionId, "agents", "f1", "retry-log.json");
     const logContent = JSON.parse(await readFile(retryLogPath, "utf-8"));
     expect(Array.isArray(logContent)).toBe(true);
     expect(logContent).toHaveLength(1);

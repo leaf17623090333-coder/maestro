@@ -9,7 +9,7 @@ Plan-first delivery with approval gates and TDD by default.
 1. Discovery: define or refine the feature, gather only the context needed to act, and persist durable findings.
 2. Planning: write the execution plan before implementation and make task boundaries explicit.
 3. Approval: review the plan, resolve comments, and do not start execution work until the plan is approved.
-4. Execution: sync tasks, implement via direct worker CLI launches, and keep reports current.
+4. Execution: sync tasks, implement via direct agent CLI launches, and keep reports current.
 5. Completion: merge only after verification passes and the resulting state is documented.
 
 ### TDD Lifecycle

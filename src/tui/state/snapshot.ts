@@ -17,7 +17,7 @@ import type { RatchetStorePort } from "@/features/ratchet";
 import type { ProjectGraphStorePort } from "@/features/graph";
 import type { HandoffLaunchRecord, LaunchStorePort } from "@/features/handoff";
 import { TASK_STATUSES, type TaskQueryPort, type TaskStatus } from "@/features/task";
-import type { ReplyStorePort, WorkerReply, ReplyOutcome } from "@/features/reply";
+import type { ReplyStorePort, AgentReply, ReplyOutcome } from "@/features/reply";
 import { ingestReply } from "@/features/reply";
 import type {
   Principle,
@@ -127,7 +127,7 @@ export async function buildSnapshot(
   // stale for one poll cycle.
   const ingest = options.includeReplies === true
     ? await loadAndIngestReplies(deps, missionId)
-    : { replies: undefined as readonly WorkerReply[] | undefined, outcomesCache: undefined };
+    : { replies: undefined as readonly AgentReply[] | undefined, outcomesCache: undefined };
   const replies = ingest.replies;
 
   const [
@@ -680,23 +680,23 @@ const STALE_THRESHOLD_MS = 60 * 60 * 1000; // 1 hour
 export function buildAgentGrid(
   features: readonly Feature[],
 ): readonly AgentGridRow[] {
-  const byWorker = new Map<string, Feature[]>();
+  const byAgent = new Map<string, Feature[]>();
   for (const f of features) {
-    const bucket = byWorker.get(f.agentType) ?? [];
+    const bucket = byAgent.get(f.agentType) ?? [];
     bucket.push(f);
-    byWorker.set(f.agentType, bucket);
+    byAgent.set(f.agentType, bucket);
   }
 
   const rows: AgentGridRow[] = [];
-  const agentTypes = new Set<string>(byWorker.keys());
+  const agentTypes = new Set<string>(byAgent.keys());
 
   for (const agentType of agentTypes) {
-    const workerFeatures = byWorker.get(agentType) ?? [];
-    const active = workerFeatures.find(
+    const agentFeatures = byAgent.get(agentType) ?? [];
+    const active = agentFeatures.find(
       (f) => f.status === "assigned" || f.status === "in-progress",
     );
-    const hasReview = workerFeatures.some((f) => f.status === "review");
-    const allDone = workerFeatures.length > 0 && workerFeatures.every((f) => f.status === "done");
+    const hasReview = agentFeatures.some((f) => f.status === "review");
+    const allDone = agentFeatures.length > 0 && agentFeatures.every((f) => f.status === "done");
     const isStale = active !== undefined
       && (Date.now() - new Date(active.updatedAt).getTime()) > STALE_THRESHOLD_MS;
 
@@ -713,8 +713,8 @@ export function buildAgentGrid(
       activeFeatureId: active?.id,
       activeFeatureTitle: active?.title,
       lastActivityAt: active?.updatedAt,
-      featureCount: workerFeatures.length,
-      completedCount: workerFeatures.filter((f) => f.status === "done").length,
+      featureCount: agentFeatures.length,
+      completedCount: agentFeatures.filter((f) => f.status === "done").length,
     });
   }
 
@@ -753,7 +753,7 @@ export function buildDispatchQueue(
 
 export function buildEventStream(
   progressLog: readonly MissionControlEvent[],
-  replies: readonly WorkerReply[] = [],
+  replies: readonly AgentReply[] = [],
 ): readonly EventStreamEntry[] {
   const entries: EventStreamEntry[] = [];
   const baseMs = getEventStreamBaseMs(progressLog);
@@ -808,7 +808,7 @@ function getEventStreamBaseMs(
 }
 
 interface IngestResult {
-  readonly replies: readonly WorkerReply[];
+  readonly replies: readonly AgentReply[];
   /** Cached outcomes (plus any appends from this ingest pass) for downstream aggregators. */
   readonly outcomesCache?: readonly PrincipleOutcomeRecord[];
 }
@@ -919,7 +919,7 @@ function buildPrincipleRecorder(
 
 async function safeListReplies(
   replyStore: ReplyStorePort,
-): Promise<readonly WorkerReply[]> {
+): Promise<readonly AgentReply[]> {
   try {
     return await replyStore.list();
   } catch {
@@ -1028,7 +1028,7 @@ export function buildPrincipleEffectivenessRows(
 
 export function buildReplyInbox(
   features: readonly Feature[],
-  replies: readonly WorkerReply[],
+  replies: readonly AgentReply[],
 ): readonly ReplyInboxEntry[] {
   const featureById = new Map(features.map((f) => [f.id, f]));
   const entries: ReplyInboxEntry[] = replies.map((reply) => {
@@ -1048,7 +1048,7 @@ export function buildReplyInbox(
   return entries;
 }
 
-function isReplyPending(reply: WorkerReply, feature: Feature | undefined): boolean {
+function isReplyPending(reply: AgentReply, feature: Feature | undefined): boolean {
   if (!feature) return true;
   if (reply.outcome === "completed") return feature.status !== "done";
   if (reply.outcome === "abandoned") return feature.status !== "blocked";

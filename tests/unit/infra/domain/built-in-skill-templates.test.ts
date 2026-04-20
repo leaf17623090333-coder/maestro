@@ -7,8 +7,8 @@ describe("BUILT_IN_SKILL_TEMPLATES", () => {
     const skill = conduct?.files.find((file) => file.path === "SKILL.md")?.content ?? "";
 
     expect(skill).toContain("maestro task create \"Write unit tests for validation\" --labels conduct --blocked-by <prevId>");
-    expect(skill).toContain("maestro task claim <taskId> --session <worker-id>");
-    expect(skill).toContain("maestro task update <taskId> --status in_progress --session <worker-id>");
+    expect(skill).toContain("maestro task claim <taskId> --session <agent-id>");
+    expect(skill).toContain("maestro task update <taskId> --status in_progress --session <agent-id>");
     expect(skill).toContain("maestro task update <taskId> --status completed --reason \"implemented: <summary>\"");
     expect(skill).not.toContain("maestro task update <taskId> --claim");
     expect(skill).not.toContain("maestro task close <taskId>");

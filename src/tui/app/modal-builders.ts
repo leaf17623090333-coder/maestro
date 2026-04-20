@@ -363,7 +363,7 @@ function buildAgentGridModal(
   return {
     mode: "split",
     title: "Agent Grid",
-    eyebrow: "Worker status and feature assignments.",
+    eyebrow: "Agent status and feature assignments.",
     items: grid.length > 0
       ? grid.map((row) => ({
           label: formatAgentLabel(row.agentType),
@@ -374,7 +374,7 @@ function buildAgentGridModal(
     selectedIndex: Math.min(state.modal.selectedIndex, Math.max(0, grid.length - 1)),
     detailItems: selected
       ? [
-          { text: `Worker: ${formatAgentLabel(selected.agentType)}` },
+          { text: `Agent: ${formatAgentLabel(selected.agentType)}` },
           { text: `Status: ${AGENT_STATUS_LABEL[selected.status]}` },
           ...(selected.activeFeatureId
             ? [{ text: `Active: ${selected.activeFeatureId}`, detail: selected.activeFeatureTitle }]
@@ -400,7 +400,7 @@ function buildDispatchModal(
   const { phase } = state.modal;
 
   let footer = buildOverlayFooter(returnTarget, "prepare");
-  if (phase === "generating") footer = "Generating worker prompt...";
+  if (phase === "generating") footer = "Generating agent prompt...";
   else if (phase === "generated") footer = `Prompt written to ${state.modal.promptPath ?? "disk"} -- Esc close`;
   else if (phase === "error") footer = `Error: ${state.modal.errorMessage ?? "unknown"} -- Esc close`;
 
@@ -426,7 +426,7 @@ function buildDispatchModal(
       ? [
           { text: `Feature: ${selected.featureId}`, detail: selected.featureTitle },
           { text: `Milestone: ${selected.milestoneTitle} (#${selected.milestoneOrder})` },
-          { text: `Worker: ${formatAgentLabel(selected.agentType)}` },
+          { text: `Agent: ${formatAgentLabel(selected.agentType)}` },
         ]
       : [{ text: "Select a feature to view dispatch details" }],
     footer,

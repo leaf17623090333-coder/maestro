@@ -8,7 +8,7 @@ import { FsAssertionStoreAdapter } from "@/features/mission/validation/adapters/
 import { createMission } from "@/features/mission/usecases/mission-lifecycle.usecase.js";
 import { updateFeature } from "@/features/mission/feature/usecases/feature-lifecycle.usecase.js";
 import { FsReplyStoreAdapter } from "@/features/reply/adapters/fs-reply-store.adapter.js";
-import { writeWorkerReply } from "@/features/reply/usecases/write-reply.usecase.js";
+import { writeAgentReply } from "@/features/reply/usecases/write-reply.usecase.js";
 import { ingestReply } from "@/features/reply/usecases/ingest-reply.usecase.js";
 
 let tmpDir: string;
@@ -75,7 +75,7 @@ describe("ingestReply", () => {
       await assertionStore.update(missionId, a.id, { result: "passed" });
     }
 
-    await writeWorkerReply(replyStore, {
+    await writeAgentReply(replyStore, {
       missionId,
       featureId,
       outcome: "completed",
@@ -101,7 +101,7 @@ describe("ingestReply", () => {
     await updateFeature(missionStore, featureStore, tmpDir, missionId, featureId, { status: "review" });
     // Assertions left pending
 
-    await writeWorkerReply(replyStore, {
+    await writeAgentReply(replyStore, {
       missionId,
       featureId,
       outcome: "completed",
@@ -123,7 +123,7 @@ describe("ingestReply", () => {
     const { missionId, featureId } = await setupMission();
     await updateFeature(missionStore, featureStore, tmpDir, missionId, featureId, { status: "in-progress" });
 
-    await writeWorkerReply(replyStore, {
+    await writeAgentReply(replyStore, {
       missionId,
       featureId,
       outcome: "completed",
@@ -147,7 +147,7 @@ describe("ingestReply", () => {
     await updateFeature(missionStore, featureStore, tmpDir, missionId, featureId, { status: "in-progress" });
     await updateFeature(missionStore, featureStore, tmpDir, missionId, featureId, { status: "review" });
 
-    await writeWorkerReply(replyStore, {
+    await writeAgentReply(replyStore, {
       missionId,
       featureId,
       outcome: "kicked-back",
@@ -169,7 +169,7 @@ describe("ingestReply", () => {
     await updateFeature(missionStore, featureStore, tmpDir, missionId, featureId, { status: "in-progress" });
     await updateFeature(missionStore, featureStore, tmpDir, missionId, featureId, { status: "review" });
 
-    await writeWorkerReply(replyStore, {
+    await writeAgentReply(replyStore, {
       missionId,
       featureId,
       outcome: "abandoned",
@@ -193,7 +193,7 @@ describe("ingestReply", () => {
     const assertions = await assertionStore.list(missionId);
     for (const a of assertions) await assertionStore.update(missionId, a.id, { result: "passed" });
 
-    await writeWorkerReply(replyStore, { missionId, featureId, outcome: "completed" });
+    await writeAgentReply(replyStore, { missionId, featureId, outcome: "completed" });
 
     const first = await ingestReply(
       { missionStore, featureStore, assertionStore, replyStore, baseDir: tmpDir },
@@ -218,7 +218,7 @@ describe("ingestReply", () => {
     const assertions = await assertionStore.list(missionId);
     for (const a of assertions) await assertionStore.update(missionId, a.id, { result: "passed" });
 
-    await writeWorkerReply(replyStore, { missionId, featureId, outcome: "completed" });
+    await writeAgentReply(replyStore, { missionId, featureId, outcome: "completed" });
 
     const calls: Array<{ featureId: string; outcome: string }> = [];
     const result = await ingestReply(
@@ -250,7 +250,7 @@ describe("ingestReply", () => {
       await assertionStore.update(missionId, assertion.id, { result: "passed" });
     }
 
-    await writeWorkerReply(replyStore, {
+    await writeAgentReply(replyStore, {
       missionId,
       featureId,
       outcome: "completed",
@@ -294,7 +294,7 @@ describe("ingestReply", () => {
 
   it("records reply but does not move state when feature is missing", async () => {
     const { missionId } = await setupMission();
-    await writeWorkerReply(replyStore, {
+    await writeAgentReply(replyStore, {
       missionId,
       featureId: "f-missing",
       outcome: "completed",
@@ -323,7 +323,7 @@ describe("ingestReply", () => {
       await assertionStore.update(second.missionId, assertion.id, { result: "passed" });
     }
 
-    await writeWorkerReply(replyStore, {
+    await writeAgentReply(replyStore, {
       missionId: second.missionId,
       featureId: second.featureId,
       outcome: "completed",

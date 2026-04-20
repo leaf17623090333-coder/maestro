@@ -32,7 +32,7 @@ const sampleManifest: BundleManifest = {
     features: 1,
     milestones: 1,
     assertions: 0,
-    workers: 0,
+    agents: 0,
     replies: 0,
     launches: 0,
     checkpoints: 0,

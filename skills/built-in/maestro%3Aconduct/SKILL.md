@@ -1,12 +1,12 @@
 ---
 name: maestro:conduct
-description: "Enter conductor mode: plan, decompose, and dispatch -- sub-agents implement, not you. Use when user says 'you orchestrate', 'conduct this', 'delegate this', 'don't code yourself', 'break this into sub-agents', 'run this milestone without doing it yourself', or wants to stay in the driver seat while you manage workers. Works for formal mission/milestone execution and ad-hoc decomposition."
+description: "Enter conductor mode: plan, decompose, and dispatch -- sub-agents implement, not you. Use when user says 'you orchestrate', 'conduct this', 'delegate this', 'don't code yourself', 'break this into sub-agents', 'run this milestone without doing it yourself', or wants to stay in the driver seat while you manage agents. Works for formal mission/milestone execution and ad-hoc decomposition."
 argument-hint: "[--mission <id>] [--ad-hoc]"
 ---
 
 # Conductor Mode
 
-You hold the score. Workers play the notes. Your job is to plan, decompose, dispatch, monitor, and synthesize -- never to write implementation code yourself.
+You hold the score. Agents play the notes. Your job is to plan, decompose, dispatch, monitor, and synthesize -- never to write implementation code yourself.
 
 Arguments: `$ARGUMENTS`
 
@@ -16,11 +16,11 @@ Arguments: `$ARGUMENTS`
 
 These are non-negotiable. Violating any one defeats the purpose of conductor mode.
 
-1. **No implementation code.** You do not write production code. Workers do. The only exception is the tiny-bug carve-out (see below).
+1. **No implementation code.** You do not write production code. Agents do. The only exception is the tiny-bug carve-out (see below).
 2. **No dispatch without a task definition.** "Go look at the auth module" is not a task. "Map every caller of `verifyToken` in `src/auth/`, report file paths and call sites, no edits" is.
 3. **No silent exit from conductor mode.** If you think direct implementation is warranted, say so explicitly and ask: "This looks small enough to handle directly -- should I, or dispatch?" Never quietly start coding.
-4. **No parallel dispatch without verified independence.** Before sending two workers out simultaneously, verify they will not touch the same files. See `reference/independence-check.md`.
-5. **No forwarding raw worker output.** When workers report back, read their output, synthesize it in your own words, and present findings with your analysis. The user's cognitive load should decrease after a round of workers completes, not increase.
+4. **No parallel dispatch without verified independence.** Before sending two agents out simultaneously, verify they will not touch the same files. See `reference/independence-check.md`.
+5. **No forwarding raw agent output.** When agents report back, read their output, synthesize it in your own words, and present findings with your analysis. The user's cognitive load should decrease after a round of agents completes, not increase.
 
 ---
 
@@ -56,15 +56,15 @@ For the active milestone, classify each feature:
 
 | Status | Conductor action |
 |--------|-----------------|
-| `pending` | Generate worker prompt (A3) |
-| `assigned` | Worker has been dispatched; monitor |
-| `in-progress` | Worker is active; check for blockers |
-| `review` | Read worker output; verify and synthesize |
+| `pending` | Generate agent prompt (A3) |
+| `assigned` | Agent has been dispatched; monitor |
+| `in-progress` | Agent is active; check for blockers |
+| `review` | Read agent output; verify and synthesize |
 | `done` | Already complete; skip |
 
 If all features in the active milestone are `done`, skip to A6 (milestone gate).
 
-### A3. Generate Worker Prompts
+### A3. Generate Agent Prompts
 
 For each `pending` feature:
 
@@ -72,7 +72,7 @@ For each `pending` feature:
 maestro feature prompt <featureId> --mission <missionId>
 ```
 
-This generates a self-contained worker assignment from mission metadata. **You must read the generated prompt before dispatching.** Check:
+This generates a self-contained agent assignment from mission metadata. **You must read the generated prompt before dispatching.** Check:
 
 - Does the `expectedBehavior` match what the mission actually needs?
 - Are `verificationSteps` specific and observable?
@@ -87,9 +87,9 @@ Before dispatching multiple features in parallel, verify they are independent. R
 
 Quick check: list the files each feature will touch. Any overlap means sequential, not parallel.
 
-### A5. Dispatch Workers
+### A5. Dispatch Agents
 
-For each ready feature, dispatch a worker. Workers should load `maestro:worker-base` for their startup/cleanup procedure, then their feature's `agentType` skill for the actual work.
+For each ready feature, dispatch an agent. Agents should load `maestro:agent-base` for their startup/cleanup procedure, then their feature's `agentType` skill for the actual work.
 
 Track dispatch:
 
@@ -97,23 +97,23 @@ Track dispatch:
 maestro feature update <featureId> --status assigned --mission <missionId>
 ```
 
-**Dispatch format:** Use the five-section worker brief (see Worker Brief Format below). For mission features, the `maestro feature prompt` output provides most of the content -- augment it with your conductor notes from the A3 review.
+**Dispatch format:** Use the five-section agent brief (see Agent Brief Format below). For mission features, the `maestro feature prompt` output provides most of the content -- augment it with your conductor notes from the A3 review.
 
 Dispatch independent features in parallel. Sequential features wait for their dependencies.
 
 ### A6. Monitor and Synthesize
 
-Poll for worker completion:
+Poll for agent completion:
 
 ```bash
 maestro feature list --mission <missionId> --milestone <milestoneId> --json
 maestro reply list --mission <missionId> --json
 ```
 
-When a worker completes:
+When an agent completes:
 
 1. Read the reply/report
-2. Verify: did the worker's output meet the feature's `verificationSteps` and `fulfills` assertions?
+2. Verify: did the agent's output meet the feature's `verificationSteps` and `fulfills` assertions?
 3. If verified: update feature status and present synthesis to user
 4. If issues found: create a follow-up task or ask the user how to proceed
 
@@ -152,7 +152,7 @@ Never skip this step. Jumping straight into decomposition produces plans that so
 
 1. **Restate the work in one sentence.** Read it back to the user. If they don't confirm, ask one clarifying question and wait.
 2. **Ask: "What does done look like?"** The answer defines your acceptance criteria.
-3. **Surface assumptions.** Write them down even if they feel trivial. They become the constraints for worker briefs.
+3. **Surface assumptions.** Write them down even if they feel trivial. They become the constraints for agent briefs.
 4. **If genuinely ambiguous** (two or more valid interpretations), stop and ask the user to pick one.
 
 ### B2. Decompose into Tasks
@@ -178,18 +178,18 @@ Before parallel dispatch, apply the independence check from `reference/independe
 
 ### B4. Dispatch with Structured Briefs
 
-For each task, dispatch a worker using the five-section brief format (see below). Claim the task before dispatching:
+For each task, dispatch an agent using the five-section brief format (see below). Claim the task before dispatching:
 
 ```bash
-maestro task claim <taskId> --session <worker-id>
-maestro task update <taskId> --status in_progress --session <worker-id>
+maestro task claim <taskId> --session <agent-id>
+maestro task update <taskId> --status in_progress --session <agent-id>
 ```
 
 See `reference/brief-templates.md` for copy-paste templates for common scenarios.
 
 ### B5. Synthesize and Decide
 
-When workers return:
+When agents return:
 
 1. Read all reports
 2. Write your own integrated synthesis
@@ -204,17 +204,17 @@ Loop back to B2 if more work remains, or wrap up.
 
 ---
 
-## Worker Brief Format
+## Agent Brief Format
 
-Every worker dispatch -- whether from a mission prompt or ad-hoc -- uses this five-section structure:
+Every agent dispatch -- whether from a mission prompt or ad-hoc -- uses this five-section structure:
 
 | Section | Content | What breaks without it |
 |---------|---------|------------------------|
-| **Goal** | One sentence: "When done, X is true" | Worker doesn't know when to stop |
-| **Scope** | Files/dirs to touch; what is out of bounds | Worker refactors the world |
-| **Context** | Error messages, function signatures, prior decisions, relevant code paths | Worker re-explores what you already know |
-| **Constraints** | What NOT to do (no commits, no .maestro/ edits, no unrelated changes) | Worker "improves" things you didn't ask for |
-| **Output** | What worker must report back (files changed, tests run, issues found) | You can't verify without re-reading everything |
+| **Goal** | One sentence: "When done, X is true" | Agent doesn't know when to stop |
+| **Scope** | Files/dirs to touch; what is out of bounds | Agent refactors the world |
+| **Context** | Error messages, function signatures, prior decisions, relevant code paths | Agent re-explores what you already know |
+| **Constraints** | What NOT to do (no commits, no .maestro/ edits, no unrelated changes) | Agent "improves" things you didn't ask for |
+| **Output** | What agent must report back (files changed, tests run, issues found) | You can't verify without re-reading everything |
 
 For mission features, `maestro feature prompt` generates most of this. Review it and augment with your conductor notes.
 
@@ -241,15 +241,15 @@ When in doubt, dispatch. The cost of one sub-agent is small; the cost of silentl
 
 ## Synthesis Protocol
 
-When workers return, you are the integrator. Your job:
+When agents return, you are the integrator. Your job:
 
-1. **Read all worker reports** -- do not skim
-2. **Cross-reference**: did worker A's output conflict with worker B's? Did anyone flag unexpected issues?
+1. **Read all agent reports** -- do not skim
+2. **Cross-reference**: did agent A's output conflict with agent B's? Did anyone flag unexpected issues?
 3. **Write your synthesis in your own words** -- what was accomplished, what issues surfaced, what the implications are
 4. **Recommend next steps** -- don't just dump findings, propose a path forward
 5. **Surface blockers and surprises** -- anything the user needs to decide on
 
-Never paste raw worker output and call it your analysis. The user hired a conductor, not a relay.
+Never paste raw agent output and call it your analysis. The user hired a conductor, not a relay.
 
 ---
 
@@ -270,9 +270,9 @@ Never silently drop back into implementation. The user chose conductor mode for 
 
 | Skill | Relationship |
 |-------|-------------|
-| `maestro:worker-base` | Workers follow this for startup/cleanup/handoff. You do NOT follow it -- you are the conductor, not a worker |
+| `maestro:agent-base` | Agents follow this for startup/cleanup/handoff. You do NOT follow it -- you are the conductor, not an agent |
 | `maestro:mission-planning` | If the user wants a mission but none exists, invoke this first to create one, then conduct it |
 | `maestro:dispatching` | Full independence verification protocol. Your `reference/independence-check.md` is a condensed version |
 | `maestro:scrutiny-validator` | Invoke at milestone gates for code scrutiny validation |
 | `maestro:user-testing-validator` | Invoke at milestone gates for user-facing validation |
-| `maestro:implement` | Workers may use this for track-based TDD execution. You dispatch them to use it; you do not use it yourself |
+| `maestro:implement` | Agents may use this for track-based TDD execution. You dispatch them to use it; you do not use it yourself |

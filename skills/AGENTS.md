@@ -17,7 +17,7 @@ Shipped built-in skill source only. Use this file with the repo-root [AGENTS.md]
 
 ## Lookup Rules
 
-- Runtime worker prompt lookup resolves `.maestro/skills/{agentType}/SKILL.md` first.
+- Runtime agent prompt lookup resolves `.maestro/skills/{agentType}/SKILL.md` first.
 - If no project-local skill exists, runtime falls back to `skills/built-in/{agentType}/SKILL.md`.
 
 ## Local Gotchas

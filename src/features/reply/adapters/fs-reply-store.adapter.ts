@@ -17,8 +17,8 @@ import { ensureDir, readText, removeIfExists, writeText } from "@/shared/lib/fs.
 import { parseYaml, stringifyYaml } from "@/shared/lib/yaml.js";
 import { assertSafeSegment, resolveWithin } from "@/shared/lib/path-safety.js";
 import type { ReplyStorePort } from "../ports/reply-store.port.js";
-import type { WorkerReply } from "../domain/reply-types.js";
-import { validateWorkerReply } from "../domain/reply-validators.js";
+import type { AgentReply } from "../domain/reply-types.js";
+import { validateAgentReply } from "../domain/reply-validators.js";
 
 const REPLIES_DIR = "replies";
 
@@ -44,14 +44,14 @@ export class FsReplyStoreAdapter implements ReplyStorePort {
     return resolveWithin(this.missionDir(missionId), `${featureId}.ingested`, "Reply ingested marker");
   }
 
-  async get(missionId: string, featureId: string): Promise<WorkerReply | undefined> {
+  async get(missionId: string, featureId: string): Promise<AgentReply | undefined> {
     const raw = await readText(this.replyPath(missionId, featureId));
     if (raw === undefined) return undefined;
     return parseReplyText(raw, missionId, featureId);
   }
 
-  async list(): Promise<readonly WorkerReply[]> {
-    const replies: WorkerReply[] = [];
+  async list(): Promise<readonly AgentReply[]> {
+    const replies: AgentReply[] = [];
     for (const ref of await listReplyRefs(this.dir())) {
       const reply = await this.get(ref.missionId, ref.featureId);
       if (reply) {
@@ -61,13 +61,13 @@ export class FsReplyStoreAdapter implements ReplyStorePort {
     return replies.sort((a, b) => a.writtenAt.localeCompare(b.writtenAt));
   }
 
-  async listSince(isoTimestamp: string): Promise<readonly WorkerReply[]> {
+  async listSince(isoTimestamp: string): Promise<readonly AgentReply[]> {
     const all = await this.list();
     return all.filter((r) => r.writtenAt >= isoTimestamp);
   }
 
-  async write(reply: WorkerReply): Promise<void> {
-    const validated = validateWorkerReply(reply);
+  async write(reply: AgentReply): Promise<void> {
+    const validated = validateAgentReply(reply);
     await ensureDir(this.missionDir(validated.missionId));
     await writeText(this.replyPath(validated.missionId, validated.featureId), stringifyYaml(validated));
     // Overwriting a reply invalidates any prior ingestion marker so the
@@ -123,10 +123,10 @@ function parseReplyText(
   raw: string,
   expectedMissionId: string,
   expectedFeatureId: string,
-): WorkerReply | undefined {
+): AgentReply | undefined {
   try {
     const parsed = parseYaml<unknown>(raw);
-    const reply = validateWorkerReply(parsed);
+    const reply = validateAgentReply(parsed);
     if (
       reply.missionId !== expectedMissionId
       || reply.featureId !== expectedFeatureId

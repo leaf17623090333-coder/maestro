@@ -1,11 +1,11 @@
 ---
-name: cli-worker
+name: cli-agent
 description: Implement Mission Control CLI commands, Mission Control snapshot/TUI behavior, and user-visible recovery/operator workflows in Maestro
 ---
 
-# CLI Worker
+# CLI Agent
 
-NOTE: startup and cleanup are handled by `worker-base`. This skill defines the work procedure for CLI-facing Mission Control reliability features.
+NOTE: startup and cleanup are handled by `agent-base`. This skill defines the work procedure for CLI-facing Mission Control reliability features.
 
 ## When to Use This Skill
 

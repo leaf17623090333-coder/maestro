@@ -47,8 +47,8 @@ async function writePipelinePlan(cwd: string): Promise<string> {
           {
             id: "f1",
             milestoneId: "m1",
-            title: "Bootstrap worker prompt",
-            description: "Generate the first worker prompt and complete the setup task",
+            title: "Bootstrap agent prompt",
+            description: "Generate the first agent prompt and complete the setup task",
             agentType: "test-skill",
             verificationSteps: ["Confirm prompt generation", "Confirm setup completed"],
             fulfills: ["assertion-bootstrap-1"],
@@ -160,13 +160,13 @@ describe("compiled CLI pipeline E2E", () => {
     const promptData = JSON.parse(promptResult.stdout);
     expect(promptData.featureId).toBe("f1");
     expect(promptData.agentType).toBe("test-skill");
-    expect(promptData.prompt).toContain("# Worker Assignment: Bootstrap worker prompt");
+    expect(promptData.prompt).toContain("# Agent Assignment: Bootstrap agent prompt");
     const promptPath = join(
       tmpDir,
       ".maestro",
       "missions",
       missionId,
-      "workers",
+      "agents",
       "f1",
       "prompt.md",
     );
@@ -196,7 +196,7 @@ describe("compiled CLI pipeline E2E", () => {
     expect(JSON.parse(executingMissionShow.stdout).effectiveMissionStatus).toBe("executing");
 
     const report = JSON.stringify({
-      content: "Bootstrap worker prompt completed successfully",
+      content: "Bootstrap agent prompt completed successfully",
       timestamp: new Date().toISOString(),
       agent: "compiled-e2e-agent",
     });

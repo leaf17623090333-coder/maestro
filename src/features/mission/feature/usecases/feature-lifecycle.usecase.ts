@@ -1,13 +1,13 @@
 /**
  * Feature lifecycle usecases
- * Implements feature listing, updating, and worker report persistence
+ * Implements feature listing, updating, and agent report persistence
  */
 import type { FeatureStorePort } from "../ports/feature-store.port.js";
 import type { MissionStorePort } from "../../ports/mission-store.port.js";
 import type {
   Feature,
   UpdateFeatureInput,
-  WorkerReport,
+  AgentReport,
 } from "../../domain/mission-types.js";
 import { MaestroError } from "@/shared/errors.js";
 import { assertFeatureTransition } from "../../domain/mission-state.js";
@@ -63,11 +63,11 @@ export async function listFeatures(
 
 /**
  * Update a feature's status and/or report
- * Enforces legal state transitions and persists worker reports.
+ * Enforces legal state transitions and persists agent reports.
  *
  * BEHAVIOR CHANGE (v1.0.0): This no longer writes to the runtime store.
  * Runtime state is owned externally now that maestro does not spawn
- * workers. The only persistent effect is the feature/report update
+ * agents. The only persistent effect is the feature/report update
  * (plus retry-log bookkeeping).
  */
 export async function updateFeature(
@@ -112,7 +112,7 @@ export async function updateFeature(
 
   // Handle report persistence
   let reportPersisted: string | undefined;
-  let finalReport: WorkerReport | undefined = input.report;
+  let finalReport: AgentReport | undefined = input.report;
 
   // If no new report is provided but status is changing to pending (retry),
   // preserve the existing report
@@ -120,9 +120,9 @@ export async function updateFeature(
     finalReport = existing.report;
   }
 
-  // If a new report is provided, persist it to workers/{featureId}/report.json
+  // If a new report is provided, persist it to agents/{featureId}/report.json
   if (input.report !== undefined) {
-    reportPersisted = await persistWorkerReport(baseDir, missionId, featureId, input.report);
+    reportPersisted = await persistAgentReport(baseDir, missionId, featureId, input.report);
   }
 
   // Persist retry reason if provided on retry (status -> pending)
@@ -132,9 +132,9 @@ export async function updateFeature(
       timestamp: new Date().toISOString(),
       previousStatus: existing.status,
     };
-    const workersDir = join(baseDir, MAESTRO_DIR, "missions", missionId, "workers", featureId);
-    await ensureDir(workersDir);
-    const retryLogPath = join(workersDir, "retry-log.json");
+    const agentsDir = join(baseDir, MAESTRO_DIR, "missions", missionId, "agents", featureId);
+    await ensureDir(agentsDir);
+    const retryLogPath = join(agentsDir, "retry-log.json");
     const existingLog = await readJson<readonly unknown[]>(retryLogPath);
     const log = Array.isArray(existingLog) ? [...existingLog, retryEntry] : [retryEntry];
     await writeJson(retryLogPath, log);
@@ -155,19 +155,19 @@ export async function updateFeature(
 }
 
 /**
- * Parse a worker report from inline JSON or @file syntax
+ * Parse an agent report from inline JSON or @file syntax
  */
-function isVerificationObj(v: unknown): v is WorkerReport["verification"] {
+function isVerificationObj(v: unknown): v is AgentReport["verification"] {
   return typeof v === "object" && v !== null && "commandsRun" in v && "interactiveChecks" in v;
 }
 
-function isTestsObj(t: unknown): t is WorkerReport["tests"] {
+function isTestsObj(t: unknown): t is AgentReport["tests"] {
   return typeof t === "object" && t !== null && "added" in t;
 }
 
-export async function parseWorkerReport(
+export async function parseAgentReport(
   reportValue: string,
-): Promise<WorkerReport> {
+): Promise<AgentReport> {
   let reportContent: string;
 
   if (reportValue.startsWith("@")) {
@@ -192,7 +192,7 @@ export async function parseWorkerReport(
   try {
     parsed = JSON.parse(reportContent);
   } catch {
-    throw new MaestroError("Invalid JSON in worker report", [
+    throw new MaestroError("Invalid JSON in agent report", [
       "Report must be valid JSON",
       "Use inline JSON or @file.json syntax",
     ]);
@@ -200,25 +200,25 @@ export async function parseWorkerReport(
 
   // Validate required fields
   if (typeof parsed !== "object" || parsed === null) {
-    throw new MaestroError("Worker report must be a JSON object");
+    throw new MaestroError("Agent report must be a JSON object");
   }
 
   const reportObj = parsed as Record<string, unknown>;
 
   // Accept rich format (plan spec) with salientSummary
   if (typeof reportObj.salientSummary === "string") {
-    const report: WorkerReport = {
+    const report: AgentReport = {
       salientSummary: reportObj.salientSummary as string,
       whatWasImplemented: typeof reportObj.whatWasImplemented === "string" ? reportObj.whatWasImplemented : "",
       whatWasLeftUndone: typeof reportObj.whatWasLeftUndone === "string" ? reportObj.whatWasLeftUndone : "",
       verification: isVerificationObj(reportObj.verification)
-        ? reportObj.verification as WorkerReport["verification"]
+        ? reportObj.verification as AgentReport["verification"]
         : { commandsRun: [], interactiveChecks: [] },
       tests: isTestsObj(reportObj.tests)
-        ? reportObj.tests as WorkerReport["tests"]
+        ? reportObj.tests as AgentReport["tests"]
         : { added: [] },
       discoveredIssues: Array.isArray(reportObj.discoveredIssues)
-        ? reportObj.discoveredIssues as WorkerReport["discoveredIssues"]
+        ? reportObj.discoveredIssues as AgentReport["discoveredIssues"]
         : [],
     };
     return report;
@@ -226,7 +226,7 @@ export async function parseWorkerReport(
 
   // Accept legacy format with content field (backward compat)
   if (typeof reportObj.content === "string" && reportObj.content.length > 0) {
-    const report: WorkerReport = {
+    const report: AgentReport = {
       salientSummary: reportObj.content as string,
       whatWasImplemented: reportObj.content as string,
       whatWasLeftUndone: "",
@@ -237,25 +237,25 @@ export async function parseWorkerReport(
     return report;
   }
 
-  throw new MaestroError("Worker report must have 'salientSummary' (preferred) or 'content' (legacy) field", [
+  throw new MaestroError("Agent report must have 'salientSummary' (preferred) or 'content' (legacy) field", [
     "Rich format: { salientSummary, whatWasImplemented, whatWasLeftUndone, verification, tests, discoveredIssues }",
     "Legacy format: { content: string }",
   ]);
 }
 
 /**
- * Persist a worker report to workers/{featureId}/report.json
+ * Persist an agent report to agents/{featureId}/report.json
  */
-async function persistWorkerReport(
+async function persistAgentReport(
   baseDir: string,
   missionId: string,
   featureId: string,
-  report: WorkerReport,
+  report: AgentReport,
 ): Promise<string> {
-  const workersDir = join(baseDir, MAESTRO_DIR, "missions", missionId, "workers", featureId);
-  await ensureDir(workersDir);
+  const agentsDir = join(baseDir, MAESTRO_DIR, "missions", missionId, "agents", featureId);
+  await ensureDir(agentsDir);
 
-  const reportPath = join(workersDir, "report.json");
+  const reportPath = join(agentsDir, "report.json");
   await writeJson(reportPath, report);
 
   return reportPath;

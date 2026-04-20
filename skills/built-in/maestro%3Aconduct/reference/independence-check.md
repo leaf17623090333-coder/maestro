@@ -1,6 +1,6 @@
 # Independence Check
 
-Before dispatching two or more workers in parallel, verify they are independent. This is the dispatch gate -- skip it and you get merge conflicts, wasted work, or silent bugs.
+Before dispatching two or more agents in parallel, verify they are independent. This is the dispatch gate -- skip it and you get merge conflicts, wasted work, or silent bugs.
 
 ## The Five Tests
 
@@ -69,4 +69,4 @@ Dispatch plan: Wave 1 = [1, 3], Wave 2 = [2]
 Proceed?
 ```
 
-Always show the dispatch plan and get user confirmation before sending workers out.
+Always show the dispatch plan and get user confirmation before sending agents out.

@@ -3,12 +3,12 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { FsReplyStoreAdapter } from "@/features/reply/adapters/fs-reply-store.adapter.js";
-import type { WorkerReply } from "@/features/reply/domain/reply-types.js";
+import type { AgentReply } from "@/features/reply/domain/reply-types.js";
 
 let tmpDir: string;
 let store: FsReplyStoreAdapter;
 
-const makeReply = (overrides: Partial<WorkerReply> = {}): WorkerReply => ({
+const makeReply = (overrides: Partial<AgentReply> = {}): AgentReply => ({
   missionId: "2026-04-13-001",
   featureId: "f-42",
   outcome: "completed",

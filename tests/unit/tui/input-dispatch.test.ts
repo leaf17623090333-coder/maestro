@@ -36,7 +36,7 @@ const SNAPSHOT: MissionControlSnapshot = {
   session: null,
   configSummary: null,
   configInspector: {
-    tabs: ["overview", "effective", "project", "global", "defaults", "workers", "plan", "doctor", "memory"],
+    tabs: ["overview", "effective", "project", "global", "defaults", "agents", "plan", "doctor", "memory"],
     rowsByTab: {
       overview: [],
         effective: [{
@@ -59,7 +59,7 @@ const SNAPSHOT: MissionControlSnapshot = {
       project: [],
       global: [],
       defaults: [],
-      workers: [],
+      agents: [],
       plan: [],
       doctor: [],
       memory: [],

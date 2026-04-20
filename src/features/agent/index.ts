@@ -11,9 +11,9 @@ export {
 } from "./domain/agents.js";
 
 export {
-  generateWorkerPrompt,
-  type GenerateWorkerPromptResult,
-} from "./usecases/generate-worker-prompt.usecase.js";
+  generateAgentPrompt,
+  type GenerateAgentPromptResult,
+} from "./usecases/generate-agent-prompt.usecase.js";
 
 export {
   injectAgentBlocks,

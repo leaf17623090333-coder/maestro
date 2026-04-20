@@ -50,14 +50,14 @@ describe("FsMissionStoreAdapter", () => {
         const id = await store.stage(input, "2026-03-28-001", []);
         await store.finalize(id);
 
-      // Check that feature, workers, and checkpoints dirs exist
+      // Check that feature, agents, and checkpoints dirs exist
       const featuresDir = join(tmpDir, ".maestro", "missions", id, "features");
-      const workersDir = join(tmpDir, ".maestro", "missions", id, "workers");
+      const agentsDir = join(tmpDir, ".maestro", "missions", id, "agents");
       const checkpointsDir = join(tmpDir, ".maestro", "missions", id, "checkpoints");
 
       const { stat } = await import("node:fs/promises");
         expect((await stat(featuresDir)).isDirectory()).toBe(true);
-        expect((await stat(workersDir)).isDirectory()).toBe(true);
+        expect((await stat(agentsDir)).isDirectory()).toBe(true);
         expect((await stat(checkpointsDir)).isDirectory()).toBe(true);
       });
 

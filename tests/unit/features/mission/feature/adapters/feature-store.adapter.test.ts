@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { FsFeatureStoreAdapter } from "@/features/mission/feature/adapters/feature-store.adapter.js";
 import { migrateLegacyWorkerType } from "@/features/mission/feature/feature-migration.js";
-import type { CreateFeatureInput, Feature, WorkerReport } from "@/features/mission/domain/mission-types.js";
+import type { CreateFeatureInput, Feature, AgentReport } from "@/features/mission/domain/mission-types.js";
 
 let tmpDir: string;
 let store: FsFeatureStoreAdapter;
@@ -183,7 +183,7 @@ describe("FsFeatureStoreAdapter", () => {
       expect(updated!.updatedAt).toBeTruthy();
     });
 
-    it("updates feature with worker report", async () => {
+    it("updates feature with agent report", async () => {
       const input = makeCreateInput();
       await store.create(missionId, input, "f1");
 
@@ -194,7 +194,7 @@ describe("FsFeatureStoreAdapter", () => {
         agent: "claude-code",
       };
 
-      const report: WorkerReport = {
+      const report: AgentReport = {
         salientSummary: "Work completed successfully",
         whatWasImplemented: "Work completed successfully",
         whatWasLeftUndone: "",
@@ -203,7 +203,7 @@ describe("FsFeatureStoreAdapter", () => {
         discoveredIssues: [],
       };
 
-      const updated = await store.update(missionId, "f1", { report: legacyReport as unknown as WorkerReport });
+      const updated = await store.update(missionId, "f1", { report: legacyReport as unknown as AgentReport });
       // After round-trip through disk + Zod validation, expect rich format
       const reloaded = await store.get(missionId, "f1");
       expect(reloaded!.report).toEqual(report);

@@ -5,8 +5,8 @@ import type { DoctorCheck } from "@/infra/domain/status-types.js";
 import { countLegacyHandoffFiles } from "@/features/handoff";
 
 /**
- * Phase 1 strip: CASS and worker-transport checks were removed. The
- * conductor model does not spawn workers or depend on CASS, so these
+ * Phase 1 strip: CASS and agent-transport checks were removed. The
+ * conductor model does not spawn runtime agents or depend on CASS, so these
  * checks no longer map to anything the CLI can fix.
  */
 export async function runDoctor(

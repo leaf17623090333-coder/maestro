@@ -25,7 +25,7 @@ import type { ReplyStorePort } from "../ports/reply-store.port.js";
 import type {
   ReplyIngestResult,
   ReplyOutcome,
-  WorkerReply,
+  AgentReply,
 } from "../domain/reply-types.js";
 
 /**
@@ -110,7 +110,7 @@ interface InferredOutcome {
 }
 
 function inferEffectiveOutcome(
-  reply: WorkerReply,
+  reply: AgentReply,
   feature: Feature,
   assertionsPass: boolean,
 ): InferredOutcome {
@@ -145,7 +145,7 @@ async function applyOutcomeTransition(
   deps: IngestReplyDeps,
   missionId: string,
   feature: Feature,
-  reply: WorkerReply,
+  reply: AgentReply,
   inferred: InferredOutcome,
 ): Promise<{ advanced: boolean }> {
   const target = targetStatusFor(inferred.outcome);

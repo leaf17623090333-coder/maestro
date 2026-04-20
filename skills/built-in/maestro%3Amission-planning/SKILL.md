@@ -1,6 +1,6 @@
 ---
 name: maestro:mission-planning
-description: "Plan and structure new missions. Brainstorm raw ideas into decomposed missions with milestones, features, worker types, constraints, and the exact `maestro handoff` command for the first external worker."
+description: "Plan and structure new missions. Brainstorm raw ideas into decomposed missions with milestones, features, agent types, constraints, and the exact `maestro handoff` command for the first external agent."
 argument-hint: "<raw idea or mission description>"
 ---
 
@@ -11,15 +11,15 @@ Maestro is the conductor. It persists the mission, keeps shared context on disk,
 The input is `$ARGUMENTS` — a single sentence like "add a command palette to the TUI" or a rough paragraph describing a goal. The output is two concrete artifacts:
 
 1. A mission persisted under `.maestro/missions/{id}/` via `maestro mission create --file plan.json`
-2. The exact `maestro handoff ...` command for the first external worker
+2. The exact `maestro handoff ...` command for the first external agent
 
-Do not auto-launch the handoff in this skill. Planning stops once the mission exists and the launch command is drafted. Skip any step and the downstream worker either drifts off-scope or halts asking for clarification.
+Do not auto-launch the handoff in this skill. Planning stops once the mission exists and the launch command is drafted. Skip any step and the downstream agent either drifts off-scope or halts asking for clarification.
 
 ## The 5-step workflow at a glance
 
 1. Brainstorm opening — clarify intent before structure
 2. Decompose into milestones and features — 3-7 milestones, sprint-sized
-3. Match worker types — codex-cli, claude-code, subagent, human
+3. Match agent types — codex-cli, claude-code, subagent, human
 4. Capture constraints — what not to touch, and why
 5. Persist mission and draft the first handoff command
 
@@ -51,33 +51,33 @@ Do not auto-launch the handoff in this skill. Planning stops once the mission ex
 
 **Reference**: `reference/decomposition.md`
 
-**Output**: a draft plan with 3-7 milestones, 1-5 features per milestone, dependencies, and verification steps. No worker types yet.
+**Output**: a draft plan with 3-7 milestones, 1-5 features per milestone, dependencies, and verification steps. No agent types yet.
 
-## Step 3 — Match worker types
+## Step 3 — Match agent types
 
 **Trigger**: you have a decomposed plan from Step 2.
 
 **Action**:
-1. For each feature, pick a worker type from the allowed set: `codex-cli`, `claude-code`, `subagent`, `human`. Do not invent new worker types. If the work genuinely requires a worker type outside the allowed set, invoke `maestro:define-mission-skills` to register the new skill, then return here to assign it.
+1. For each feature, pick an agent type from the allowed set: `codex-cli`, `claude-code`, `subagent`, `human`. Do not invent new agent types. If the work genuinely requires an agent type outside the allowed set, invoke `maestro:define-mission-skills` to register the new skill, then return here to assign it.
 2. Apply the decision table in the reference file. Mechanical work goes to `codex-cli`, ambiguous work goes to `claude-code`, exploration goes to `subagent`, trust calls go to `human`.
-3. For any milestone with a `code-review` or `plan-review` profile, confirm the reviewer worker type is a different instance than whatever produced the artifact being reviewed. Self-review is pathologically lenient.
-4. Re-read each feature's worker-type choice and ask "would this worker actually succeed here?" If not, revise.
-5. Identify the first feature that should be launched through `maestro handoff`. It must be assigned to `codex-cli` or `claude-code`. If your first execution feature is `subagent` or `human`, either re-scope the plan or choose the next feature that should run as a fresh external worker.
+3. For any milestone with a `code-review` or `plan-review` profile, confirm the reviewer agent type is a different instance than whatever produced the artifact being reviewed. Self-review is pathologically lenient.
+4. Re-read each feature's agent-type choice and ask "would this agent actually succeed here?" If not, revise.
+5. Identify the first feature that should be launched through `maestro handoff`. It must be assigned to `codex-cli` or `claude-code`. If your first execution feature is `subagent` or `human`, either re-scope the plan or choose the next feature that should run as a fresh external agent.
 
-**Reference**: `reference/worker-type-matching.md`
+**Reference**: `reference/agent-type-matching.md`
 
-**Output**: every feature has an `agentType` field. Review milestones use a different instance than the generator, and the first external worker candidate is identified.
+**Output**: every feature has an `agentType` field. Review milestones use a different instance than the generator, and the first external agent candidate is identified.
 
 ## Step 4 — Capture constraints
 
-**Trigger**: every feature has a worker type assigned.
+**Trigger**: every feature has an agent type assigned.
 
 **Action**:
-1. For each feature, list the things a worker must not touch while executing it. Name specific files, APIs, patterns, or out-of-scope extensions.
+1. For each feature, list the things an agent must not touch while executing it. Name specific files, APIs, patterns, or out-of-scope extensions.
 2. For each constraint, write the reason next to it. A constraint without a reason is unenforceable at edge cases.
-3. Store the reason somewhere the worker will later see it: `preconditions`, feature description, or a concrete verification note.
+3. Store the reason somewhere the agent will later see it: `preconditions`, feature description, or a concrete verification note.
 4. Keep each feature to 1-4 real constraints. If a feature needs more than that, it is too large — go back to Step 2 and split it.
-5. Make sure the first external worker's feature has explicit constraints. Those become the `## Constraints` section of the eventual handoff brief.
+5. Make sure the first external agent's feature has explicit constraints. Those become the `## Constraints` section of the eventual handoff brief.
 
 **Reference**: `reference/boundary-capture.md`
 
@@ -85,17 +85,17 @@ Do not auto-launch the handoff in this skill. Planning stops once the mission ex
 
 ## Step 5 — Persist mission and draft the first handoff command
 
-**Trigger**: plan, worker types, and constraints are all in hand.
+**Trigger**: plan, agent types, and constraints are all in hand.
 
 **Action**:
-1. Write the plan to a JSON file (typically `plans/<mission-name>.json`). Include milestones, features, dependencies, verification steps, worker types, and constraints.
+1. Write the plan to a JSON file (typically `plans/<mission-name>.json`). Include milestones, features, dependencies, verification steps, agent types, and constraints.
 2. Run `maestro mission create --file <plan.json>` to persist the mission. Capture the returned mission id.
-3. Run the readiness check. If the plan is still missing a launchable first worker, go back to Steps 2-4 instead of drafting a bad command.
-4. Map the first worker's `agentType` to a provider:
+3. Run the readiness check. If the plan is still missing a launchable first agent, go back to Steps 2-4 instead of drafting a bad command.
+4. Map the first agent's `agentType` to a provider:
    - `codex-cli` -> `--provider codex`
    - `claude-code` -> `--provider claude`
 5. Draft the exact handoff command. The task string must name the mission id, feature id or title, expected outcome, and the requirement to run the listed verification steps before stopping.
-6. Add `--worktree <slug>` when the worker should operate in an isolated sibling checkout, especially for risky review or parallel implementation slices.
+6. Add `--worktree <slug>` when the agent should operate in an isolated sibling checkout, especially for risky review or parallel implementation slices.
 7. Return the mission id and the exact handoff command to the user. Do not run the command inside this skill.
 
 **Reference**: `reference/readiness-check.md`, `reference/handoff-command-cheatsheet.md`
@@ -107,7 +107,7 @@ Do not auto-launch the handoff in this skill. Planning stops once the mission ex
 ## Critical constraints
 
 - Never skip the brainstorm opening (Step 1). Jumping straight into decomposition produces plans that solve the wrong problem cleanly.
-- Never invent worker types or milestone profiles. The allowed sets are closed. If none fit, the work needs to be re-decomposed, not given a new category.
+- Never invent agent types or milestone profiles. The allowed sets are closed. If none fit, the work needs to be re-decomposed, not given a new category.
 - Never draft the first handoff command for a `subagent` or `human` feature. Native handoff launching is only for fresh Codex or Claude runs.
 - Never auto-launch the handoff from this skill. The output is the exact command, not the running child process.
 - The output of this skill is always a mission file plus the exact next `maestro handoff ...` command. If either is missing, the skill has not completed.
@@ -131,4 +131,4 @@ maestro handoff \
   --provider codex
 ```
 
-Mission persisted, launch command drafted. The operator can now run that command to start the first Codex worker with a persisted markdown handoff brief. The skill is done.
+Mission persisted, launch command drafted. The operator can now run that command to start the first Codex agent with a persisted markdown handoff brief. The skill is done.

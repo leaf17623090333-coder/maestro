@@ -17,7 +17,7 @@ import type {
 } from "@/features/mission/index.js";
 import type { HandoffLaunchRecord, LaunchStorePort } from "@/features/handoff/index.js";
 import type { ReplyStorePort } from "@/features/reply/index.js";
-import type { WorkerReply } from "@/features/reply/index.js";
+import type { AgentReply } from "@/features/reply/index.js";
 
 const MISSION_ID = "2026-04-13-001";
 
@@ -108,7 +108,7 @@ function buildLaunch(id: string, refs: HandoffLaunchRecord["refs"]): HandoffLaun
   };
 }
 
-function buildReply(featureId: string): WorkerReply {
+function buildReply(featureId: string): AgentReply {
   return {
     missionId: MISSION_ID,
     featureId,
@@ -170,7 +170,7 @@ class FakeCheckpointStore implements CheckpointStorePort {
 }
 
 class FakeReplyStore implements ReplyStorePort {
-  constructor(private readonly replies: ReadonlyMap<string, WorkerReply>) {}
+  constructor(private readonly replies: ReadonlyMap<string, AgentReply>) {}
   async get(missionId: string, featureId: string) {
     return this.replies.get(`${missionId}:${featureId}`);
   }
@@ -190,8 +190,8 @@ class FakeLaunchStore implements LaunchStorePort {
   resolveArtifactPath(relativePath: string) { return join(projectDir, relativePath); }
 }
 
-async function seedWorkers(featureId: string): Promise<void> {
-  const dir = join(projectDir, ".maestro", "missions", MISSION_ID, "workers", featureId);
+async function seedAgents(featureId: string): Promise<void> {
+  const dir = join(projectDir, ".maestro", "missions", MISSION_ID, "agents", featureId);
   await mkdir(dir, { recursive: true });
   await writeFile(join(dir, "prompt.md"), `# prompt for ${featureId}\n`);
   await writeFile(
@@ -239,7 +239,7 @@ async function seedMemory(): Promise<void> {
 }
 
 function makeDeps({
-  replies = new Map<string, WorkerReply>(),
+  replies = new Map<string, AgentReply>(),
   launches = [] as readonly HandoffLaunchRecord[],
   checkpoints = [] as readonly Checkpoint[],
   assertions = [] as readonly Assertion[],
@@ -278,15 +278,15 @@ describe("collectBundleSources", () => {
     expect(files.has(`${MISSION_ID}.mission/mission/assertions.json`)).toBe(true);
     expect(result.stats.features).toBe(2);
     expect(result.stats.milestones).toBe(2);
-    expect(result.stats.workers).toBe(0);
+    expect(result.stats.agents).toBe(0);
     expect(result.stats.replies).toBe(0);
     expect(result.stats.launches).toBe(0);
     expect(result.stats.memorySnapshot).toEqual({ corrections: 0, learnings: 0 });
   });
 
-  it("includes worker files, replies, launches, checkpoints, principles, and memory", async () => {
-    await seedWorkers("f1");
-    await seedWorkers("f2");
+  it("includes agent files, replies, launches, checkpoints, principles, and memory", async () => {
+    await seedAgents("f1");
+    await seedAgents("f2");
     await seedReplies("f1");
     await seedPrinciplesAndOutcomes();
     await seedMemory();
@@ -294,7 +294,7 @@ describe("collectBundleSources", () => {
     const launchInScope = buildLaunch("2026-04-13-101", { missionId: MISSION_ID });
     const launchOutOfScope = buildLaunch("2026-04-13-102", { missionId: "2020-01-01-001" });
 
-    const replies = new Map<string, WorkerReply>([
+    const replies = new Map<string, AgentReply>([
       [`${MISSION_ID}:f1`, buildReply("f1")],
     ]);
 
@@ -312,9 +312,9 @@ describe("collectBundleSources", () => {
     });
 
     const files = filesByPath(result.files);
-    expect(files.has(`${MISSION_ID}.mission/mission/workers/f1/prompt.md`)).toBe(true);
-    expect(files.has(`${MISSION_ID}.mission/mission/workers/f1/report.json`)).toBe(true);
-    expect(files.has(`${MISSION_ID}.mission/mission/workers/f2/prompt.md`)).toBe(true);
+    expect(files.has(`${MISSION_ID}.mission/mission/agents/f1/prompt.md`)).toBe(true);
+    expect(files.has(`${MISSION_ID}.mission/mission/agents/f1/report.json`)).toBe(true);
+    expect(files.has(`${MISSION_ID}.mission/mission/agents/f2/prompt.md`)).toBe(true);
     expect(files.has(`${MISSION_ID}.mission/replies/f1.yaml`)).toBe(true);
     expect(files.has(`${MISSION_ID}.mission/launches/2026-04-13-101.json`)).toBe(true);
     expect(files.has(`${MISSION_ID}.mission/launches/2026-04-13-102.json`)).toBe(false);
@@ -325,7 +325,7 @@ describe("collectBundleSources", () => {
     expect(files.has(`${MISSION_ID}.mission/memory/learnings/_compiled.json`)).toBe(true);
 
     expect(result.stats.features).toBe(2);
-    expect(result.stats.workers).toBe(2);
+    expect(result.stats.agents).toBe(2);
     expect(result.stats.replies).toBe(1);
     expect(result.stats.launches).toBe(1);
     expect(result.stats.checkpoints).toBe(1);
@@ -336,11 +336,11 @@ describe("collectBundleSources", () => {
   });
 
   it("drops redacted scopes from the output", async () => {
-    await seedWorkers("f1");
+    await seedAgents("f1");
     await seedReplies("f1");
     await seedMemory();
 
-    const replies = new Map<string, WorkerReply>([
+    const replies = new Map<string, AgentReply>([
       [`${MISSION_ID}:f1`, buildReply("f1")],
     ]);
     const deps = makeDeps({ replies });
@@ -352,8 +352,8 @@ describe("collectBundleSources", () => {
     });
 
     const files = filesByPath(result.files);
-    expect(files.has(`${MISSION_ID}.mission/mission/workers/f1/prompt.md`)).toBe(false);
-    expect(files.has(`${MISSION_ID}.mission/mission/workers/f1/report.json`)).toBe(true);
+    expect(files.has(`${MISSION_ID}.mission/mission/agents/f1/prompt.md`)).toBe(false);
+    expect(files.has(`${MISSION_ID}.mission/mission/agents/f1/report.json`)).toBe(true);
     expect(files.has(`${MISSION_ID}.mission/replies/f1.yaml`)).toBe(false);
     expect([...files.keys()].some((p) => p.startsWith(`${MISSION_ID}.mission/memory/`))).toBe(false);
 
