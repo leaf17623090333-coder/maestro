@@ -25,3 +25,14 @@ Use this directory as committed bootstrap and worker-reference infrastructure fo
 - Hooks should prefer `.maestro` when locating project state
 - `pretooluse` may inject workflow reminders for `git commit`
 - `posttooluse` should append lightweight events to `.maestro/sessions/events.jsonl`
+
+<!-- AGENTS-HIERARCHY:START -->
+## AGENTS Hierarchy
+Parent:
+- [../AGENTS.md](../AGENTS.md)
+
+Children:
+- none
+
+Managed by `agents-md-hierarchy`. Edit outside this block.
+<!-- AGENTS-HIERARCHY:END -->

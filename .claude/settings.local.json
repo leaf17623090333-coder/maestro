@@ -1,9 +1,20 @@
 {
-  "outputStyle": "default",
   "permissions": {
     "allow": [
       "Bash(rtk ls:*)",
-      "Bash(mkdir -p ~/.claude/blueprint ~/.agent/diagrams)"
+      "Bash(mkdir -p ~/.claude/blueprint ~/.agent/diagrams)",
+      "Bash(bun run:*)",
+      "Bash(git checkout *)",
+      "Bash(./dist/maestro --version)",
+      "Bash(bun test *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(bun scripts/bump.ts patch)",
+      "Bash(bun tsc *)",
+      "Bash(./dist/maestro task *)",
+      "Bash(bun scripts/bump.ts feature)",
+      "WebSearch"
     ]
-  }
+  },
+  "outputStyle": "default"
 }
