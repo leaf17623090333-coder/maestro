@@ -13,25 +13,13 @@ It is designed for a workflow where a human operator coordinates multiple termin
 - Mission Control gives you a read-only TUI and JSON snapshots of current state.
 - The runtime stays local-first: filesystem, git, config, and terminal tools.
 
-## At A Glance
+## System Map
 
-```mermaid
-flowchart LR
-  human["Human operator"]
-  maestro["Maestro CLI + .maestro/ state"]
-  workerA["Agent terminal A"]
-  workerB["Agent terminal B"]
-  tui["Mission Control"]
+![Maestro system overview](assets/diagrams/readme-system-overview.svg)
 
-  human --> maestro
-  maestro --> workerA
-  maestro --> workerB
-  workerA --> maestro
-  workerB --> maestro
-  maestro --> tui
-```
+Maestro is the shared state layer in the middle. The operator and fresh agent runs both go through the CLI, the CLI persists shared state locally, and Mission Control projects that same state without mutating it.
 
-Maestro is the shared state layer in the middle. The human moves between terminals; agents read and write through the same local CLI surface.
+If you want the full standalone diagram source, see [`assets/diagrams/readme-system-overview.html`](assets/diagrams/readme-system-overview.html).
 
 ## What Maestro Is Not
 
@@ -40,6 +28,18 @@ Maestro is the shared state layer in the middle. The human moves between termina
 - It does not require a database, queue, or network API to work.
 
 The human operator is the bridge between terminals. Maestro is the shared state layer underneath that workflow.
+
+## Two Working Loops
+
+Maestro has two related but separate operating modes:
+
+| Use missions when you need... | Use tasks when you need... |
+|---|---|
+| A planned multi-step effort with milestones, assertions, checkpoints, and handoff launches. | A lightweight blocker graph for the daily queue. |
+| A durable brief for a fresh agent run. | Fast `ready`, `claim`, `update`, and blocker management. |
+| Reviewable artifacts under `.maestro/missions/<mission-id>/`. | Repo-tracked task state under `.maestro/tasks/tasks.jsonl`. |
+
+If you only remember one distinction: `mission` is for planned execution; `task` is for the day-to-day queue.
 
 ## Core Concepts
 
@@ -66,21 +66,11 @@ Mission Control gives you a read-only terminal dashboard over the current Maestr
 
 ## How Work Flows
 
-```mermaid
-flowchart TD
-  init["Initialize project"] --> plan["Create mission plan JSON"]
-  plan --> mission["maestro mission create --file plan.json"]
-  mission --> approve["maestro mission approve <mission-id>"]
-  approve --> prompt["Optional: maestro feature prompt <feature-id> --mission <mission-id>"]
-  prompt --> handoff["maestro handoff \"Implement auth-impl\" --provider codex"]
-  handoff --> worker["Fresh Codex or Claude run starts with a persisted markdown brief"]
-  worker --> progress["maestro feature update ... --status in-progress/review"]
-  progress --> validate["maestro validate update ... --result passed|failed|waived"]
-  validate --> checkpoint["maestro checkpoint save --mission <mission-id>"]
-  checkpoint --> seal["maestro milestone seal <milestone-id> --mission <mission-id>"]
-```
+![How Maestro work flows](assets/diagrams/readme-how-work-flows.svg)
 
-The loop is deliberately simple: define work, optionally inspect the current feature brief, launch a fresh handoff, update progress, validate the outcome, and checkpoint before sealing the milestone.
+The loop is deliberately simple: define work, optionally inspect the feature brief, launch a fresh handoff, update progress, validate the outcome, and checkpoint before sealing the milestone.
+
+Standalone diagram source: [`readme-how-work-flows.html`](assets/diagrams/readme-how-work-flows.html)
 
 ## Installation
 
@@ -285,16 +275,13 @@ The prompt itself is stored separately as markdown. Maestro always renders the s
 
 ### Launch status flow
 
-```mermaid
-flowchart LR
-  launching["launching"] --> launched["launched"]
-  launching --> completed["completed"]
-  launching --> failed["failed"]
-```
+![Launch status flow](assets/diagrams/readme-launch-status.svg)
 
 - Default mode returns as soon as the child process is started and records status `launched`.
 - `--wait` blocks until the provider exits and records `completed` or `failed`.
 - `--json` prints the persisted launch record for automation or debugging.
+
+Standalone diagram source: [`readme-launch-status.html`](assets/diagrams/readme-launch-status.html)
 
 ### Typical commands
 
@@ -389,21 +376,21 @@ For non-interactive environments, prefer `--preview`, `--preview all`, or `--jso
 
 ## Architecture
 
-```mermaid
-flowchart TD
-  cli["CLI commands"] --> usecases["Use cases"]
-  usecases --> domain["Domain models + validators"]
-  usecases --> ports["Ports"]
-  ports --> adapters["Filesystem, git, config, session adapters"]
-  adapters --> state[".maestro/ state + local environment"]
-  state --> tui["Mission Control snapshots"]
-```
+![Maestro architecture layers](assets/diagrams/readme-architecture-layers.svg)
 
-The codebase follows a hexagonal shape: commands call use cases, use cases depend on domain rules and ports, and adapters implement those ports against the local filesystem and environment.
+The codebase follows a hexagonal shape: commands stay thin, `src/services.ts` wires dependencies, use cases depend on domain rules and ports, and adapters implement those ports against the local filesystem and environment.
+
+Standalone diagram source: [`readme-architecture-layers.html`](assets/diagrams/readme-architecture-layers.html)
 
 ## Storage Model
 
 Maestro stores project-local state in `.maestro/` and user-level defaults in `~/.maestro/`.
+
+| Surface | Lives where | Holds |
+|---|---|---|
+| Project workflow state | `.maestro/` | Missions, launches, tasks, notes, and local memory artifacts |
+| User-level defaults | `~/.maestro/` | Global config and graph metadata |
+| Read-only projections | Mission Control | Terminal previews and JSON snapshots over the same state |
 
 ```text
 .maestro/
