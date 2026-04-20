@@ -50,7 +50,7 @@ export async function launchHandoff(
   }
 
   const worktree = input.worktree
-    ? await createHandoffWorktree(deps.git, input.cwd, input.worktree, input.baseBranch, input.task)
+    ? await createHandoffWorktree(deps.git, input.cwd, input.provider, input.worktree, input.baseBranch, input.task)
     : undefined;
   const targetDir = worktree?.path ?? input.cwd;
   const model = input.model ?? DEFAULT_HANDOFF_MODELS[input.provider];
@@ -91,21 +91,41 @@ export async function launchHandoff(
       wait: input.wait,
       logPath: deps.launchStore.resolveArtifactPath(initialRecord.outputPath),
     });
+    const waitedExitCode = input.wait ? launchResult.exitCode : undefined;
     const finalRecord = await deps.launchStore.update({
       ...initialRecord,
       status: input.wait
-        ? (launchResult.exitCode === 0 ? "completed" : "failed")
+        ? (waitedExitCode === 0 ? "completed" : "failed")
         : "launched",
       command: launchResult.command,
       ...(launchResult.pid !== undefined ? { pid: launchResult.pid } : {}),
       ...(launchResult.exitCode !== undefined ? { exitCode: launchResult.exitCode } : {}),
     });
 
+    if (input.wait && waitedExitCode === undefined) {
+      throw new MaestroError(`${input.provider} handoff did not report an exit code`, [
+        `Launch record: ${finalRecord.id}`,
+        `Prompt: ${finalRecord.promptPath}`,
+        `Log: ${finalRecord.outputPath}`,
+      ]);
+    }
+
+    if (input.wait && waitedExitCode !== 0) {
+      throw new MaestroError(`${input.provider} handoff exited with code ${launchResult.exitCode}`, [
+        `Launch record: ${finalRecord.id}`,
+        `Prompt: ${finalRecord.promptPath}`,
+        `Log: ${finalRecord.outputPath}`,
+      ]);
+    }
+
     return {
       record: finalRecord,
       prompt,
     };
   } catch (error) {
+    if (error instanceof MaestroError) {
+      throw error;
+    }
     const message = error instanceof Error ? error.message : String(error);
     const failedRecord = await deps.launchStore.update({
       ...initialRecord,
@@ -123,6 +143,7 @@ export async function launchHandoff(
 async function createHandoffWorktree(
   git: GitPort,
   cwd: string,
+  provider: HandoffProvider,
   worktree: string | boolean,
   baseBranch: string | undefined,
   task: string,
@@ -132,7 +153,7 @@ async function createHandoffWorktree(
   return git.createWorktree(cwd, {
     slug,
     baseBranch: resolvedBaseBranch,
-    branchPrefix: "codex",
+    branchPrefix: provider,
   });
 }
 

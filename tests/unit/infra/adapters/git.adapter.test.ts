@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { mkdtemp, rm } from "node:fs/promises";
-import { basename, dirname, join } from "node:path";
+import { mkdir, mkdtemp, rm } from "node:fs/promises";
+import { basename, join } from "node:path";
 import { tmpdir } from "node:os";
 import { ShellGitAdapter } from "@/infra/adapters/git.adapter.js";
 import { runCommand } from "../../../helpers/command-runner.js";
@@ -80,7 +80,21 @@ describe("ShellGitAdapter", () => {
       });
 
       expect(worktree.branch).toBe("codex/replace-handoff");
-      expect(worktree.path).toBe(join(dirname(tempRepo), `${basename(tempRepo)}-replace-handoff`));
+      expect(worktree.path.endsWith(`${basename(tempRepo)}-replace-handoff`)).toBe(true);
+    });
+
+    it("resolves the sibling worktree from the repo root even when called from a nested cwd", async () => {
+      const nestedDir = join(tempRepo, "nested", "deeper");
+      await mkdir(nestedDir, { recursive: true });
+
+      const worktree = await git.createWorktree(nestedDir, {
+        slug: "nested-review",
+        baseBranch: "main",
+        branchPrefix: "claude",
+      });
+
+      expect(worktree.branch).toBe("claude/nested-review");
+      expect(worktree.path.endsWith(`${basename(tempRepo)}-nested-review`)).toBe(true);
     });
   });
 });

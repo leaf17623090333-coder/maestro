@@ -168,9 +168,76 @@ describe("launchHandoff", () => {
     expect(result.record.exitCode).toBe(0);
     expect(result.record.worktree).toMatchObject({
       path: "/tmp/fix-handoff",
-      branch: "codex/fix-handoff",
+      branch: "claude/fix-handoff",
       baseBranch: "main",
     });
     expect(result.prompt).toContain("fresh worktree");
+  });
+
+  it("throws when a waited launch exits non-zero after recording the failure", async () => {
+    const launchStore = makeLaunchStore();
+
+    await expect(
+      launchHandoff({
+        missionStore: mockMissionStore([]),
+        featureStore: mockFeatureStore("2026-04-20-001", []),
+        assertionStore: mockAssertionStore("2026-04-20-001", []),
+        git: makeGit(),
+        launchStore,
+        launchers: {
+          codex: {
+            provider: "codex",
+            async launch() {
+              return {
+                command: ["codex", "exec"],
+                exitCode: 7,
+              };
+            },
+          },
+          claude: { provider: "claude", async launch() { throw new Error("not used"); } },
+        },
+      }, {
+        cwd: "/tmp/project",
+        task: "Fail loudly",
+        provider: "codex",
+        wait: true,
+      }),
+    ).rejects.toThrow("codex handoff exited with code 7");
+
+    expect(launchStore.updates.at(-1)?.status).toBe("failed");
+    expect(launchStore.updates.at(-1)?.exitCode).toBe(7);
+  });
+
+  it("throws when a waited launch does not report an exit code", async () => {
+    const launchStore = makeLaunchStore();
+
+    await expect(
+      launchHandoff({
+        missionStore: mockMissionStore([]),
+        featureStore: mockFeatureStore("2026-04-20-001", []),
+        assertionStore: mockAssertionStore("2026-04-20-001", []),
+        git: makeGit(),
+        launchStore,
+        launchers: {
+          codex: {
+            provider: "codex",
+            async launch() {
+              return {
+                command: ["codex", "exec"],
+              };
+            },
+          },
+          claude: { provider: "claude", async launch() { throw new Error("not used"); } },
+        },
+      }, {
+        cwd: "/tmp/project",
+        task: "Missing exit code",
+        provider: "codex",
+        wait: true,
+      }),
+    ).rejects.toThrow("codex handoff did not report an exit code");
+
+    expect(launchStore.updates.at(-1)?.status).toBe("failed");
+    expect(launchStore.updates.at(-1)?.exitCode).toBeUndefined();
   });
 });

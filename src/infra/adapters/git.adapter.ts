@@ -57,15 +57,16 @@ export class ShellGitAdapter implements GitPort {
       readonly branchPrefix: string;
     },
   ): Promise<GitWorktree> {
-    const repoName = basename(cwd);
-    const parentDir = dirname(cwd);
+    const repoRoot = await this.getRepoRoot(cwd);
+    const repoName = basename(repoRoot);
+    const parentDir = dirname(repoRoot);
 
     for (let index = 0; index < 100; index += 1) {
       const suffix = index === 0 ? "" : `-${index + 1}`;
       const effectiveSlug = `${input.slug}${suffix}`;
       const branch = `${input.branchPrefix}/${effectiveSlug}`;
       const path = join(parentDir, `${repoName}-${effectiveSlug}`);
-      const branchExists = await this.branchExists(cwd, branch);
+      const branchExists = await this.branchExists(repoRoot, branch);
       if (branchExists || await dirExists(path)) {
         continue;
       }
@@ -73,7 +74,7 @@ export class ShellGitAdapter implements GitPort {
       await execOrThrow(
         ["git", "worktree", "add", "-b", branch, path, input.baseBranch],
         "git worktree add",
-        { cwd },
+        { cwd: repoRoot },
       );
 
       return {
@@ -93,6 +94,15 @@ export class ShellGitAdapter implements GitPort {
       { cwd },
     );
     return result.exitCode === 0;
+  }
+
+  private async getRepoRoot(cwd: string): Promise<string> {
+    const result = await execOrThrow(
+      ["git", "rev-parse", "--show-toplevel"],
+      "git rev-parse --show-toplevel",
+      { cwd },
+    );
+    return result.stdout;
   }
 }
 

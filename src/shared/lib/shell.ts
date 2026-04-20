@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { createWriteStream } from "node:fs";
+import { closeSync, openSync } from "node:fs";
 import { dirname } from "node:path";
 import { MaestroError } from "@/shared/errors.js";
 import { ensureDir } from "./fs.js";
@@ -83,20 +83,35 @@ export async function runLoggedCommand(
 ): Promise<LoggedCommandResult> {
   await ensureDir(dirname(opts.logPath));
 
-  const logStream = createWriteStream(opts.logPath, { flags: "a" });
-  const child = spawn(argv[0]!, argv.slice(1), {
-    cwd: opts.cwd,
-    detached: !opts.wait,
-    stdio: ["ignore", "pipe", "pipe"],
-  });
+  const logFd = openSync(opts.logPath, "a");
+  let closedFd = false;
+  const closeLogFd = (): void => {
+    if (closedFd) return;
+    closeSync(logFd);
+    closedFd = true;
+  };
 
-  child.stdout?.pipe(logStream, { end: false });
-  child.stderr?.pipe(logStream, { end: false });
+  let child: ReturnType<typeof spawn>;
+  try {
+    child = spawn(argv[0]!, argv.slice(1), {
+      cwd: opts.cwd,
+      detached: !opts.wait,
+      stdio: ["ignore", logFd, logFd],
+    });
+  } catch (error) {
+    closeLogFd();
+    throw error;
+  }
 
   await new Promise<void>((resolve, reject) => {
     child.once("spawn", () => resolve());
-    child.once("error", (error) => reject(error));
+    child.once("error", (error) => {
+      closeLogFd();
+      reject(error);
+    });
   });
+
+  closeLogFd();
 
   if (!opts.wait) {
     child.unref();
@@ -109,10 +124,6 @@ export async function runLoggedCommand(
   const exitCode = await new Promise<number>((resolve, reject) => {
     child.once("close", (code, signal) => resolve(code ?? (signal ? 1 : 0)));
     child.once("error", (error) => reject(error));
-  });
-
-  await new Promise<void>((resolve, reject) => {
-    logStream.end((error) => error ? reject(error) : resolve());
   });
 
   return {

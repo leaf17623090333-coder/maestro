@@ -6,7 +6,7 @@ import {
   expect,
   it,
 } from "bun:test";
-import { chmod, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { access, chmod, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import {
@@ -55,6 +55,35 @@ echo "${name} output"
   return binDir;
 }
 
+async function installFailingProvider(
+  name: "codex" | "claude",
+): Promise<string> {
+  const binDir = join(tmpDir, "bin-fail");
+  await Bun.$`mkdir -p ${binDir}`.quiet();
+  const scriptPath = join(binDir, name);
+  const script = `#!/bin/sh
+echo "${name} failed" 1>&2
+exit 7
+`;
+  await writeFile(scriptPath, script);
+  await chmod(scriptPath, 0o755);
+  return binDir;
+}
+
+async function waitForFile(path: string, timeoutMs = 2_000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    try {
+      await access(path);
+      return;
+    } catch {
+      await Bun.sleep(50);
+    }
+  }
+
+  throw new Error(`Timed out waiting for file: ${path}`);
+}
+
 describe("compiled handoff launcher E2E", () => {
   it(
     "launches codex by default, writes prompt artifacts, and returns launch metadata",
@@ -92,7 +121,8 @@ describe("compiled handoff launcher E2E", () => {
       expect(record.status).toBe("launched");
       expect(record.pid).toBeDefined();
 
-      await Bun.sleep(150);
+      await waitForFile(argsPath);
+      await waitForFile(cwdPath);
 
       const prompt = await readFile(join(tmpDir, record.promptPath), "utf8");
       expect(prompt).toContain("## Task");
@@ -161,7 +191,7 @@ describe("compiled handoff launcher E2E", () => {
       expect(record.status).toBe("completed");
       expect(record.exitCode).toBe(0);
       expect(record.worktree).toMatchObject({
-        branch: "codex/finish-worktree",
+        branch: "claude/finish-worktree",
         baseBranch: "main",
       });
       expect(record.worktree?.path.endsWith(`${basename(tmpDir)}-finish-worktree`)).toBe(true);
@@ -177,6 +207,91 @@ describe("compiled handoff launcher E2E", () => {
 
       const outputLog = await readFile(join(tmpDir, record.outputPath), "utf8");
       expect(outputLog).toContain("claude output");
+    },
+    SLOW_CLI_TIMEOUT_MS,
+  );
+
+  it(
+    "creates a sibling worktree from the repo root when launched from a nested cwd",
+    async () => {
+      const argsPath = join(tmpDir, "claude-nested-args.txt");
+      const cwdPath = join(tmpDir, "claude-nested-cwd.txt");
+      const nestedDir = join(tmpDir, "nested", "deeper");
+      await Bun.$`mkdir -p ${nestedDir}`.quiet();
+      const binDir = await installFakeProvider("claude", argsPath, cwdPath);
+
+      const result = await runCompiled(
+        [
+          "handoff",
+          "Create the nested cwd worktree",
+          "--provider",
+          "claude",
+          "--worktree",
+          "nested-cwd",
+          "--wait",
+          "--json",
+        ],
+        nestedDir,
+        {
+          env: {
+            PATH: `${binDir}:${process.env.PATH ?? ""}`,
+            FAKE_PROVIDER_ARGS: argsPath,
+            FAKE_PROVIDER_CWD: cwdPath,
+          },
+        },
+      );
+
+      expect(result.exitCode).toBe(0);
+      const record = expectJson<{
+        worktree?: {
+          path: string;
+          branch: string;
+          baseBranch: string;
+        };
+      }>(result);
+
+      expect(record.worktree).toMatchObject({
+        branch: "claude/nested-cwd",
+        baseBranch: "main",
+      });
+      expect(record.worktree?.path.endsWith(`${basename(tmpDir)}-nested-cwd`)).toBe(true);
+      expect(record.worktree?.path.includes(`${basename(nestedDir)}-nested-cwd`)).toBe(false);
+
+      const loggedCwd = (await readFile(cwdPath, "utf8")).trim();
+      expect(loggedCwd).toBe(record.worktree?.path);
+    },
+    SLOW_CLI_TIMEOUT_MS,
+  );
+
+  it(
+    "fails the CLI in --wait mode when the provider exits non-zero",
+    async () => {
+      const binDir = await installFailingProvider("claude");
+
+      const result = await runCompiled(
+        ["handoff", "Fail the waited handoff", "--provider", "claude", "--wait", "--json"],
+        tmpDir,
+        {
+          env: {
+            PATH: `${binDir}:${process.env.PATH ?? ""}`,
+          },
+        },
+      );
+
+      expect(result.exitCode).not.toBe(0);
+      const payload = expectJson<{ error: string; hints: string[] }>(result);
+      expect(payload.error).toContain("claude handoff exited with code 7");
+      expect(payload.hints.join(" ")).toContain("Launch record:");
+
+      const launchesDir = join(tmpDir, ".maestro", "launches");
+      const [launchId] = await Bun.$`ls ${launchesDir}`.text().then((text) => text.trim().split("\n").filter(Boolean));
+      expect(launchId).toBeDefined();
+      const launchRecord = JSON.parse(await readFile(join(launchesDir, launchId!, "launch.json"), "utf8")) as {
+        status: string;
+        exitCode?: number;
+      };
+      expect(launchRecord.status).toBe("failed");
+      expect(launchRecord.exitCode).toBe(7);
     },
     SLOW_CLI_TIMEOUT_MS,
   );

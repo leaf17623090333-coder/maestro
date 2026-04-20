@@ -27,6 +27,32 @@ async function runShellProbe(script: string): Promise<readonly ShellMemorySample
   return JSON.parse(stdout) as readonly ShellMemorySample[];
 }
 
+async function runShellScript(script: string): Promise<{
+  readonly stdout: string;
+  readonly stderr: string;
+  readonly exitCode: number;
+  readonly elapsedMs: number;
+}> {
+  const repoRoot = join(import.meta.dir, "..", "..", "..", "..");
+  const startedAt = Date.now();
+  const proc = Bun.spawn(["bun", "-e", script], {
+    cwd: repoRoot,
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const [stdout, stderr, exitCode] = await Promise.all([
+    new Response(proc.stdout).text(),
+    new Response(proc.stderr).text(),
+    proc.exited,
+  ]);
+  return {
+    stdout,
+    stderr,
+    exitCode,
+    elapsedMs: Date.now() - startedAt,
+  };
+}
+
 function growthMb(
   samples: readonly ShellMemorySample[],
   key: "rssMb" | "heapMb" | "externalMb",
@@ -101,6 +127,27 @@ describe("shell exec helpers", () => {
       const log = await readFile(logPath, "utf8");
       expect(log).toContain("hello");
       expect(log).toContain("world");
+    });
+
+    it("returns promptly for detached launches while the child keeps writing to the log", async () => {
+      const logPath = join(tempDir, "detached.log");
+      const result = await runShellScript(`
+        import { runLoggedCommand } from "./src/shared/lib/shell.ts";
+        await runLoggedCommand(
+          ["bash", "-lc", "sleep 1; echo detached-done"],
+          { cwd: "/tmp", logPath: ${JSON.stringify(logPath)}, wait: false },
+        );
+        console.log("returned");
+      `);
+
+      expect(result.exitCode).toBe(0);
+      expect(result.stderr.trim()).toBe("");
+      expect(result.stdout).toContain("returned");
+      expect(result.elapsedMs).toBeLessThan(800);
+
+      await Bun.sleep(1200);
+      const log = await readFile(logPath, "utf8");
+      expect(log).toContain("detached-done");
     });
   });
 });

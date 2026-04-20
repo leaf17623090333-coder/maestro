@@ -13,6 +13,7 @@ import type { GitState } from "@/infra/domain/git-types.js";
 import type { HandoffPromptContext, HandoffRelevantFile } from "@/features/handoff";
 import { MAESTRO_DIR } from "@/shared/domain/defaults.js";
 import { fileExists } from "@/shared/lib/fs.js";
+import { sanitizeInlineCodeContent, sanitizeInlinePromptContent } from "@/shared/lib/sanitize.js";
 
 export interface BuildHandoffPromptDeps {
   readonly missionStore: MissionStorePort;
@@ -318,7 +319,7 @@ function renderHandoffPrompt(context: HandoffPromptContext): string {
   return [
     "## Task",
     "",
-    context.task,
+    sanitizePromptLine(context.task),
     "",
     "## Context",
     "",
@@ -354,23 +355,36 @@ function renderBullets(lines: readonly string[]): string[] {
   if (lines.length === 0) {
     return ["- None captured."];
   }
-  return lines.map((line) => `- ${normalizeText(line)}`);
+  return lines.map((line) => `- ${sanitizePromptLine(line)}`);
 }
 
 function renderRelevantFiles(files: readonly HandoffRelevantFile[]): string[] {
   if (files.length === 0) {
     return ["- No specific files were captured from the current workspace state."];
   }
-  return files.map((file) => `- \`${file.path}\` — ${normalizeText(file.reason)}`);
+  return files.map((file) => `- ${renderInlineCodeSpan(file.path)} — ${sanitizePromptLine(file.reason)}`);
 }
 
 function renderCheckboxes(lines: readonly string[]): string[] {
   if (lines.length === 0) {
     return ["- [ ] Complete the requested task and verify the result."];
   }
-  return lines.map((line) => `- [ ] ${normalizeText(line)}`);
+  return lines.map((line) => `- [ ] ${sanitizePromptLine(line)}`);
 }
 
 function normalizeText(value: string): string {
   return value.replace(/\s+/g, " ").trim();
+}
+
+function sanitizePromptLine(value: string): string {
+  return sanitizeInlinePromptContent(normalizeText(value));
+}
+
+function renderInlineCodeSpan(value: string): string {
+  const content = sanitizeInlineCodeContent(value);
+  const backtickRuns = [...content.matchAll(/`+/g)].map((match) => match[0].length);
+  const fenceLength = Math.max(1, ...backtickRuns) + (backtickRuns.length > 0 ? 1 : 0);
+  const fence = "`".repeat(fenceLength);
+  const padded = content.startsWith("`") || content.endsWith("`") ? ` ${content} ` : content;
+  return `${fence}${padded}${fence}`;
 }

@@ -16,18 +16,26 @@ export function escapeMarkdownBoundaries(content: string): string {
     .replace(/^(-->)/gm, "\\$1");
 }
 
+function stripPromptMarkup(content: string): string {
+  return content
+    .replace(/<\/?system[^>]*>/gi, "")
+    .replace(/<\/?instructions[^>]*>/gi, "")
+    .replace(/<\/?user-prompt[^>]*>/gi, "")
+    .replace(/<\/?assistant[^>]*>/gi, "");
+}
+
+function stripPromptControls(content: string): string {
+  return content
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "")
+    .replace(/\r\n?/g, "\n");
+}
+
 export function sanitizeInlinePromptContent(content: string): string {
   if (!content || content.trim().length === 0) {
     return "_(no content)_";
   }
 
-  const collapsed = content
-    .replace(/<\/?system[^>]*>/gi, "")
-    .replace(/<\/?instructions[^>]*>/gi, "")
-    .replace(/<\/?user-prompt[^>]*>/gi, "")
-    .replace(/<\/?assistant[^>]*>/gi, "")
-    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "")
-    .replace(/\r\n?/g, "\n")
+  const collapsed = stripPromptControls(stripPromptMarkup(content))
     .split("\n")
     .map((line) => escapeMarkdownBoundaries(line.trim()))
     .filter((line) => line.length > 0)
@@ -39,6 +47,17 @@ export function sanitizeInlinePromptContent(content: string): string {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
+}
+
+export function sanitizeInlineCodeContent(content: string): string {
+  if (!content || content.trim().length === 0) {
+    return "_(no content)_";
+  }
+
+  return stripPromptControls(stripPromptMarkup(content))
+    .split("\n")
+    .map((line) => line.replace(/\t/g, "  "))
+    .join(" / ");
 }
 
 /**
@@ -53,11 +72,7 @@ export function sanitizePromptContent(content: string, label?: string): string {
   const tag = label ?? "user-content";
 
   // Strip known injection patterns
-  let sanitized = content
-    .replace(/<\/?system[^>]*>/gi, "")
-    .replace(/<\/?instructions[^>]*>/gi, "")
-    .replace(/<\/?user-prompt[^>]*>/gi, "")
-    .replace(/<\/?assistant[^>]*>/gi, "");
+  let sanitized = stripPromptMarkup(content);
 
   sanitized = escapeMarkdownBoundaries(sanitized);
 
