@@ -25,10 +25,60 @@ maestro feature list --mission <id> --json
 maestro feature prompt <featureId> --mission <id>
 \`\`\`
 
-**Launch a fresh Codex or Claude handoff:**
+**Shared task workflow:**
+\`\`\`bash
+maestro status --json
+maestro task ready --json --compact --limit 5
+\`\`\`
+
+Task rows live in \`.maestro/tasks/tasks.jsonl\`.
+Live resume state lives in \`.maestro/tasks/continuations/active/<taskId>.json\`.
+Completed resume state moves to \`.maestro/tasks/continuations/completed/<taskId>.json\`.
+Local per-task history lives in \`.maestro/tasks/local-history/<taskId>.jsonl\`.
+Task continuation is the source of truth for normal resume. Standalone handoff packets are for cross-agent transfer.
+
+If you are taking new work:
+\`\`\`bash
+maestro task claim <id>
+maestro task update <id> --status in_progress
+\`\`\`
+
+If you already have an active task, session hooks may show a small pointer.
+Saying \`continue\` or \`resume\` in chat loads the full task continuation.
+These are plain chat intents, not Maestro CLI commands.
+
+**Keep resume state fresh while working:**
+\`\`\`bash
+maestro task update <id> --current-state "..."
+maestro task update <id> --next-action "..."
+maestro task update <id> --add-decision "keep api stable"
+maestro task update <id> --remove-decision "old constraint"
+\`\`\`
+
+Use these when the task meaningfully changes:
+- current state changed
+- next action changed
+- an important decision or constraint changed
+- blockers appeared or were cleared
+
+**Blockers and completion:**
+\`\`\`bash
+maestro task block <blockerId> <blockedId...>
+maestro task unblock <blockerId> <blockedId...>
+maestro task update <id> --status completed --reason "<one-line outcome>"
+maestro task reopen <id>
+\`\`\`
+
+Rules:
+- A task cannot move to \`in_progress\` or \`completed\` while unresolved blockers remain.
+- Completion \`--reason\` becomes shared context for future sessions. Keep it short, factual, and free of secrets.
+- Reopen a completed task before resuming work on it.
+
+**Create a standalone Codex or Claude handoff packet:**
 \`\`\`bash
 maestro handoff "Implement <featureId> for mission <id>" \\
   [--agent codex|claude]     # default: codex
+  [--task-id <id>]           # link the packet to a specific task
   [--model <model>]          # default: codex=gpt-5.4, claude=opus
   [--worktree [slug]]        # create/reuse sibling git worktree
   [--base <branch>]          # base branch for --worktree
@@ -36,17 +86,24 @@ maestro handoff "Implement <featureId> for mission <id>" \\
   [--wait]                   # foreground: block until the agent exits
   [--json]                   # machine-readable launch descriptor
 \`\`\`
-Handoffs run detached by default: the launcher returns immediately with a launch id and the external agent keeps running in the background. Use \`--wait\` only when you need to block until the agent exits (e.g. scripts that consume its final report).
+Handoff packets are portable transfer artifacts built from the active task continuation summary plus recent local task history.
+They run detached by default: the launcher returns immediately with a handoff id and the external agent keeps running in the background.
+Use \`--wait\` only when you need to block until the agent exits.
 
-Every launch persists under \`.maestro/launches/<id>/\`:
+Each handoff persists under \`.maestro/launches/<id>/\`:
 - \`prompt.md\` -- the self-contained briefing sent to the agent
 - \`output.log\` -- live stdout/stderr from the agent process
-- \`launch.json\` -- status, timing, agent, model, and worktree metadata
+- \`launch.json\` -- launch status, timing, agent, model, task linkage, and pickup metadata
 
 **Pick up a standalone handoff packet:**
 \`\`\`bash
 maestro handoff pickup [--id <handoff-id>] [--agent codex|claude --session <id>] [--json]
 \`\`\`
+
+Pickup behavior:
+- picking up a packet immediately takes over the linked task
+- task ownership switches to the current session
+- the picked-up packet is consumed for live work
 
 **Capture a correction rule for future sessions:**
 \`\`\`bash
@@ -71,6 +128,7 @@ maestro task claim <id>                                      # session auto-dete
 maestro task update <id> --status in_progress                # auto-claims if unowned
 maestro task update <id> --current-state "..." --next-action "..."
 maestro task update <id> --add-decision "keep api stable"
+maestro task update <id> --remove-decision "old constraint"
 maestro task update <id> --status completed --reason "<one-line outcome>"
 maestro task reopen <id>
 
@@ -95,12 +153,20 @@ JSON
 \`\`\`
 The whole batch is created under one lock. Name slots in the same batch reference each other via \`blockedBy\` / \`parent\`; strings matching \`tsk-xxxxxx\` point to existing tasks. \`--start <name>\` claims and moves the named task to \`in_progress\` in the same command. Any validation error rejects the whole batch -- nothing is written unless every task is valid. Pass \`batchId\` to make retries idempotent (receipt persists under \`.maestro/tasks/batches/\`).
 
-**Task contract (the two non-obvious rules):**
-- A task cannot move to \`in_progress\` or \`completed\` while any id in its \`blockedBy\` list is unresolved. Resolve blockers first or create them as \`completed\` upstream.
-- Completion \`--reason\` is persisted verbatim as shared context for future sessions. Keep it terse, factual, and free of secrets.
-- Continuation updates live beside the task row. Use \`--current-state\`, \`--next-action\`, and decision flags to keep resume context fresh for the next agent.
+**Working model:**
+- Use task continuation for same-task resume.
+- Use handoff packets for Codex-to-Claude or Claude-to-Codex transfer.
+- Keep \`current-state\`, \`next-action\`, and active decisions fresh so the next agent can continue without guessing.
 
-**When to use**: Start every session with \`maestro status\` to see shared state. Use \`maestro feature prompt\` to read the current feature's briefing with memory context auto-injected. Use \`maestro task ready\` to inspect the shared queue, \`maestro task create ... --status in_progress\` or \`maestro task claim\` to take ownership, and \`maestro handoff pickup\` when another agent handed work back to you.`;
+**Recommended loop:**
+1. Run \`maestro status\` and \`maestro task ready\`.
+2. Claim or resume one task.
+3. Keep the continuation summary updated as the task changes.
+4. Use plain \`continue\` or \`resume\` in chat when returning to active work.
+5. Use \`maestro handoff\` only when transferring work to another agent or session.
+6. Complete or reopen the task explicitly so resume state stays correct.
+
+**When to use**: Start every session with \`maestro status\` to see shared state. Use \`maestro feature prompt\` to read the current feature's briefing with memory context auto-injected. Use \`maestro task ready\` to inspect the queue, \`maestro task claim\` or \`maestro task update <id> --status in_progress\` to take ownership, keep the continuation summary fresh while you work, use plain \`continue\` or \`resume\` in chat to reload the latest task context, and use \`maestro handoff pickup\` when another agent handed work back to you.`;
 
 export const PROJECT_BOOTSTRAP_TEMPLATES: readonly BootstrapTemplateFile[] = [
   {
