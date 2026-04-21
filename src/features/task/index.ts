@@ -71,7 +71,6 @@ export {
   unblockTasks,
 } from "./usecases/manage-task-blockers.usecase.js";
 export { releaseOwnedTasks } from "./usecases/release-owned-tasks.usecase.js";
-export { reopenTask } from "./usecases/reopen-task.usecase.js";
 export {
   readyTasks,
   type TaskBriefing,

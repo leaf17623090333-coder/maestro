@@ -11,7 +11,6 @@ import { claimTask } from "../usecases/claim-task.usecase.js";
 import { unclaimTask } from "../usecases/unclaim-task.usecase.js";
 import { blockTasks, unblockTasks } from "../usecases/manage-task-blockers.usecase.js";
 import { releaseOwnedTasks } from "../usecases/release-owned-tasks.usecase.js";
-import { reopenTask } from "../usecases/reopen-task.usecase.js";
 import { readyTaskPage, readyTasks } from "../usecases/ready-tasks.usecase.js";
 import { captureTaskCandidate } from "../usecases/capture-task-candidate.usecase.js";
 import { planTasks } from "../usecases/plan-tasks.usecase.js";
@@ -572,7 +571,7 @@ function registerReopenCommand(taskCmd: Command, program: Command): void {
       const services = getServices();
       const isJson = resolveJsonFlag(opts, program);
       const previous = await services.taskStore.get(id);
-      const reopened = await reopenTask(services.taskStore, id);
+      const reopened = await services.taskStore.reopen(id);
       const existingSummary = await loadTaskContinuationSummary(services.taskContinuationStore, id);
       const summary = buildTaskContinuationSummary(reopened, existingSummary, {
         currentState: "Task reopened and ready to resume.",
@@ -811,6 +810,7 @@ async function resolveSessionAndReleaseStale(
   await maybeReleaseStaleOwnedTasks(sessionId ? [sessionId] : []);
   return sessionId;
 }
+
 async function releaseMatchingOwnedTasks(
   taskStore: ReturnType<typeof getServices>["taskStore"],
   tasks: readonly Task[],
@@ -852,7 +852,6 @@ function collectReleaseOwnerIds(
 
   return [...ownerIds];
 }
-
 
 function warnAutoClaimed(task: Task, autoClaimed: boolean): void {
   if (autoClaimed && task.assignee) {
