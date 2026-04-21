@@ -43,9 +43,12 @@ maestro task claim <id>
 maestro task update <id> --status in_progress
 \`\`\`
 
-If you already have an active task, session hooks may show a small pointer.
-Saying \`continue\` or \`resume\` in chat loads the full task continuation.
+When a new session starts with an active task, Maestro session hooks automatically
+inject a small continuation pointer into the agent's context.
+Saying \`continue\` or \`resume\` in chat then loads the full continuation state
+(current state, next action, active decisions, recent history).
 These are plain chat intents, not Maestro CLI commands.
+Use \`maestro task show <id>\` to read the raw task and continuation state directly.
 
 **Keep resume state fresh while working:**
 \`\`\`bash
@@ -124,6 +127,7 @@ maestro task create "Title" [--description "..."] [--type task|bug|feature|epic|
 
 # Discover, claim, work, complete
 maestro task ready --json --compact --limit 5
+maestro task show <id>                                       # inspect task details and resume state
 maestro task claim <id>                                      # session auto-detected; --session <id> for explicit override
 maestro task update <id> --status in_progress                # auto-claims if unowned
 maestro task update <id> --current-state "..." --next-action "..."
@@ -134,6 +138,9 @@ maestro task reopen <id>
 
 # Release or re-wire
 maestro task unclaim <id>
+maestro task release-owned <sessionId>                       # release tasks owned by a dead/stale session;
+                                                             # accepts bare ids or canonical owner ids like \`claude-code-pickup-1\`.
+                                                             # Manual \`claude-*\` operator sessions are preserved by \`task ready\`.
 maestro task block <blockerId> <blockedId...>                # blockerId must finish before blockedId is ready
 maestro task unblock <blockerId> <blockedId...>
 \`\`\`
