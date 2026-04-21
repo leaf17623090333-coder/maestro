@@ -19,8 +19,6 @@ It is designed for a workflow where a human operator coordinates multiple termin
 
 Maestro is the shared state layer in the middle. The operator and fresh agent runs both go through the CLI, the CLI persists shared state locally, and Mission Control projects that same state without mutating it.
 
-If you want the full standalone diagram source, see [`assets/diagrams/readme-system-overview.html`](assets/diagrams/readme-system-overview.html).
-
 ## What Maestro Is Not
 
 - It is not a hosted orchestration service or remote agent platform.
@@ -69,8 +67,6 @@ Mission Control gives you a read-only terminal dashboard over the current Maestr
 ![How Maestro work flows](assets/diagrams/readme-how-work-flows.svg)
 
 The loop is deliberately simple: define work, optionally inspect the feature brief, launch a fresh handoff, update progress, validate the outcome, and checkpoint before sealing the milestone.
-
-Standalone diagram source: [`readme-how-work-flows.html`](assets/diagrams/readme-how-work-flows.html)
 
 ## Installation
 
@@ -285,8 +281,6 @@ The prompt itself is stored separately as markdown. Maestro always renders the s
 - `--json` prints the persisted launch record for automation or debugging.
 - `handoff pickup` atomically consumes a packet on first pickup and records the new active agent on the linked task continuation.
 
-Standalone diagram source: [`readme-launch-status.html`](assets/diagrams/readme-launch-status.html)
-
 ### Typical commands
 
 Default Codex launch:
@@ -386,8 +380,6 @@ For non-interactive environments, prefer `--preview`, `--preview all`, or `--jso
 ![Maestro architecture layers](assets/diagrams/readme-architecture-layers.svg)
 
 The codebase follows a hexagonal shape: commands stay thin, `src/services.ts` wires dependencies, use cases depend on domain rules and ports, and adapters implement those ports against the local filesystem and environment.
-
-Standalone diagram source: [`readme-architecture-layers.html`](assets/diagrams/readme-architecture-layers.html)
 
 ## Storage Model
 
