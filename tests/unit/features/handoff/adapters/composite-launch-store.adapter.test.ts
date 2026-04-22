@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { access, mkdtemp, rm } from "node:fs/promises";
+import { access, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { CompositeLaunchStore, FsLaunchStoreAdapter } from "@/features/handoff";
+import { CompositeLaunchStore, FsLaunchStoreAdapter, type HandoffLaunchRecord } from "@/features/handoff";
 
 describe("CompositeLaunchStore", () => {
   let localDir: string;
@@ -57,20 +57,26 @@ describe("CompositeLaunchStore", () => {
     await expect(access(join(globalDir, ".maestro", "launches", record.id, "launch.json"))).rejects.toThrow();
   });
 
-  it("get() returns the local record when both stores have a colliding id", async () => {
-    const localRecord = await createPacket({ via: "local", taskId: "tsk-local" });
-    const globalRecord = await createPacket({ via: "global" });
-    expect(localRecord.id).toBe(globalRecord.id);
+  async function seedAtId(rootDir: string, record: HandoffLaunchRecord): Promise<void> {
+    const launchDir = join(rootDir, ".maestro", "launches", record.id);
+    await mkdir(launchDir, { recursive: true });
+    await writeFile(join(launchDir, "launch.json"), JSON.stringify(record));
+  }
 
-    const fromComposite = await store.get(localRecord.id);
-    expect(fromComposite?.id).toBe(localRecord.id);
+  it("get() returns the local record when both stores have a colliding id", async () => {
+    const globalRecord = await createPacket({ via: "global" });
+    const localTwin: HandoffLaunchRecord = { ...globalRecord, refs: { taskId: "tsk-local" } };
+    await seedAtId(localDir, localTwin);
+
+    const fromComposite = await store.get(globalRecord.id);
+    expect(fromComposite?.id).toBe(globalRecord.id);
     expect(fromComposite?.refs.taskId).toBe("tsk-local");
   });
 
   it("list() merges both stores and dedupes on id with local-first priority", async () => {
-    const localRecord = await createPacket({ via: "local", taskId: "tsk-a" });
     const globalRecord = await createPacket({ via: "global" });
-    expect(localRecord.id).toBe(globalRecord.id);
+    const localTwin: HandoffLaunchRecord = { ...globalRecord, refs: { taskId: "tsk-a" } };
+    await seedAtId(localDir, localTwin);
 
     const merged = await store.list();
     expect(merged).toHaveLength(1);

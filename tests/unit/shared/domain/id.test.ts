@@ -1,47 +1,84 @@
 import { describe, expect, it } from "bun:test";
-import { generateHandoffId } from "@/shared/domain/id.js";
+import { generateHandoffId, HANDOFF_ID_PATTERN } from "@/shared/domain/id.js";
 
 describe("generateHandoffId", () => {
-  const fixedDate = new Date("2026-03-28T12:00:00Z");
-
-  it("generates first ID of the day as 001", () => {
-    const id = generateHandoffId([], fixedDate);
-    expect(id).toBe("2026-03-28-001");
-  });
-
-  it("increments sequence for existing IDs on the same day", () => {
-    const existing = ["2026-03-28-001", "2026-03-28-002"];
-    const id = generateHandoffId(existing, fixedDate);
-    expect(id).toBe("2026-03-28-003");
-  });
-
-  it("ignores IDs from other days", () => {
-    const existing = ["2026-03-27-005", "2026-03-26-001"];
-    const id = generateHandoffId(existing, fixedDate);
-    expect(id).toBe("2026-03-28-001");
-  });
-
-  it("handles gaps in sequence", () => {
-    const existing = ["2026-03-28-001", "2026-03-28-005"];
-    const id = generateHandoffId(existing, fixedDate);
-    expect(id).toBe("2026-03-28-006");
-  });
-
-  it("pads single-digit sequences with zeros", () => {
-    const id = generateHandoffId([], fixedDate);
-    expect(id).toMatch(/^\d{4}-\d{2}-\d{2}-\d{3}$/);
-  });
-
-  it("handles date rollover", () => {
-    const midnight = new Date("2026-04-01T00:00:00Z");
-    const existing = ["2026-03-31-010"];
-    const id = generateHandoffId(existing, midnight);
-    expect(id).toBe("2026-04-01-001");
-  });
-
-  it("uses current date when no date provided", () => {
+  it("generates an adjective-noun-N id", () => {
     const id = generateHandoffId([]);
-    const today = new Date().toISOString().slice(0, 10);
-    expect(id.startsWith(today)).toBe(true);
+    expect(id).toMatch(/^[a-z]+-[a-z]+-\d+$/);
+  });
+
+  it("starts a fresh pair at counter 1", () => {
+    const id = generateHandoffId([]);
+    expect(id.endsWith("-1")).toBe(true);
+  });
+
+  it("increments the counter for the same (adjective, noun) pair", () => {
+    const seen = new Set<string>();
+    for (let i = 0; i < 30; i++) {
+      const first = generateHandoffId([]);
+      const second = generateHandoffId([first]);
+      if (second.startsWith(first.slice(0, first.lastIndexOf("-") + 1))) {
+        const firstSeq = Number(first.slice(first.lastIndexOf("-") + 1));
+        const secondSeq = Number(second.slice(second.lastIndexOf("-") + 1));
+        expect(secondSeq).toBe(firstSeq + 1);
+        seen.add("incremented");
+      } else {
+        expect(second.endsWith("-1")).toBe(true);
+        seen.add("fresh");
+      }
+    }
+    expect(seen.size).toBeGreaterThan(0);
+  });
+
+  it("picks max-in-pair and adds 1 when gaps exist", () => {
+    const existing = ["swift-otter-1", "swift-otter-5"];
+    for (let i = 0; i < 50; i++) {
+      const id = generateHandoffId([...existing, "bold-finch-2"]);
+      if (id.startsWith("swift-otter-")) {
+        expect(id).toBe("swift-otter-6");
+        return;
+      }
+    }
+  });
+
+  it("ignores ids from other pairs", () => {
+    const existing = ["bold-finch-9", "lucky-badger-3"];
+    for (let i = 0; i < 50; i++) {
+      const id = generateHandoffId(existing);
+      if (id.startsWith("bold-finch-")) {
+        expect(id).toBe("bold-finch-10");
+        return;
+      }
+      if (id.startsWith("lucky-badger-")) {
+        expect(id).toBe("lucky-badger-4");
+        return;
+      }
+    }
+  });
+
+  it("ignores legacy date-style ids when counting pair sequence", () => {
+    const existing = ["2026-03-28-001", "2026-03-28-002"];
+    const id = generateHandoffId(existing);
+    expect(id).toMatch(/^[a-z]+-[a-z]+-\d+$/);
+    expect(id.endsWith("-1")).toBe(true);
+  });
+});
+
+describe("HANDOFF_ID_PATTERN", () => {
+  it("matches the new adjective-noun-N format", () => {
+    expect(HANDOFF_ID_PATTERN.test("swift-otter-3")).toBe(true);
+    expect(HANDOFF_ID_PATTERN.test("bold-finch-10")).toBe(true);
+  });
+
+  it("still matches legacy date-style ids", () => {
+    expect(HANDOFF_ID_PATTERN.test("2026-04-22-001")).toBe(true);
+    expect(HANDOFF_ID_PATTERN.test("2026-03-28-999")).toBe(true);
+  });
+
+  it("rejects unsafe path segments", () => {
+    expect(HANDOFF_ID_PATTERN.test("../etc/passwd")).toBe(false);
+    expect(HANDOFF_ID_PATTERN.test("swift-otter")).toBe(false);
+    expect(HANDOFF_ID_PATTERN.test("swift_otter_3")).toBe(false);
+    expect(HANDOFF_ID_PATTERN.test("Swift-Otter-3")).toBe(false);
   });
 });

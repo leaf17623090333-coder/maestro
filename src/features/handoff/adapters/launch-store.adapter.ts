@@ -65,7 +65,7 @@ export class FsLaunchStoreAdapter implements LaunchStorePort {
   }
 
   async update(record: HandoffLaunchRecord): Promise<HandoffLaunchRecord> {
-    assertSafeSegment(record.id, "launch ID", HANDOFF_ID_PATTERN, "digits and dashes in YYYY-MM-DD-NNN format");
+    assertSafeSegment(record.id, "launch ID", HANDOFF_ID_PATTERN, "adjective-noun-N (e.g. swift-otter-3) or legacy YYYY-MM-DD-NNN");
     await writeJson(join(this.resolveLaunchDir(record.id), "launch.json"), record);
     return record;
   }
@@ -76,7 +76,7 @@ export class FsLaunchStoreAdapter implements LaunchStorePort {
     readonly sessionId?: string;
     readonly pickedUpAt: string;
   }): Promise<HandoffLaunchRecord> {
-    assertSafeSegment(input.id, "launch ID", HANDOFF_ID_PATTERN, "digits and dashes in YYYY-MM-DD-NNN format");
+    assertSafeSegment(input.id, "launch ID", HANDOFF_ID_PATTERN, "adjective-noun-N (e.g. swift-otter-3) or legacy YYYY-MM-DD-NNN");
     const lockPath = join(this.resolveLaunchDir(input.id), ".pickup.lock");
     const deadline = Date.now() + PICKUP_LOCK_WAIT_MS;
 
@@ -122,7 +122,7 @@ export class FsLaunchStoreAdapter implements LaunchStorePort {
   }
 
   async get(id: string): Promise<HandoffLaunchRecord | undefined> {
-    assertSafeSegment(id, "launch ID", HANDOFF_ID_PATTERN, "digits and dashes in YYYY-MM-DD-NNN format");
+    assertSafeSegment(id, "launch ID", HANDOFF_ID_PATTERN, "adjective-noun-N (e.g. swift-otter-3) or legacy YYYY-MM-DD-NNN");
     return readJson<HandoffLaunchRecord>(join(this.resolveLaunchDir(id), "launch.json"));
   }
 

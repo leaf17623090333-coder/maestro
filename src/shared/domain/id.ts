@@ -1,32 +1,42 @@
-export const HANDOFF_ID_PATTERN = /^\d{4}-\d{2}-\d{2}-\d{3}$/;
+export const HANDOFF_ID_PATTERN = /^(\d{4}-\d{2}-\d{2}-\d{3}|[a-z]+-[a-z]+-\d+)$/;
+
+const ADJECTIVES = [
+  "bold", "brave", "brisk", "calm", "chill", "clear", "cool", "crisp",
+  "dapper", "eager", "fair", "fancy", "fast", "fine", "firm", "free",
+  "gentle", "glad", "golden", "grand", "happy", "jolly", "keen", "kind",
+  "lively", "loyal", "lucky", "merry", "mild", "misty", "neat", "noble",
+  "proud", "quick", "quiet", "sharp", "shiny", "sleek", "snug", "spry",
+  "steady", "sunny", "swift", "tidy", "vivid", "warm", "witty", "young",
+] as const;
+
+const NOUNS = [
+  "otter", "finch", "badger", "falcon", "fox", "hawk", "heron", "lynx",
+  "owl", "panda", "raven", "robin", "seal", "swan", "tiger", "whale",
+  "wolf", "wren", "bear", "crane", "crow", "deer", "duck", "eagle",
+  "elk", "gecko", "goose", "hare", "ibex", "jay", "koala", "lark",
+  "marten", "moose", "oriole", "panther", "puma", "quail", "rabbit", "salmon",
+  "sparrow", "stoat", "stork", "trout", "turtle", "weasel", "yak", "zebra",
+] as const;
 
 /**
- * Generate a date-sequential handoff ID.
- * Format: YYYY-MM-DD-NNN (e.g. 2026-03-28-001)
+ * Generate a human-friendly handoff id in the form `adjective-noun-N`.
+ * N is the next available counter for that exact (adjective, noun) pair
+ * across the provided `existingIds`, starting at 1.
  */
 export function generateHandoffId(
   existingIds: readonly string[],
-  now: Date = new Date(),
+  _now: Date = new Date(),
 ): string {
-  const datePrefix = formatDatePrefix(now);
-  const todayIds = existingIds.filter((id) => id.startsWith(datePrefix));
-
+  const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]!;
+  const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)]!;
+  const prefix = `${adj}-${noun}-`;
   let maxSeq = 0;
-  for (const id of todayIds) {
-    const seqStr = id.slice(datePrefix.length + 1);
-    const seq = parseInt(seqStr, 10);
-    if (!Number.isNaN(seq) && seq > maxSeq) {
+  for (const id of existingIds) {
+    if (!id.startsWith(prefix)) continue;
+    const seq = Number.parseInt(id.slice(prefix.length), 10);
+    if (Number.isFinite(seq) && seq > maxSeq) {
       maxSeq = seq;
     }
   }
-
-  const nextSeq = String(maxSeq + 1).padStart(3, "0");
-  return `${datePrefix}-${nextSeq}`;
-}
-
-function formatDatePrefix(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+  return `${prefix}${maxSeq + 1}`;
 }
