@@ -2,9 +2,9 @@
 
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-04-21 01:56:37 +07
-**Commit:** 18d66d4c
-**Branch:** main
+**Generated:** 2026-04-22 06:13:30 +0700
+**Commit:** 0e72e7ec
+**Branch:** feat/task-contracts-stack
 
 ## OVERVIEW
 Maestro is a local-first conductor for multi-agent software engineering. It is a single-package Bun/TypeScript CLI with an OpenTUI dashboard, repo-owned agent surfaces, and shared project state under `.maestro/`.
@@ -72,7 +72,7 @@ bun run release:local
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **maestro** (7172 symbols, 13256 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **maestro** (8293 symbols, 15357 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
@@ -127,5 +127,5 @@ Children:
 - [src/AGENTS.md](src/AGENTS.md)
 - [tests/AGENTS.md](tests/AGENTS.md)
 
-Managed by `agents-md-hierarchy`. Edit outside this block.
+Managed by `init-deep`. Edit outside this block.
 <!-- AGENTS-HIERARCHY:END -->

@@ -1,6 +1,7 @@
 import type {
   Task,
   CreateTaskInput,
+  TaskMetadataPatch,
   TaskMutationInput,
   UpdateTaskInput,
   UpdateTaskResult,
@@ -68,6 +69,16 @@ export interface TaskStorePort extends TaskQueryPort {
   /** Reopen a completed task back into the pending queue. */
   reopen(id: string): Promise<Task>;
 
+  /** Delete a task and remove its graph references from the remaining store. */
+  delete(id: string): Promise<Task>;
+
+  /**
+   * Bump `lastActivityAt` on a claimed task without any other state change.
+   * Used by `task heartbeat` so long-running sessions signal they are alive.
+   * Throws if the caller is not the current owner (unless forced).
+   */
+  heartbeat(id: string, sessionId: string, opts?: { force?: boolean }): Promise<Task>;
+
   /**
    * Look up a stored batch receipt for idempotency replay.
    *
@@ -76,5 +87,8 @@ export interface TaskStorePort extends TaskQueryPort {
    * drift detection.
    */
   findBatchReceipt(batchId: string): Promise<BatchResult | undefined>;
+
+  /** Persist internal task metadata without widening the public task update surface. */
+  syncMetadata(id: string, patch: TaskMetadataPatch): Promise<Task>;
 
 }

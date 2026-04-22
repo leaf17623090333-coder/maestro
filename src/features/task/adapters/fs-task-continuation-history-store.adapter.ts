@@ -1,5 +1,6 @@
 import { join } from "node:path";
-import { ensureDir, appendText, readText } from "@/shared/lib/fs.js";
+import { ensureDir, appendText, readText, removeIfExists } from "@/shared/lib/fs.js";
+import { resolveWithin } from "@/shared/lib/path-safety.js";
 import type { TaskContinuationHistoryPort } from "../ports/task-continuation-history.port.js";
 import {
   validateTaskContinuationEvent,
@@ -36,11 +37,15 @@ export class FsTaskContinuationHistoryStoreAdapter implements TaskContinuationHi
     return events.slice(-limit);
   }
 
+  async delete(taskId: string): Promise<void> {
+    await removeIfExists(this.historyPath(taskId));
+  }
+
   private historyDir(): string {
     return join(this.baseDir, MAESTRO_DIR, "tasks", "local-history");
   }
 
   private historyPath(taskId: string): string {
-    return join(this.historyDir(), `${taskId}.jsonl`);
+    return resolveWithin(this.historyDir(), `${taskId}.jsonl`, "Task continuation history path");
   }
 }

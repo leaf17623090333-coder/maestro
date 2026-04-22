@@ -10,11 +10,11 @@
  */
 
 import { join } from "node:path";
-import { open, stat } from "node:fs/promises";
-import { setTimeout as sleep } from "node:timers/promises";
+import { withFileLock } from "@/shared/lib/fs-lock.js";
 import type {
   Task,
   CreateTaskInput,
+  TaskMetadataPatch,
   TaskMutationInput,
   UpdateTaskInput,
   UpdateTaskResult,
@@ -22,7 +22,7 @@ import type {
 import type { BatchResult, CreateBatchInput } from "../domain/task-batch-types.js";
 import type { TaskStorePort } from "../ports/task-store.port.js";
 import { MAESTRO_DIR } from "@/shared/domain/defaults.js";
-import { ensureDir, readText, removeIfExists, writeText } from "@/shared/lib/fs.js";
+import { ensureDir, readText, writeText } from "@/shared/lib/fs.js";
 import { generateTaskId } from "../domain/task-id.js";
 import {
   assertNoBlockCycle,
@@ -45,6 +45,7 @@ import {
   DEFAULT_TASK_TYPE,
   DEFAULT_TASK_PRIORITY,
   DEFAULT_TASK_STATUS,
+  buildTaskReceipt,
 } from "../domain/task-types.js";
 import {
   assertTaskMutationOwnership,
@@ -59,11 +60,6 @@ const LOCK_WAIT_TIMEOUT_MS = 5_000;
 const LOCK_INITIAL_RETRY_DELAY_MS = 10;
 const LOCK_MAX_RETRY_DELAY_MS = 100;
 const LOCK_STALE_MS = 30_000;
-
-interface TaskStoreLockMetadata {
-  readonly pid: number;
-  readonly createdAt: string;
-}
 
 export class JsonlTaskStoreAdapter implements TaskStorePort {
   constructor(private readonly baseDir: string) {}
@@ -255,6 +251,18 @@ export class JsonlTaskStoreAdapter implements TaskStorePort {
         ? existing.closeReason
         : (patch.reason.length === 0 ? undefined : patch.reason);
       const now = new Date().toISOString();
+      const receipt = buildTaskReceipt(existing.receipt, {
+        nextStatus,
+        capturedAt: now,
+        summary: patch.summary,
+        surprise: patch.surprise,
+        verifiedBy: patch.verifiedBy,
+        reasonFallback: reason,
+      });
+      const nextAssignee = autoClaim ? autoClaim.sessionId : existing.assignee;
+      const lastActivityAt = isMutationByOwner(nextAssignee, opts)
+        ? now
+        : existing.lastActivityAt;
 
       const updated: Task = {
         ...existing,
@@ -265,9 +273,11 @@ export class JsonlTaskStoreAdapter implements TaskStorePort {
         status: nextStatus,
         parentId: patch.parentId === "" ? undefined : (patch.parentId ?? existing.parentId),
         labels,
-        assignee: autoClaim ? autoClaim.sessionId : existing.assignee,
+        assignee: nextAssignee,
         claimedAt: autoClaim ? now : existing.claimedAt,
+        lastActivityAt,
         closeReason: nextStatus === "completed" ? reason : existing.closeReason,
+        receipt,
         updatedAt: now,
       };
 
@@ -316,6 +326,7 @@ export class JsonlTaskStoreAdapter implements TaskStorePort {
         ...existing,
         assignee: sessionId,
         claimedAt: existing.claimedAt ?? now,
+        lastActivityAt: now,
         updatedAt: now,
       };
 
@@ -449,6 +460,30 @@ export class JsonlTaskStoreAdapter implements TaskStorePort {
     }
   }
 
+  async syncMetadata(id: string, patch: TaskMetadataPatch): Promise<Task> {
+    return this.withLock(async () => {
+      const tasks = await this.readAll();
+      const existing = tasks.get(id);
+      if (!existing) {
+        throw taskNotFound(id);
+      }
+
+      const updated: Task = {
+        ...existing,
+        contractId: patch.contractId === undefined
+          ? existing.contractId
+          : (patch.contractId ?? undefined),
+        claimedAtCommit: patch.claimedAtCommit === undefined
+          ? existing.claimedAtCommit
+          : (patch.claimedAtCommit ?? undefined),
+      };
+
+      tasks.set(id, updated);
+      await this.writeAll(tasks);
+      return updated;
+    });
+  }
+
   private async writeReceiptFile(result: BatchResult): Promise<void> {
     if (!result.batchId) return;
     const path = this.batchReceiptPath(result.batchId);
@@ -480,6 +515,36 @@ export class JsonlTaskStoreAdapter implements TaskStorePort {
     });
   }
 
+  async heartbeat(id: string, sessionId: string, opts: { force?: boolean } = {}): Promise<Task> {
+    return this.withLock(async () => {
+      const tasks = await this.readAll();
+      const existing = tasks.get(id);
+      if (!existing) {
+        throw taskNotFound(id);
+      }
+      if (existing.status === "completed") {
+        throw taskAlreadyCompleted(id);
+      }
+      if (!existing.assignee) {
+        throw taskNotClaimed(id);
+      }
+      if (existing.assignee !== sessionId && !opts.force) {
+        throw taskClaimOwnedByDifferentSession(id, existing.assignee);
+      }
+
+      const now = new Date().toISOString();
+      const beat: Task = {
+        ...existing,
+        lastActivityAt: now,
+        updatedAt: now,
+      };
+
+      tasks.set(id, beat);
+      await this.writeAll(tasks);
+      return beat;
+    });
+  }
+
   async reopen(id: string): Promise<Task> {
     return this.withLock(async () => {
       const tasks = await this.readAll();
@@ -497,13 +562,70 @@ export class JsonlTaskStoreAdapter implements TaskStorePort {
         status: "pending",
         assignee: undefined,
         claimedAt: undefined,
+        claimedAtCommit: undefined,
+        lastActivityAt: undefined,
         closeReason: undefined,
+        receipt: undefined,
         updatedAt: now,
       };
 
       tasks.set(id, reopened);
       await this.writeAll(tasks);
       return reopened;
+    });
+  }
+
+  async delete(id: string): Promise<Task> {
+    return this.withLock(async () => {
+      const tasks = await this.readAll();
+      const existing = tasks.get(id);
+      if (!existing) {
+        throw taskNotFound(id);
+      }
+
+      const now = new Date().toISOString();
+      tasks.delete(id);
+
+      for (const [taskId, task] of tasks.entries()) {
+        let changed = false;
+        let nextTask = task;
+
+        if (task.parentId === id) {
+          nextTask = {
+            ...nextTask,
+            parentId: undefined,
+            updatedAt: now,
+          };
+          changed = true;
+        }
+
+        const nextBlocks = task.blocks.filter((blockedId) => blockedId !== id);
+        if (!sameValues(task.blocks, nextBlocks)) {
+          nextTask = {
+            ...nextTask,
+            blocks: nextBlocks,
+            updatedAt: now,
+          };
+          changed = true;
+        }
+
+        const nextBlockedBy = task.blockedBy.filter((blockerId) => blockerId !== id);
+        if (!sameValues(task.blockedBy, nextBlockedBy)) {
+          nextTask = {
+            ...nextTask,
+            blockedBy: nextBlockedBy,
+            updatedAt: now,
+          };
+          changed = true;
+        }
+
+        if (changed) {
+          tasks.set(taskId, nextTask);
+        }
+      }
+
+      await this.writeAll(tasks);
+      return existing;
     });
   }
 
@@ -561,82 +683,34 @@ export class JsonlTaskStoreAdapter implements TaskStorePort {
     await writeText(this.tasksPath(), content);
   }
 
-  private async removeStaleLock(lockPath: string): Promise<boolean> {
-    try {
-      const lockStat = await stat(lockPath);
-      if (Date.now() - lockStat.mtimeMs < LOCK_STALE_MS) {
-        return false;
-      }
-      const metadata = await this.readLockMetadata(lockPath);
-      if (metadata && isProcessAlive(metadata.pid)) {
-        return false;
-      }
-      await removeIfExists(lockPath);
-      return true;
-    } catch (error) {
-      const errno = error as NodeJS.ErrnoException;
-      if (errno.code === "ENOENT") {
-        return false;
-      }
-      throw error;
-    }
-  }
-
   private async withLock<T>(fn: () => Promise<T>): Promise<T> {
     await ensureDir(this.tasksDir());
     const lockPath = this.lockPath();
-    const deadline = Date.now() + LOCK_WAIT_TIMEOUT_MS;
-    let retryDelayMs = LOCK_INITIAL_RETRY_DELAY_MS;
-
-    while (true) {
-      try {
-        const handle = await open(lockPath, "wx");
-        try {
-          await handle.writeFile(serializeLockMetadata());
-          return await fn();
-        } finally {
-          await handle.close();
-          await removeIfExists(lockPath);
-        }
-      } catch (error) {
-        const errno = error as NodeJS.ErrnoException;
-        if (errno.code !== "EEXIST") {
-          throw error;
-        }
-        if (await this.removeStaleLock(lockPath)) {
-          continue;
-        }
-        if (Date.now() >= deadline) {
-          throw new MaestroError(`Task store lock is still active: ${lockPath}`, [
-            "Retry once the other task command finishes",
-            `If this lock is stale, remove it manually: rm ${lockPath}`,
-          ]);
-        }
-        await sleep(retryDelayMs);
-        retryDelayMs = Math.min(retryDelayMs * 2, LOCK_MAX_RETRY_DELAY_MS);
-      }
-    }
+    return withFileLock(
+      {
+        lockPath,
+        staleMs: LOCK_STALE_MS,
+        timeoutMs: LOCK_WAIT_TIMEOUT_MS,
+        initialRetryDelayMs: LOCK_INITIAL_RETRY_DELAY_MS,
+        maxRetryDelayMs: LOCK_MAX_RETRY_DELAY_MS,
+        timeoutMessage: `Task store lock is still active: ${lockPath}`,
+        timeoutHints: [
+          "Retry once the other task command finishes",
+          `If this lock is stale, remove it manually: rm ${lockPath}`,
+        ],
+      },
+      fn,
+    );
   }
+}
 
-  private async readLockMetadata(lockPath: string): Promise<TaskStoreLockMetadata | undefined> {
-    const raw = await readText(lockPath);
-    if (!raw) return undefined;
-    try {
-      const parsed = JSON.parse(raw) as Record<string, unknown>;
-      if (typeof parsed.pid !== "number" || !Number.isInteger(parsed.pid)) {
-        return undefined;
-      }
-      if (typeof parsed.createdAt !== "string") {
-        return undefined;
-      }
-      return {
-        pid: parsed.pid,
-        createdAt: parsed.createdAt,
-      };
-    } catch {
-      return undefined;
-    }
-  }
+function isMutationByOwner(
+  nextAssignee: string | undefined,
+  opts: TaskMutationInput,
+): boolean {
+  if (nextAssignee === undefined) return false;
+  if (opts.sessionId === undefined) return false;
+  return nextAssignee === opts.sessionId;
 }
 
 function applyLabelPatch(
@@ -817,28 +891,4 @@ function dedupeValues(values: readonly string[]): readonly string[] {
 
 function sameValues(left: readonly string[], right: readonly string[]): boolean {
   return left.length === right.length && left.every((value, index) => value === right[index]);
-}
-
-function serializeLockMetadata(): string {
-  const metadata: TaskStoreLockMetadata = {
-    pid: process.pid,
-    createdAt: new Date().toISOString(),
-  };
-  return `${JSON.stringify(metadata)}\n`;
-}
-
-function isProcessAlive(pid: number): boolean {
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch (error) {
-    const errno = error as NodeJS.ErrnoException;
-    if (errno.code === "ESRCH") {
-      return false;
-    }
-    if (errno.code === "EPERM") {
-      return true;
-    }
-    return false;
-  }
 }

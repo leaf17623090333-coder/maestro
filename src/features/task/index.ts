@@ -7,6 +7,7 @@ export type {
   UpdateTaskInput,
   ClaimTaskInput,
   UnclaimTaskInput,
+  TaskMetadataPatch,
   ListTasksFilters,
   ReadyTasksFilters,
 } from "./domain/task-types.js";
@@ -59,6 +60,7 @@ export { JsonlTaskStoreAdapter } from "./adapters/jsonl-task-store.adapter.js";
 export { FsCandidateStoreAdapter } from "./adapters/fs-candidate-store.adapter.js";
 export { FsTaskContinuationStoreAdapter } from "./adapters/fs-task-continuation-store.adapter.js";
 export { FsTaskContinuationHistoryStoreAdapter } from "./adapters/fs-task-continuation-history-store.adapter.js";
+export type { Contract } from "./domain/contract/contract-types.js";
 
 export { createTask } from "./usecases/create-task.usecase.js";
 export { showTask } from "./usecases/show-task.usecase.js";
@@ -66,6 +68,7 @@ export { listTasks } from "./usecases/list-tasks.usecase.js";
 export { updateTask } from "./usecases/update-task.usecase.js";
 export { claimTask } from "./usecases/claim-task.usecase.js";
 export { unclaimTask } from "./usecases/unclaim-task.usecase.js";
+export { syncTaskMetadata } from "./usecases/sync-task-metadata.usecase.js";
 export {
   blockTasks,
   unblockTasks,
@@ -104,3 +107,4 @@ export type {
 export { registerTaskCommand } from "./commands/task.command.js";
 export { buildTaskServices } from "./services.js";
 export type { TaskServices } from "./services.js";
+export { transferContractOwnership } from "./usecases/contract/transfer-ownership.usecase.js";

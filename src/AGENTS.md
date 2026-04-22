@@ -50,7 +50,8 @@ Parent:
 Children:
 - [features/AGENTS.md](features/AGENTS.md)
 - [infra/AGENTS.md](infra/AGENTS.md)
+- [shared/AGENTS.md](shared/AGENTS.md)
 - [tui/AGENTS.md](tui/AGENTS.md)
 
-Managed by `agents-md-hierarchy`. Edit outside this block.
+Managed by `init-deep`. Edit outside this block.
 <!-- AGENTS-HIERARCHY:END -->

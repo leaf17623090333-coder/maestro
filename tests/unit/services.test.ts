@@ -51,6 +51,8 @@ describe("services composition root", () => {
       ratchetStore: expect.any(Object),
       projectGraphStore: expect.any(Object),
       taskStore: expect.any(Object),
+      contractStore: expect.any(Object),
+      gitAnchor: expect.any(Object),
       replyStore: expect.any(Object),
     });
   });

@@ -14,7 +14,7 @@ import {
   type TaskContinuationSummary,
 } from "@/features/task";
 import { MaestroError } from "@/shared/errors.js";
-import { output, resolveJsonFlag } from "@/shared/lib/output.js";
+import { output, resolveJsonFlag, warn } from "@/shared/lib/output.js";
 
 export function registerHandoffCommand(program: Command): void {
   const handoffCmd = program
@@ -95,6 +95,7 @@ export function registerHandoffCommand(program: Command): void {
         {
           launchStore: services.launchStore,
           taskStore: services.taskStore,
+          contractStore: services.contractStore,
           continuationStore: services.taskContinuationStore,
           continuationHistory: services.taskContinuationHistory,
         },
@@ -105,6 +106,10 @@ export function registerHandoffCommand(program: Command): void {
           ownerId: actor.ownerId,
         },
       );
+
+      if (result.contractTransferWarning) {
+        warn(result.contractTransferWarning);
+      }
 
       output(isJson, result.record, (record) => formatPickupRecord(record, result.taskId, result.ownerId));
     });

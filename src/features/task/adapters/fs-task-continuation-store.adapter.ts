@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { MAESTRO_DIR } from "@/shared/domain/defaults.js";
 import { ensureDir, fileExists, readJson, removeIfExists, writeJson } from "@/shared/lib/fs.js";
 import { MaestroError } from "@/shared/errors.js";
+import { resolveWithin } from "@/shared/lib/path-safety.js";
 import type { TaskContinuationStorePort } from "../ports/task-continuation-store.port.js";
 import {
   validateTaskContinuationSummary,
@@ -25,8 +26,16 @@ export class FsTaskContinuationStoreAdapter implements TaskContinuationStorePort
   }
 
   async listActive(): Promise<readonly TaskContinuationSummary[]> {
-    const entries = await this.listSummaryFiles("active");
-    const summaries = await Promise.all(entries.map((entry) => this.readSummary(join(this.stateDir("active"), entry))));
+    return this.listSummaries("active");
+  }
+
+  async listCompleted(): Promise<readonly TaskContinuationSummary[]> {
+    return this.listSummaries("completed");
+  }
+
+  private async listSummaries(state: ContinuationState): Promise<readonly TaskContinuationSummary[]> {
+    const entries = await this.listSummaryFiles(state);
+    const summaries = await Promise.all(entries.map((entry) => this.readSummary(join(this.stateDir(state), entry))));
     return summaries
       .filter((summary): summary is TaskContinuationSummary => summary !== undefined)
       .sort((left, right) => right.lastActiveAt.localeCompare(left.lastActiveAt));
@@ -57,6 +66,17 @@ export class FsTaskContinuationStoreAdapter implements TaskContinuationStorePort
     return nextSummary;
   }
 
+  async delete(taskId: string): Promise<void> {
+    await Promise.all([
+      removeIfExists(this.summaryPath("active", taskId)),
+      removeIfExists(this.summaryPath("completed", taskId)),
+    ]);
+  }
+
+  async deleteCompleted(taskId: string): Promise<void> {
+    await removeIfExists(this.summaryPath("completed", taskId));
+  }
+
   private continuationsDir(): string {
     return join(this.baseDir, MAESTRO_DIR, "tasks", "continuations");
   }
@@ -66,7 +86,7 @@ export class FsTaskContinuationStoreAdapter implements TaskContinuationStorePort
   }
 
   private summaryPath(state: ContinuationState, taskId: string): string {
-    return join(this.stateDir(state), `${taskId}.json`);
+    return resolveWithin(this.stateDir(state), `${taskId}.json`, "Task continuation summary path");
   }
 
   private async assertNoSplitState(taskId: string): Promise<void> {

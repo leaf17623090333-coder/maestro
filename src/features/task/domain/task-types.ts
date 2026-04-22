@@ -44,6 +44,13 @@ export const TASK_PRIORITIES: readonly TaskPriority[] = [0, 1, 2, 3, 4] as const
 // Core entity
 // ============================
 
+export interface TaskReceipt {
+  readonly summary: string;
+  readonly surprise?: string;
+  readonly verifiedBy?: readonly string[];
+  readonly capturedAt: string;
+}
+
 export interface Task {
   readonly id: string;
   readonly title: string;
@@ -57,7 +64,11 @@ export interface Task {
   readonly blockedBy: readonly string[];
   readonly assignee?: string;
   readonly claimedAt?: string;
+  readonly contractId?: string;
+  readonly claimedAtCommit?: string;
+  readonly lastActivityAt?: string;
   readonly closeReason?: string;
+  readonly receipt?: TaskReceipt;
   readonly createdAt: string;
   readonly updatedAt: string;
 }
@@ -86,6 +97,18 @@ export interface UpdateTaskInput {
   readonly parentId?: string;
   readonly addLabels?: readonly string[];
   readonly removeLabels?: readonly string[];
+  readonly summary?: string;
+  readonly surprise?: string;
+  readonly verifiedBy?: readonly string[];
+}
+
+export interface BuildTaskReceiptInput {
+  readonly nextStatus: TaskStatus;
+  readonly capturedAt: string;
+  readonly summary?: string;
+  readonly surprise?: string;
+  readonly verifiedBy?: readonly string[];
+  readonly reasonFallback?: string;
 }
 
 export interface TaskMutationInput {
@@ -96,6 +119,11 @@ export interface TaskMutationInput {
 export interface UpdateTaskResult {
   readonly task: Task;
   readonly autoClaimed: boolean;
+}
+
+export interface TaskMetadataPatch {
+  readonly contractId?: string | null;
+  readonly claimedAtCommit?: string | null;
 }
 
 // ============================
@@ -145,4 +173,33 @@ export interface ClaimTaskInput {
 export interface UnclaimTaskInput {
   readonly sessionId: string;
   readonly force?: boolean;
+}
+
+export function buildTaskReceipt(
+  existingReceipt: TaskReceipt | undefined,
+  input: BuildTaskReceiptInput,
+): TaskReceipt | undefined {
+  if (input.nextStatus !== "completed") {
+    return existingReceipt;
+  }
+
+  const summary = nonEmpty(input.summary) ?? nonEmpty(input.reasonFallback);
+  const surprise = nonEmpty(input.surprise);
+  const verifiedBy = input.verifiedBy?.filter((name) => name.length > 0) ?? [];
+
+  if (!summary && !surprise && verifiedBy.length === 0) {
+    return existingReceipt;
+  }
+
+  return {
+    summary: summary ?? "",
+    ...(surprise ? { surprise } : {}),
+    ...(verifiedBy.length > 0 ? { verifiedBy } : {}),
+    capturedAt: input.capturedAt,
+  };
+}
+
+function nonEmpty(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  return trimmed && trimmed.length > 0 ? trimmed : undefined;
 }

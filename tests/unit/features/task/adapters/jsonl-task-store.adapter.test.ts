@@ -246,6 +246,31 @@ describe("JsonlTaskStoreAdapter", () => {
     expect((await fresh.get(task.id))?.closeReason).toBe("shipped");
   });
 
+  it("syncs internal task metadata without widening task update", async () => {
+    const task = await store.create({ title: "Meta" });
+
+    const updated = await store.syncMetadata(task.id, {
+      contractId: "c-a1b2c3",
+      claimedAtCommit: "0123456789abcdef0123456789abcdef01234567",
+    });
+
+    expect(updated.contractId).toBe("c-a1b2c3");
+    expect(updated.claimedAtCommit).toBe("0123456789abcdef0123456789abcdef01234567");
+    expect(updated.updatedAt).toBe(task.updatedAt);
+  });
+
+  it("deletes a task and removes blocker and parent references from the remaining graph", async () => {
+    const blocker = await store.create({ title: "Blocker" });
+    const target = await store.create({ title: "Target", blockedBy: [blocker.id] });
+    const child = await store.create({ title: "Child", parentId: target.id });
+
+    const deleted = await store.delete(target.id);
+    expect(deleted.id).toBe(target.id);
+    expect(await store.get(target.id)).toBeUndefined();
+    expect((await store.get(blocker.id))?.blocks).toEqual([]);
+    expect((await store.get(child.id))?.parentId).toBeUndefined();
+  });
+
     it("releases unresolved tasks owned by a dead session", async () => {
       const task = await store.create({ title: "Owned" });
       await store.claim(task.id, "codex-session-a");
@@ -255,5 +280,24 @@ describe("JsonlTaskStoreAdapter", () => {
       expect(released).toHaveLength(1);
     expect(released[0]?.status).toBe("pending");
     expect(released[0]?.assignee).toBeUndefined();
+  });
+
+  it("reopen clears claimedAtCommit along with other claim-scoped state", async () => {
+    const task = await store.create({ title: "Reopen me" });
+    await store.claim(task.id, "session-a");
+    await store.syncMetadata(task.id, { claimedAtCommit: "deadbeef" });
+    await store.update(
+      task.id,
+      { status: "completed", reason: "done" },
+      { sessionId: "session-a" },
+    );
+
+    const reopened = await store.reopen(task.id);
+    expect(reopened.status).toBe("pending");
+    expect(reopened.assignee).toBeUndefined();
+    expect(reopened.claimedAt).toBeUndefined();
+    expect(reopened.claimedAtCommit).toBeUndefined();
+    // contractId is intentionally preserved so the reopen flow can re-lock
+    // the prior contract for the task.
   });
 });

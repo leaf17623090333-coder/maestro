@@ -14,6 +14,19 @@ import { releaseOwnedTasks } from "../usecases/release-owned-tasks.usecase.js";
 import { readyTaskPage, readyTasks } from "../usecases/ready-tasks.usecase.js";
 import { captureTaskCandidate } from "../usecases/capture-task-candidate.usecase.js";
 import { planTasks } from "../usecases/plan-tasks.usecase.js";
+import { findSimilarTasks } from "../usecases/find-similar-tasks.usecase.js";
+import { heartbeatTask } from "../usecases/heartbeat-task.usecase.js";
+import { closeContractForTask } from "../usecases/contract/close-contract.usecase.js";
+import { computeContractVerdictForTask } from "../usecases/contract/compute-verdict.usecase.js";
+import { loadContractForReopen } from "../usecases/contract/reopen-contract.usecase.js";
+import { transferContractOwnership } from "../usecases/contract/transfer-ownership.usecase.js";
+import { deleteTaskFlow } from "../usecases/delete-task-flow.usecase.js";
+import {
+  pruneLocalTaskState,
+  type PruneKinds,
+} from "../usecases/prune-local-task-state.usecase.js";
+import { STUCK_THRESHOLD_MS, isStuckTask } from "../domain/now-md-format.js";
+import { parseDuration } from "./duration.js";
 import {
   buildTaskContinuationSummary,
   buildTaskOwnerId,
@@ -23,13 +36,16 @@ import {
   parseTaskOwnerId,
   syncTaskContinuation,
 } from "../usecases/task-continuation.usecase.js";
+import { reopenTaskFlow } from "../usecases/reopen-task-flow.usecase.js";
 import type {
   ListTasksFilters,
   ReadyTasksFilters,
   Task,
+  TaskMutationInput,
+  TaskReceipt,
   UpdateTaskInput,
 } from "../domain/task-types.js";
-import { TASK_STATUSES, TASK_TYPES } from "../domain/task-types.js";
+import { TASK_STATUSES, TASK_TYPES, buildTaskReceipt, indexTasksById } from "../domain/task-types.js";
 import {
   buildCreateInput,
   hasAnyPatchField,
@@ -47,15 +63,19 @@ import {
   taskUpdateClaimViaDedicatedCommand,
   taskUpdateOwnershipViaClaim,
 } from "../domain/task-errors.js";
-import { assertTaskMutationOwnership } from "../domain/task-state.js";
+import { assertTaskMutationOwnership, assertTaskUpdateAllowed } from "../domain/task-state.js";
 import {
   buildCompactReadyTaskPayload,
+  formatPruneReport,
   formatTaskBriefingList,
   formatTaskDetail,
   formatTaskShowView,
   formatTaskList,
   formatTaskSummary,
 } from "./task-command-formatters.js";
+import { registerContractCommand } from "./contract.command.js";
+import { syncTaskMetadata } from "../usecases/sync-task-metadata.usecase.js";
+import { resolveTaskSilentMode } from "./command-silence.js";
 
 interface ContinuationEditInput {
   readonly currentState?: string;
@@ -77,14 +97,21 @@ export function registerTaskCommand(program: Command): void {
   registerListCommand(taskCmd, program);
   registerUpdateCommand(taskCmd, program);
   registerClaimCommand(taskCmd, program);
+  registerContractCommand(taskCmd, program);
   registerUnclaimCommand(taskCmd, program);
   registerReleaseOwnedCommand(taskCmd, program);
   registerBlockCommand(taskCmd, program);
   registerUnblockCommand(taskCmd, program);
   registerReopenCommand(taskCmd, program);
+  registerDeleteCommand(taskCmd, program);
+  registerPruneCommand(taskCmd, program);
   registerLegacyDepsCommand(taskCmd);
   registerCloseCommand(taskCmd);
   registerReadyCommand(taskCmd, program);
+  registerSimilarCommand(taskCmd, program);
+  registerMineCommand(taskCmd, program);
+  registerStuckCommand(taskCmd, program);
+  registerHeartbeatCommand(taskCmd, program);
 }
 
 function registerCreateCommand(taskCmd: Command, program: Command): void {
@@ -148,6 +175,8 @@ function registerCreateCommand(taskCmd: Command, program: Command): void {
         task = started;
         warnAutoClaimed(started, autoClaimed);
       }
+
+      await refreshNowMd();
 
       if (opts.silent) {
         console.log(task.id);
@@ -241,6 +270,8 @@ function registerPlanCommand(taskCmd: Command, program: Command): void {
         }
         return lines;
       });
+
+      await refreshNowMd();
     });
 }
 
@@ -277,6 +308,8 @@ function registerQuickCommand(taskCmd: Command, program: Command): void {
         blockedBy: opts.blockedBy,
       });
       const task = await createTask(services.taskStore, input);
+
+      await refreshNowMd();
 
       if (isJson) {
         output(true, { id: task.id }, () => []);
@@ -349,6 +382,11 @@ function registerUpdateCommand(taskCmd: Command, program: Command): void {
     .option("--description <text>", "New description")
     .option("--status <status>", `New status (${TASK_STATUSES.join("|")})`)
     .option("--reason <text>", "Completion reason when --status completed")
+    .option("--summary <text>", "Receipt summary captured on --status completed (defaults to --reason)")
+    .option("--surprise <text>", "Surprise/gotcha captured on --status completed")
+    .option("--verified-by <name>", "Verifier captured on --status completed (repeatable)", appendVerifier, [] as string[])
+    .option("--strict", "Block completion when the contract verdict is broken")
+    .option("--no-contract", "Allow completion without a contract when contracts.default=required")
     .option("--priority <n>", "New priority 0-4")
     .option("--type <type>", `New type (${TASK_TYPES.join("|")})`)
     .option("--parent <id>", "New parent id (empty string clears)")
@@ -362,6 +400,7 @@ function registerUpdateCommand(taskCmd: Command, program: Command): void {
     .option("--add-label <labels>", "Comma-separated labels to add")
     .option("--remove-label <labels>", "Comma-separated labels to remove")
     .addOption(new Option("--claim").hideHelp())
+    .option("--silent", "Print only '<id> <marker>' (for scripts)")
     .option("--json", "Output as JSON")
     .action(async (id: string, opts) => {
       const services = getServices();
@@ -386,10 +425,16 @@ function registerUpdateCommand(taskCmd: Command, program: Command): void {
         parentId: opts.parent,
         addLabels: parseList(opts.addLabel),
         removeLabels: parseList(opts.removeLabel),
+        summary: typeof opts.summary === "string" ? opts.summary : undefined,
+        surprise: typeof opts.surprise === "string" ? opts.surprise : undefined,
+        verifiedBy: Array.isArray(opts.verifiedBy) && opts.verifiedBy.length > 0
+          ? opts.verifiedBy as readonly string[]
+          : undefined,
       };
 
       const hasTaskPatch = hasAnyPatchField(patch);
       const hasContinuationPatch = hasContinuationEdits(continuationEdits);
+      const noContract = opts.contract === false;
 
       if (!hasTaskPatch && !hasContinuationPatch) {
         throw new MaestroError("No update specified", [
@@ -400,10 +445,48 @@ function registerUpdateCommand(taskCmd: Command, program: Command): void {
       }
 
       const sessionId = await resolveSessionAndReleaseStale(opts.session);
+      if (
+        previous?.status === "completed"
+        && patch.status === "completed"
+        && !hasAdditionalCompletedTaskEdits(patch, continuationEdits)
+      ) {
+        if (emitSilentSuccess(isJson, opts, previous)) return;
+        output(isJson, previous, (task) => [
+          `[ok] Task updated: ${task.id}`,
+          `  Status: ${task.status}`,
+          `  Priority: P${task.priority}`,
+          ...(task.assignee ? [`  Assignee: ${task.assignee}`] : []),
+          ...(task.blockedBy.length > 0 ? [`  Blocked by: ${task.blockedBy.join(", ")}`] : []),
+          ...(task.blocks.length > 0 ? [`  Blocks: ${task.blocks.join(", ")}`] : []),
+          ...(task.closeReason ? [`  Reason: ${task.closeReason}`] : []),
+        ]);
+        return;
+      }
+      if (previous?.status === "completed" && patch.status === "completed") {
+        throw completedTaskUpdateRequiresReopen(id);
+      }
+      if (patch.status === "completed" && previous) {
+        await enforceContractCompletionPolicy(previous, patch, {
+          strictFlag: opts.strict === true,
+          noContract,
+        });
+      }
       let updated: Task;
       let autoClaimed = false;
 
       if (hasTaskPatch) {
+        if (previous?.status === "completed" && patch.status === "in_progress") {
+          await preflightCompletedTaskRestart(previous, patch, {
+            sessionId,
+            force: opts.force === true,
+          });
+          await reopenTaskFlow({
+            taskStore: services.taskStore,
+            continuationStore: services.taskContinuationStore,
+            continuationHistory: services.taskContinuationHistory,
+            contractStore: services.contractStore,
+          }, id);
+        }
         const result = await updateTask(
           services.taskStore,
           id,
@@ -420,9 +503,7 @@ function registerUpdateCommand(taskCmd: Command, program: Command): void {
           throw new MaestroError(`Task not found: ${id}`);
         }
         if (previous.status === "completed") {
-          throw new MaestroError(`Task ${id} is already completed and cannot be updated`, [
-            "Reopen the task first if you want to resume or revise its continuation",
-          ]);
+          throw completedTaskUpdateRequiresReopen(id);
         }
         assertTaskMutationOwnership(previous, { sessionId, force: opts.force === true }, "update");
         updated = previous;
@@ -444,6 +525,8 @@ function registerUpdateCommand(taskCmd: Command, program: Command): void {
         continuationEdits,
       );
 
+      if (emitSilentSuccess(isJson, opts, updated)) return;
+
       output(isJson, updated, (task) => [
         `[ok] Task updated: ${task.id}`,
         `  Status: ${task.status}`,
@@ -462,13 +545,21 @@ function registerClaimCommand(taskCmd: Command, program: Command): void {
     .description("Claim exclusive ownership of a task")
     .option("--force", "Take over a task already claimed by another session")
     .option("--busy-check", "Reject the claim if this session already owns unresolved work")
+    .option("--contract-required", "Always print the contract reminder note after claim")
+    .option("--no-contract", "Suppress the contract reminder note for this claim")
     .option("--session <id>", "Use an explicit session id instead of auto-detection")
+    .option("--stale-after <duration>", "Auto-release a dead owner's stale claim after this idle window (default 4h)")
+    .option("--silent", "Print only '<id> <marker>' (for scripts)")
     .option("--json", "Output as JSON")
     .action(async (id: string, opts) => {
       const services = getServices();
       const isJson = resolveJsonFlag(opts, program);
       const sessionId = await resolveOwnershipSessionId(opts.session);
+      if (opts.contractRequired === true && opts.contract === false) {
+        throw new MaestroError("Choose either --contract-required or --no-contract, not both");
+      }
       await maybeReleaseStaleOwnedTasks([sessionId]);
+      await maybeReleaseStaleClaim(id, sessionId, opts.staleAfter);
       const previous = await services.taskStore.get(id);
 
       const claimed = await claimTask(services.taskStore, id, {
@@ -476,6 +567,10 @@ function registerClaimCommand(taskCmd: Command, program: Command): void {
         force: opts.force === true,
         checkBusy: opts.busyCheck === true,
       });
+      if (claimed.contractId) {
+        await maybeTransferClaimedContractOwnership(claimed.id, sessionId);
+      }
+      await maybeAttachClaimAnchor(claimed.id);
       await syncTaskContinuation(
         {
           continuationStore: services.taskContinuationStore,
@@ -483,6 +578,18 @@ function registerClaimCommand(taskCmd: Command, program: Command): void {
         },
         buildClaimContinuationInput(previous, claimed),
       );
+
+      await refreshNowMd();
+      try {
+        await maybeWarnMissingContractAfterClaim(claimed, {
+          contractRequired: opts.contractRequired === true,
+          noContract: opts.contract === false,
+        });
+      } catch {
+        // Contract reminder notes must not block a successful claim.
+      }
+
+      if (emitSilentSuccess(isJson, opts, claimed)) return;
 
       output(isJson, claimed, (task) => [
         `[ok] Task claimed: ${task.id}`,
@@ -498,6 +605,7 @@ function registerUnclaimCommand(taskCmd: Command, program: Command): void {
     .description("Release task ownership")
     .option("--force", "Release a task owned by another session")
     .option("--session <id>", "Use an explicit session id instead of auto-detection")
+    .option("--silent", "Print only '<id> <marker>' (for scripts)")
     .option("--json", "Output as JSON")
     .action(async (id: string, opts) => {
       const services = getServices();
@@ -529,6 +637,10 @@ function registerUnclaimCommand(taskCmd: Command, program: Command): void {
         },
       );
 
+      await refreshNowMd();
+
+      if (emitSilentSuccess(isJson, opts, unclaimed)) return;
+
       output(isJson, unclaimed, (task) => [
         `[ok] Task unclaimed: ${task.id}`,
         `  Status: ${task.status}`,
@@ -540,6 +652,7 @@ function registerReleaseOwnedCommand(taskCmd: Command, program: Command): void {
   taskCmd
     .command("release-owned <sessionId>")
     .description("Release unresolved tasks owned by a dead or stale session")
+    .option("--silent", "Print only '<id> <marker>' per released task (for scripts)")
     .option("--json", "Output as JSON")
     .action(async (sessionId: string, opts) => {
       const services = getServices();
@@ -549,6 +662,13 @@ function registerReleaseOwnedCommand(taskCmd: Command, program: Command): void {
       const before = new Map(beforeTasks.map((task) => [task.id, task] as const));
       const released = await releaseMatchingOwnedTasks(services.taskStore, beforeTasks, trimmedSessionId);
       await syncRecoveredStaleOwnerTasks(services, before, released);
+
+      await refreshNowMd();
+
+      if (!isJson && resolveSilent(opts)) {
+        released.forEach(printSilent);
+        return;
+      }
 
       output(isJson, released, (tasks) => {
         if (tasks.length === 0) {
@@ -566,37 +686,104 @@ function registerReopenCommand(taskCmd: Command, program: Command): void {
   taskCmd
     .command("reopen <id>")
     .description("Restore a completed task to the pending queue")
+    .option("--silent", "Print only '<id> <marker>' (for scripts)")
     .option("--json", "Output as JSON")
     .action(async (id: string, opts) => {
       const services = getServices();
       const isJson = resolveJsonFlag(opts, program);
-      const previous = await services.taskStore.get(id);
-      const reopened = await services.taskStore.reopen(id);
-      const existingSummary = await loadTaskContinuationSummary(services.taskContinuationStore, id);
-      const summary = buildTaskContinuationSummary(reopened, existingSummary, {
-        currentState: "Task reopened and ready to resume.",
-        nextAction: `Resume ${reopened.title}.`,
-        activeAgent: null,
-      });
+      const reopened = await reopenTaskFlow({
+        taskStore: services.taskStore,
+        continuationStore: services.taskContinuationStore,
+        continuationHistory: services.taskContinuationHistory,
+        contractStore: services.contractStore,
+      }, id);
+      await refreshNowMd();
 
-      const restored = await services.taskContinuationStore.reopen(id, summary);
-      if (!restored) {
-        await services.taskContinuationStore.upsertActive(summary);
-      }
-      await services.taskContinuationHistory.append(id, {
-        kind: "task_reopened",
-        at: reopened.updatedAt,
-        summary: previous?.closeReason
-          ? `Reopened after completion: ${previous.closeReason}`
-          : "Reopened and returned to pending",
-        ...(previous?.closeReason ? { reason: previous.closeReason } : {}),
-      });
+      if (emitSilentSuccess(isJson, opts, reopened.task)) return;
 
-      output(isJson, reopened, (task) => [
+      output(isJson, reopened.task, (task) => [
         `[ok] Task reopened: ${task.id}`,
         `  Status: ${task.status}`,
         `  Next: Resume ${task.title}.`,
       ]);
+    });
+}
+
+function registerDeleteCommand(taskCmd: Command, program: Command): void {
+  taskCmd
+    .command("delete <id>")
+    .description("Delete a task and clean up its contract and continuation state")
+    .option("--force", "Delete a task claimed by another session")
+    .option("--session <id>", "Use an explicit session id instead of auto-detection")
+    .option("--silent", "Print only '<id> <marker>' (for scripts)")
+    .option("--json", "Output as JSON")
+    .action(async (id: string, opts) => {
+      const services = getServices();
+      const isJson = resolveJsonFlag(opts, program);
+      const sessionId = await resolveOptionalOwnershipSessionId(opts.session);
+      const actor: TaskMutationInput = {
+        ...(opts.force === true ? { force: true } : {}),
+        ...(sessionId ? { sessionId } : {}),
+      };
+      const deleted = await deleteTaskFlow({
+        taskStore: services.taskStore,
+        continuationStore: services.taskContinuationStore,
+        continuationHistory: services.taskContinuationHistory,
+        contractStore: services.contractStore,
+      }, id, actor);
+      await refreshNowMd();
+
+      if (emitSilentSuccess(isJson, opts, deleted)) return;
+
+      output(isJson, deleted, (task) => [
+        `[ok] Task deleted: ${task.id}`,
+        `  Title: ${task.title}`,
+      ]);
+    });
+}
+
+const DEFAULT_PRUNE_KEEP = 500;
+
+function registerPruneCommand(taskCmd: Command, program: Command): void {
+  taskCmd
+    .command("prune")
+    .description("Bound local per-machine task state (candidates + completed continuations)")
+    .option("--keep <n>", `Keep the most recent N entries per kind (default ${DEFAULT_PRUNE_KEEP})`)
+    .option("--candidates-only", "Only prune .maestro/tasks/candidates/")
+    .option("--continuations-only", "Only prune .maestro/tasks/continuations/completed/")
+    .option("--all", "Purge everything in the targeted directories")
+    .option("--dry-run", "Report what would be purged without deleting")
+    .option("--json", "Output as JSON")
+    .action(async (opts) => {
+      if (opts.candidatesOnly === true && opts.continuationsOnly === true) {
+        throw new MaestroError(
+          "Choose either --candidates-only or --continuations-only, not both",
+        );
+      }
+
+      const isJson = resolveJsonFlag(opts, program);
+      const keep = parseLimit(opts.keep) ?? DEFAULT_PRUNE_KEEP;
+      const kinds: PruneKinds = opts.candidatesOnly === true
+        ? "candidates"
+        : opts.continuationsOnly === true
+          ? "continuations"
+          : "both";
+
+      const services = getServices();
+      const report = await pruneLocalTaskState(
+        {
+          candidateStore: services.taskCandidateStore,
+          continuationStore: services.taskContinuationStore,
+        },
+        {
+          keep,
+          kinds,
+          all: opts.all === true,
+          dryRun: opts.dryRun === true,
+        },
+      );
+
+      output(isJson, report, formatPruneReport);
     });
 }
 
@@ -606,6 +793,7 @@ function registerBlockCommand(taskCmd: Command, program: Command): void {
     .description("Mark this task as blocking the target task ids")
     .option("--force", "Override ownership checks on claimed tasks")
     .option("--session <id>", "Use an explicit session id instead of auto-detection")
+    .option("--silent", "Print only '<id> <marker>' (for scripts)")
     .option("--json", "Output as JSON")
     .action(async (id: string, blockedTaskIds: string[], opts) => {
       const services = getServices();
@@ -666,6 +854,10 @@ function registerBlockCommand(taskCmd: Command, program: Command): void {
         },
       );
 
+      await refreshNowMd();
+
+      if (emitSilentSuccess(isJson, opts, updated)) return;
+
       output(isJson, updated, (task) => [
         `[ok] Blockers added: ${task.id}`,
         ...(task.blocks.length > 0 ? [`  Blocks: ${task.blocks.join(", ")}`] : ["  Blocks: none"]),
@@ -679,6 +871,7 @@ function registerUnblockCommand(taskCmd: Command, program: Command): void {
     .description("Remove blocker edges from this task to the target task ids")
     .option("--force", "Override ownership checks on claimed tasks")
     .option("--session <id>", "Use an explicit session id instead of auto-detection")
+    .option("--silent", "Print only '<id> <marker>' (for scripts)")
     .option("--json", "Output as JSON")
     .action(async (id: string, blockedTaskIds: string[], opts) => {
       const services = getServices();
@@ -734,6 +927,10 @@ function registerUnblockCommand(taskCmd: Command, program: Command): void {
           },
         },
       );
+
+      await refreshNowMd();
+
+      if (emitSilentSuccess(isJson, opts, updated)) return;
 
       output(isJson, updated, (task) => [
         `[ok] Blockers removed: ${task.id}`,
@@ -809,6 +1006,32 @@ async function resolveSessionAndReleaseStale(
   const sessionId = await resolveOptionalOwnershipSessionId(explicitSessionId);
   await maybeReleaseStaleOwnedTasks(sessionId ? [sessionId] : []);
   return sessionId;
+}
+
+async function preflightCompletedTaskRestart(
+  previous: Task,
+  patch: UpdateTaskInput,
+  actor: TaskMutationInput,
+): Promise<void> {
+  const services = getServices();
+  const reopenedTask = buildPreflightReopenedTask(previous);
+  const allTasks = await services.taskStore.all();
+  const tasks = indexTasksById(allTasks.map((task) => task.id === reopenedTask.id ? reopenedTask : task));
+  assertTaskUpdateAllowed(reopenedTask, patch, tasks, actor);
+  await loadContractForReopen(services.contractStore, previous);
+}
+
+function buildPreflightReopenedTask(previous: Task): Task {
+  return {
+    ...previous,
+    status: "pending",
+    assignee: undefined,
+    claimedAt: undefined,
+    lastActivityAt: undefined,
+    closeReason: undefined,
+    receipt: undefined,
+    updatedAt: previous.updatedAt,
+  };
 }
 
 async function releaseMatchingOwnedTasks(
@@ -1026,6 +1249,11 @@ async function applyUpdateContinuation(
   for (const event of input.events) {
     await deps.continuationHistory.append(updated.id, event);
   }
+
+  await refreshNowMd();
+  if (updated.status === "completed" && updated.contractId) {
+    await maybeFinalizeTaskContract(updated);
+  }
 }
 
 function parseContinuationEdits(opts: {
@@ -1143,8 +1371,9 @@ async function maybeReleaseStaleOwnedTasks(skipAssignees: readonly string[] = []
   const services = getServices();
   const tasks = await services.taskStore.all();
   const before = new Map(tasks.map((task) => [task.id, task] as const));
-  const staleOwners = new Set<string>();
   const skipSet = new Set(skipAssignees);
+  const tasksByAssignee = new Map<string, Task[]>();
+  let refreshedNowMd = false;
 
   for (const task of tasks) {
     if (!task.assignee || task.status === "completed") {
@@ -1157,24 +1386,67 @@ async function maybeReleaseStaleOwnedTasks(skipAssignees: readonly string[] = []
     if (!parsed) {
       continue;
     }
-    const session = await services.sessionDetect.lookup(parsed.agent, parsed.sessionId);
-    if (!session) {
-      staleOwners.add(task.assignee);
+    const grouped = tasksByAssignee.get(task.assignee);
+    if (grouped) {
+      grouped.push(task);
+    } else {
+      tasksByAssignee.set(task.assignee, [task]);
     }
   }
 
+  const staleOwners = await collectStaleOwners(services, [...tasksByAssignee.keys()]);
   for (const assignee of staleOwners) {
+    const ownedTasks = tasksByAssignee.get(assignee) ?? [];
     try {
+      await assertStaleContractsReclaimable(ownedTasks);
       const released = await releaseOwnedTasks(services.taskStore, assignee);
       await syncRecoveredStaleOwnerTasks(services, before, released);
       if (released.length > 0) {
+        refreshedNowMd = true;
         warn(`[ok] Released ${released.length} stale task(s) owned by ${assignee}`);
       }
     } catch (error) {
+      if (error instanceof MaestroError && error.message.includes("stale reclaim is blocked by contract policy")) {
+        warn(error.message);
+        continue;
+      }
       const message = error instanceof Error ? error.message : String(error);
       warn(`Stale task recovery failed for ${assignee}: ${message}`);
     }
   }
+
+  if (refreshedNowMd) {
+    await refreshNowMd();
+  }
+}
+
+const STALE_OWNER_LOOKUP_CONCURRENCY = 8;
+
+async function collectStaleOwners(
+  services: ReturnType<typeof getServices>,
+  assignees: readonly string[],
+): Promise<readonly string[]> {
+  const staleOwners = new Set<string>();
+
+  for (let index = 0; index < assignees.length; index += STALE_OWNER_LOOKUP_CONCURRENCY) {
+    const chunk = assignees.slice(index, index + STALE_OWNER_LOOKUP_CONCURRENCY);
+    const statuses = await Promise.all(chunk.map(async (assignee) => {
+      const parsed = parseTaskOwnerId(assignee);
+      if (!parsed) {
+        return undefined;
+      }
+      const session = await services.sessionDetect.lookup(parsed.agent, parsed.sessionId);
+      return session ? undefined : assignee;
+    }));
+
+    for (const assignee of statuses) {
+      if (assignee) {
+        staleOwners.add(assignee);
+      }
+    }
+  }
+
+  return [...staleOwners];
 }
 
 async function syncRecoveredStaleOwnerTasks(
@@ -1218,4 +1490,439 @@ async function maybeCaptureCompletionHint(task: Task): Promise<void> {
     const message = error instanceof Error ? error.message : String(error);
     warn(`Task ${task.id} completed, but hint capture failed: ${message}`);
   }
+}
+
+async function maybeAttachClaimAnchor(taskId: string): Promise<void> {
+  try {
+    const services = getServices();
+    const claimedAtCommit = await services.gitAnchor.resolveHeadCommit(process.cwd());
+    if (!claimedAtCommit) {
+      return;
+    }
+    await syncTaskMetadata(services.taskStore, taskId, { claimedAtCommit });
+  } catch {
+    // Claim anchor is best-effort and should not block ownership.
+  }
+}
+
+async function maybeWarnMissingContractAfterClaim(
+  task: Task,
+  opts: {
+    readonly contractRequired: boolean;
+    readonly noContract: boolean;
+  },
+): Promise<void> {
+  if (task.contractId || opts.noContract) {
+    return;
+  }
+
+  const services = getServices();
+  const config = await services.config.load(process.cwd());
+  const policy = opts.contractRequired
+    ? "required"
+    : (config.contracts?.default ?? "prompt");
+
+  if (policy === "optional") {
+    return;
+  }
+  if (policy === "prompt" && !process.stderr.isTTY) {
+    return;
+  }
+
+  const message = policy === "required"
+    ? `Task ${task.id} requires a task contract before substantial work. Create and lock one: maestro task contract new ${task.id} && maestro task contract lock ${task.id}`
+    : `Consider creating a task contract before you start: maestro task contract new ${task.id} && maestro task contract lock ${task.id}`;
+  warn(message);
+}
+
+async function enforceContractCompletionPolicy(
+  task: Task,
+  patch: UpdateTaskInput,
+  opts: { readonly strictFlag: boolean; readonly noContract: boolean },
+): Promise<void> {
+  const services = getServices();
+  const config = await services.config.load(process.cwd());
+
+  if (!task.contractId) {
+    if (!opts.noContract && config.contracts?.default === "required") {
+      throw new MaestroError(`Task ${task.id} requires a locked contract before completion`, [
+        `Create one: maestro task contract new ${task.id}`,
+        `Or bypass the requirement for this completion only: maestro task update ${task.id} --status completed --no-contract ...`,
+      ]);
+    }
+    return;
+  }
+
+  if (opts.noContract) {
+    throw new MaestroError(`Task ${task.id} already has contract ${task.contractId}; --no-contract cannot ignore it`, [
+      "Drop --no-contract and either lock the contract or discard it first",
+    ]);
+  }
+
+  const contract = await services.contractStore.get(task.contractId);
+  if (!contract) {
+    throw new MaestroError(`Contract ${task.contractId} not found for task ${task.id}`, [
+      "Inspect .maestro/tasks/contracts/ for corruption or stale state",
+    ]);
+  }
+  if (contract.status === "draft") {
+    throw new MaestroError(`Contract ${contract.id} is still draft`, [
+      `Lock it first: maestro task contract lock ${contract.id}`,
+    ]);
+  }
+  if (contract.status === "discarded" || contract.status === "fulfilled" || contract.status === "broken") {
+    return;
+  }
+
+  const strict = opts.strictFlag || contract.configSnapshot.strict;
+  if (!strict) {
+    return;
+  }
+
+  const preview = await computeContractVerdictForTask(
+    services.contractStore,
+    services.gitAnchor,
+    contract,
+    {
+      assignee: task.assignee,
+      receipt: previewTaskReceipt(task, patch),
+      updatedAt: new Date().toISOString(),
+    },
+    undefined,
+    await services.gitAnchor.resolveRepoRoot(process.cwd()),
+  );
+
+  if (!preview.verdict.fulfilled) {
+    throw new MaestroError(`Contract ${contract.id} is broken and strict mode refused completion`, [
+      formatVerdictHint(preview.verdict),
+      `Inspect the contract: maestro task contract show ${contract.id} --json`,
+    ]);
+  }
+}
+
+function previewTaskReceipt(task: Task, patch: UpdateTaskInput): TaskReceipt | undefined {
+  return buildTaskReceipt(task.receipt, {
+    nextStatus: "completed",
+    capturedAt: new Date().toISOString(),
+    summary: patch.summary,
+    surprise: patch.surprise,
+    verifiedBy: patch.verifiedBy,
+    reasonFallback: patch.reason,
+  });
+}
+
+function hasAdditionalCompletedTaskEdits(
+  patch: UpdateTaskInput,
+  continuationEdits: ContinuationEditInput,
+): boolean {
+  return (
+    patch.title !== undefined
+    || patch.description !== undefined
+    || patch.reason !== undefined
+    || patch.priority !== undefined
+    || patch.type !== undefined
+    || patch.parentId !== undefined
+    || (patch.addLabels !== undefined && patch.addLabels.length > 0)
+    || (patch.removeLabels !== undefined && patch.removeLabels.length > 0)
+    || patch.summary !== undefined
+    || patch.surprise !== undefined
+    || (patch.verifiedBy !== undefined && patch.verifiedBy.length > 0)
+    || hasContinuationEdits(continuationEdits)
+  );
+}
+
+function completedTaskUpdateRequiresReopen(id: string): MaestroError {
+  return new MaestroError(`Task ${id} is already completed and cannot be updated`, [
+    "Reopen the task first if you want to revise its receipt or continuation",
+  ]);
+}
+
+function formatVerdictHint(verdict: {
+  readonly outOfScopeFiles: readonly string[];
+  readonly forbiddenTouched: readonly string[];
+  readonly unmetCriteria: readonly Array<{ readonly text: string }>;
+  readonly capExceeded?: { readonly actual: number; readonly cap: number };
+}): string {
+  if (verdict.outOfScopeFiles.length > 0) {
+    return `Out of scope: ${verdict.outOfScopeFiles.join(", ")}`;
+  }
+  if (verdict.forbiddenTouched.length > 0) {
+    return `Forbidden files touched: ${verdict.forbiddenTouched.join(", ")}`;
+  }
+  if (verdict.unmetCriteria.length > 0) {
+    return `Unmet criteria: ${verdict.unmetCriteria.map((item) => item.text).join(" | ")}`;
+  }
+  if (verdict.capExceeded) {
+    return `Touched ${verdict.capExceeded.actual} files, exceeding the cap of ${verdict.capExceeded.cap}`;
+  }
+  return "Inspect the stored verdict for details.";
+}
+
+async function maybeFinalizeTaskContract(task: Task): Promise<void> {
+  try {
+    const services = getServices();
+    await closeContractForTask(
+      services.contractStore,
+      services.gitAnchor,
+      task,
+      await services.gitAnchor.resolveRepoRoot(process.cwd()),
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    warn(`Task ${task.id} completed, but contract close failed: ${message}`);
+  }
+}
+
+async function maybeTransferClaimedContractOwnership(
+  taskId: string,
+  newActor: string,
+  reason: "claim_reclaim" | "handoff_pickup" = "claim_reclaim",
+): Promise<void> {
+  try {
+    const services = getServices();
+    await transferContractOwnership(services.contractStore, taskId, newActor, reason);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    warn(`Task ${taskId} kept its new owner, but contract ownership transfer failed: ${message}`);
+  }
+}
+
+async function refreshNowMd(): Promise<void> {
+  try {
+    const services = getServices();
+    const tasks = await services.taskStore.all();
+    await services.taskNowMdWriter.write(tasks);
+  } catch {
+    // NOW.md is a derived view; never block a mutation on it
+  }
+}
+
+const DEFAULT_STALE_AFTER_MS = 4 * 60 * 60 * 1000;
+
+async function maybeReleaseStaleClaim(
+  taskId: string,
+  newSessionId: string,
+  staleAfterRaw: unknown,
+): Promise<void> {
+  const services = getServices();
+  const task = await services.taskStore.get(taskId);
+  if (!task || !task.assignee || task.assignee === newSessionId) {
+    return;
+  }
+
+  const thresholdMs = typeof staleAfterRaw === "string"
+    ? parseDuration(staleAfterRaw, "--stale-after")
+    : DEFAULT_STALE_AFTER_MS;
+
+  const last = lastStaleClaimActivityMs(task);
+  if (last === undefined) {
+    return;
+  }
+  const idleMs = Date.now() - last;
+  if (idleMs < thresholdMs) {
+    return;
+  }
+
+  const parsed = parseTaskOwnerId(task.assignee);
+  if (!parsed) {
+    return;
+  }
+  const session = await services.sessionDetect.lookup(parsed.agent, parsed.sessionId);
+  if (session) {
+    return;
+  }
+
+  const ownedTasks = (await services.taskStore.all()).filter((candidate) =>
+    candidate.assignee === task.assignee && candidate.status !== "completed"
+  );
+  await assertStaleContractsReclaimable(ownedTasks);
+  const before = new Map(ownedTasks.map((ownedTask) => [ownedTask.id, ownedTask] as const));
+  const released = await releaseOwnedTasks(services.taskStore, task.assignee);
+  await syncRecoveredStaleOwnerTasks(services, before, released);
+  if (released.length > 0) {
+    warn(`Released stale-claim (auto-released) on ${task.id} from ${task.assignee}`);
+  }
+}
+
+function lastStaleClaimActivityMs(task: Pick<Task, "lastActivityAt" | "updatedAt">): number | undefined {
+  const preferred = task.lastActivityAt ? Date.parse(task.lastActivityAt) : Number.NaN;
+  if (Number.isFinite(preferred)) {
+    return preferred;
+  }
+
+  const fallback = Date.parse(task.updatedAt);
+  return Number.isFinite(fallback) ? fallback : undefined;
+}
+
+async function assertStaleContractsReclaimable(tasks: readonly Task[]): Promise<void> {
+  const services = getServices();
+  for (const task of tasks) {
+    if (!task.contractId) {
+      continue;
+    }
+
+    const contract = await services.contractStore.get(task.contractId);
+    if (!contract || (contract.status !== "locked" && contract.status !== "amended")) {
+      continue;
+    }
+    if (contract.configSnapshot.staleReclaimContractPolicy !== "block") {
+      continue;
+    }
+
+    throw new MaestroError(
+      `Task ${task.id} has active contract ${contract.id}; stale reclaim is blocked by contract policy`,
+      [
+        `Inspect the contract first: maestro task contract show ${contract.id}`,
+        `Release the stale owner manually once reviewed: maestro task release-owned ${task.assignee}`,
+      ],
+    );
+  }
+}
+
+function appendVerifier(value: string, previous: string[]): string[] {
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return previous;
+  }
+  return [...previous, trimmed];
+}
+
+function resolveSilent(opts: { silent?: unknown }): boolean {
+  return resolveTaskSilentMode(opts);
+}
+
+const STATUS_MARKER: Record<Task["status"], string> = {
+  pending: ".",
+  in_progress: ">",
+  completed: "x",
+};
+
+function printSilent(task: Task): void {
+  console.log(`${task.id} ${STATUS_MARKER[task.status]}`);
+}
+
+function emitSilentSuccess(
+  isJson: boolean,
+  opts: { silent?: unknown },
+  task: Task,
+): boolean {
+  if (isJson || !resolveSilent(opts)) return false;
+  printSilent(task);
+  return true;
+}
+
+function registerSimilarCommand(taskCmd: Command, program: Command): void {
+  taskCmd
+    .command("similar <id>")
+    .description("Show past tasks with keyword overlap across title, completion reason, receipt text, and linked contract text")
+    .option("--limit <n>", "Maximum results (default 5, 0 = unlimited)")
+    .option("--json", "Output as JSON")
+    .action(async (id: string, opts) => {
+      const services = getServices();
+      const isJson = resolveJsonFlag(opts, program);
+      const limit = opts.limit === undefined ? 5 : parseLimit(opts.limit) ?? 5;
+
+      const matches = await findSimilarTasks(services.taskStore, id, limit, services.contractStore);
+
+      output(isJson, matches, (results) => {
+        if (results.length === 0) {
+          return ["No similar tasks found"];
+        }
+        const lines: string[] = [`${results.length} similar task(s)`, ""];
+        for (const match of results) {
+          const { task } = match;
+          const title = task.title.length > 40 ? `${task.title.slice(0, 37)}...` : task.title;
+          lines.push(`${task.id}  ${task.status.padEnd(12)}  x${match.overlap}  ${title}`);
+          if (task.receipt?.summary) {
+            const summary = truncate(task.receipt.summary, 80);
+            lines.push(`  summary: ${summary}`);
+          }
+          if (task.receipt?.surprise) {
+            const surprise = truncate(task.receipt.surprise, 80);
+            lines.push(`  surprise: ${surprise}`);
+          }
+        }
+        return lines;
+      });
+    });
+}
+
+function registerMineCommand(taskCmd: Command, program: Command): void {
+  taskCmd
+    .command("mine")
+    .description("List tasks owned by the current session")
+    .option("--session <id>", "Use an explicit session id instead of auto-detection")
+    .option("--status <status>", `Filter by status (${TASK_STATUSES.join("|")})`)
+    .option("--limit <n>", "Maximum tasks to return")
+    .option("--json", "Output as JSON")
+    .action(async (opts) => {
+      const services = getServices();
+      const isJson = resolveJsonFlag(opts, program);
+      const sessionId = await resolveOwnershipSessionId(opts.session);
+
+      const filters: ListTasksFilters = {
+        status: parseStatus(opts.status),
+        limit: parseLimit(opts.limit),
+        assignee: sessionId,
+      };
+      const tasks = await listTasks(services.taskStore, filters);
+      output(isJson, tasks, formatTaskList);
+    });
+}
+
+function registerStuckCommand(taskCmd: Command, program: Command): void {
+  taskCmd
+    .command("stuck")
+    .description("List in_progress tasks with no activity for a while")
+    .option("--older-than <duration>", "Inactivity threshold, e.g. 4h, 30m, 2d (default 4h)")
+    .option("--json", "Output as JSON")
+    .action(async (opts) => {
+      const services = getServices();
+      const isJson = resolveJsonFlag(opts, program);
+
+      const thresholdMs = typeof opts.olderThan === "string"
+        ? parseDuration(opts.olderThan, "--older-than")
+        : STUCK_THRESHOLD_MS;
+      const now = new Date();
+
+      const all = await services.taskStore.all();
+      const stuck = all
+        .filter((task) => task.status === "in_progress" && isStuckTask(task, now, thresholdMs))
+        .slice()
+        .sort((a, b) => (a.lastActivityAt ?? a.updatedAt).localeCompare(b.lastActivityAt ?? b.updatedAt));
+
+      output(isJson, stuck, formatTaskList);
+    });
+}
+
+function truncate(text: string, max: number): string {
+  return text.length > max ? `${text.slice(0, max - 3)}...` : text;
+}
+
+function registerHeartbeatCommand(taskCmd: Command, program: Command): void {
+  taskCmd
+    .command("heartbeat <id>")
+    .description("Bump the task's lastActivityAt timestamp without any other state change")
+    .option("--force", "Heartbeat a task owned by another session")
+    .option("--session <id>", "Use an explicit session id instead of auto-detection")
+    .option("--silent", "Print only '<id> <marker>' (for scripts)")
+    .option("--json", "Output as JSON")
+    .action(async (id: string, opts) => {
+      const services = getServices();
+      const isJson = resolveJsonFlag(opts, program);
+      const sessionId = await resolveOwnershipSessionId(opts.session);
+
+      const task = await heartbeatTask(services.taskStore, id, sessionId, {
+        force: opts.force === true,
+      });
+
+      await refreshNowMd();
+
+      if (emitSilentSuccess(isJson, opts, task)) return;
+
+      output(isJson, task, (t) => [
+        `[ok] Task heartbeat: ${t.id}`,
+        `  Last activity: ${t.lastActivityAt ?? "n/a"}`,
+      ]);
+    });
 }
