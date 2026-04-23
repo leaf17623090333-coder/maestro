@@ -1,6 +1,22 @@
 import { describe, expect, it } from "bun:test";
 import { listHandoffs } from "@/features/handoff";
+import type { Task } from "@/features/task";
 import { makeHandoffRecord, mockHandoffStore } from "../../../../helpers/mocks.js";
+
+function makeTask(id: string, status: Task["status"]): Task {
+  return {
+    id,
+    title: `Task ${id}`,
+    type: "task",
+    priority: 2,
+    status,
+    labels: [],
+    blocks: [],
+    blockedBy: [],
+    createdAt: "2026-04-23T00:00:00.000Z",
+    updatedAt: "2026-04-23T00:00:00.000Z",
+  };
+}
 
 describe("listHandoffs", () => {
   const open1 = makeHandoffRecord({ id: "alpha-fox-1", createdAt: "2026-04-20T00:00:00.000Z" });
@@ -44,16 +60,44 @@ describe("listHandoffs", () => {
     const store = mockHandoffStore([open1, stale]);
     const taskStore = {
       async get(id: string) {
-        return id === "tsk-done" ? { id, status: "completed" } : undefined;
+        return id === "tsk-done" ? makeTask(id, "completed") : undefined;
       },
     };
 
-    const result = await listHandoffs(store, { openOnly: true, taskStore });
+    const result = await listHandoffs(store, {
+      openOnly: true,
+      taskStore,
+      currentProjectRoot: "/src",
+    });
     expect(result.map((r) => r.id)).toEqual(["alpha-fox-1"]);
 
     const reconciled = await store.get("stale-heron-5");
     expect(reconciled?.status).toBe("completed");
     expect(reconciled?.consumedAt).toBeUndefined();
+  });
+
+  it("does not reconcile foreign-project packets that reuse a completed local task id", async () => {
+    const foreign = makeHandoffRecord({
+      id: "foreign-heron-6",
+      createdAt: "2026-04-23T02:00:00.000Z",
+      refs: { taskId: "tsk-done" },
+      status: "launched",
+      sourceDir: "/repo/other",
+    });
+    const store = mockHandoffStore([foreign]);
+
+    const result = await listHandoffs(store, {
+      openOnly: true,
+      taskStore: {
+        async get(id: string) {
+          return id === "tsk-done" ? makeTask(id, "completed") : undefined;
+        },
+      },
+      currentProjectRoot: "/repo/current",
+    });
+
+    expect(result.map((r) => r.id)).toEqual(["foreign-heron-6"]);
+    expect((await store.get("foreign-heron-6"))?.status).toBe("launched");
   });
 
   it("returns an empty array when no records exist", async () => {

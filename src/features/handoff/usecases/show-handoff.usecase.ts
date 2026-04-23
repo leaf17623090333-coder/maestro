@@ -8,6 +8,7 @@ export async function showHandoff(
   id: string,
   options: {
     readonly taskStore?: Pick<TaskQueryPort, "get">;
+    readonly currentProjectRoot?: string;
   } = {},
 ): Promise<HandoffRecord> {
   const record = await store.get(id);
@@ -16,8 +17,12 @@ export async function showHandoff(
       "Run `maestro handoff list` to see available packets",
     ]);
   }
-  if (!options.taskStore) {
+  if (!options.taskStore || !options.currentProjectRoot) {
     return record;
   }
-  return reconcileHandoffRecord({ handoffStore: store, taskStore: options.taskStore }, record);
+  return reconcileHandoffRecord({
+    handoffStore: store,
+    taskStore: options.taskStore,
+    currentProjectRoot: options.currentProjectRoot,
+  }, record);
 }

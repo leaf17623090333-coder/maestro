@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { FsHandoffStoreAdapter } from "@/features/handoff";
@@ -217,6 +217,60 @@ describe("task + handoff pickup CLI", () => {
       env: baseEnv(tmpDir),
     });
     expect(shownA.exitCode).toBe(0);
+    expect((await handoffStore.get(handoff.id))?.status).toBe("launched");
+  }, SLOW_CLI_TIMEOUT_MS);
+
+  it("does not reconcile a foreign project's stale handoff when task ids collide in the global store", async () => {
+    const sharedHome = join(tmpDir, "shared-home");
+    const projectA = join(tmpDir, "project-a");
+    const projectB = join(tmpDir, "project-b");
+
+    await mkdir(sharedHome, { recursive: true });
+    await mkdir(projectA, { recursive: true });
+    await mkdir(projectB, { recursive: true });
+    await initGitRepo(projectA);
+    await initGitRepo(projectB);
+    expect((await runCli(["init"], projectA, { env: baseEnv(sharedHome) })).exitCode).toBe(0);
+    expect((await runCli(["init"], projectB, { env: baseEnv(sharedHome) })).exitCode).toBe(0);
+
+    const created = await runCli(["task", "create", "project-b task", "--json"], projectB, {
+      env: baseEnv(sharedHome),
+    });
+    expect(created.exitCode).toBe(0);
+    const task = expectJson<{ id: string }>(created);
+
+    const started = await runCli(["task", "update", task.id, "--status", "in_progress", "--json"], projectB, {
+      env: baseEnv(sharedHome),
+    });
+    expect(started.exitCode).toBe(0);
+
+    const handoffStore = new FsHandoffStoreAdapter(sharedHome);
+    const handoff = await handoffStore.create({
+      task: "foreign task-id collision",
+      name: "foreign task-id collision",
+      agent: "codex",
+      model: "gpt-5.4",
+      wait: false,
+      sourceDir: projectA,
+      targetDir: projectA,
+      refs: { taskId: task.id },
+      prompt: "## Task\n\nforeign task-id collision\n",
+    });
+    await handoffStore.update({ ...handoff, status: "launched" });
+
+    const completed = await runCli(
+      ["task", "update", task.id, "--status", "completed", "--reason", "done", "--json"],
+      projectB,
+      { env: baseEnv(sharedHome) },
+    );
+    expect(completed.exitCode).toBe(0);
+    expect((await handoffStore.get(handoff.id))?.status).toBe("launched");
+
+    const shown = await runCli(["task", "show", task.id, "--json"], projectB, {
+      env: baseEnv(sharedHome),
+    });
+    expect(shown.exitCode).toBe(0);
+    expect(expectJson<{ openHandoffs?: string[] }>(shown).openHandoffs ?? []).toEqual([]);
     expect((await handoffStore.get(handoff.id))?.status).toBe("launched");
   }, SLOW_CLI_TIMEOUT_MS);
 });

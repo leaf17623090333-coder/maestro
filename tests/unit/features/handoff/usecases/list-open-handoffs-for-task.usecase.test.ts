@@ -1,6 +1,22 @@
 import { describe, expect, it } from "bun:test";
 import { listOpenHandoffsForTask } from "@/features/handoff";
+import type { Task } from "@/features/task";
 import { makeHandoffRecord, mockHandoffStore } from "../../../../helpers/mocks.js";
+
+function makeTask(id: string, status: Task["status"]): Task {
+  return {
+    id,
+    title: `Task ${id}`,
+    type: "task",
+    priority: 2,
+    status,
+    labels: [],
+    blocks: [],
+    blockedBy: [],
+    createdAt: "2026-04-23T00:00:00.000Z",
+    updatedAt: "2026-04-23T00:00:00.000Z",
+  };
+}
 
 describe("listOpenHandoffsForTask", () => {
   it("returns open packets whose refs.taskId matches, newest first", async () => {
@@ -27,7 +43,9 @@ describe("listOpenHandoffsForTask", () => {
     });
 
     const store = mockHandoffStore([r1, r2, consumed, other]);
-    const result = await listOpenHandoffsForTask(store, "tsk-abc123");
+    const result = await listOpenHandoffsForTask(store, "tsk-abc123", {
+      currentProjectRoot: "/src",
+    });
     expect(result).toEqual(["beta-bear-2", "alpha-fox-1"]);
   });
 
@@ -35,7 +53,9 @@ describe("listOpenHandoffsForTask", () => {
     const store = mockHandoffStore([
       makeHandoffRecord({ id: "x-y-1", createdAt: "2026-04-22T00:00:00.000Z", refs: {} }),
     ]);
-    const result = await listOpenHandoffsForTask(store, "tsk-missing");
+    const result = await listOpenHandoffsForTask(store, "tsk-missing", {
+      currentProjectRoot: "/src",
+    });
     expect(result).toEqual([]);
   });
 
@@ -50,9 +70,10 @@ describe("listOpenHandoffsForTask", () => {
     ]);
 
     const result = await listOpenHandoffsForTask(store, "tsk-abc123", {
+      currentProjectRoot: "/src",
       taskStore: {
         async get(id: string) {
-          return id === "tsk-abc123" ? { id, status: "completed" } : undefined;
+          return id === "tsk-abc123" ? makeTask(id, "completed") : undefined;
         },
       },
     });
@@ -78,10 +99,11 @@ describe("listOpenHandoffsForTask", () => {
     ]);
 
     const result = await listOpenHandoffsForTask(store, "tsk-abc123", {
+      currentProjectRoot: "/src",
       taskStore: {
         async get(id: string) {
           return id === "tsk-abc123" || id === "tsk-xyz789"
-            ? { id, status: "completed" }
+            ? makeTask(id, "completed")
             : undefined;
         },
       },
@@ -90,5 +112,27 @@ describe("listOpenHandoffsForTask", () => {
     expect(result).toEqual([]);
     expect((await store.get("stale-ibis-9"))?.status).toBe("completed");
     expect((await store.get("other-heron-3"))?.status).toBe("launched");
+  });
+
+  it("ignores foreign-project packets that reuse the same task id", async () => {
+    const local = makeHandoffRecord({
+      id: "local-lark-1",
+      createdAt: "2026-04-23T00:00:00.000Z",
+      refs: { taskId: "tsk-abc123" },
+      sourceDir: "/repo/current",
+    });
+    const foreign = makeHandoffRecord({
+      id: "foreign-ibis-2",
+      createdAt: "2026-04-23T01:00:00.000Z",
+      refs: { taskId: "tsk-abc123" },
+      sourceDir: "/repo/other",
+    });
+
+    const store = mockHandoffStore([local, foreign]);
+    const result = await listOpenHandoffsForTask(store, "tsk-abc123", {
+      currentProjectRoot: "/repo/current",
+    });
+
+    expect(result).toEqual(["local-lark-1"]);
   });
 });

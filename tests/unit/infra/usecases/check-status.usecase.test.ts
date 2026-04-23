@@ -31,11 +31,14 @@ describe("checkStatus", () => {
     });
   });
 
-  it("reports legacy handoff artifacts when .maestro/handoffs exists", async () => {
+  it("reports legacy handoff artifacts when .maestro/handoffs or .maestro/launches exist", async () => {
     const legacyDir = join(cwd, ".maestro", "handoffs");
     await mkdir(legacyDir, { recursive: true });
     await writeFile(join(legacyDir, "2026-04-20-001.json"), "{}\n");
     await writeFile(join(legacyDir, "2026-04-20-002.json"), "{}\n");
+    const launchDir = join(cwd, ".maestro", "launches");
+    await mkdir(launchDir, { recursive: true });
+    await writeFile(join(launchDir, "2026-04-20-003.json"), "{}\n");
 
     const status = await checkStatus(
       mockConfig({ exists: async () => true }),
@@ -43,6 +46,6 @@ describe("checkStatus", () => {
       cwd,
     );
 
-    expect(status.legacyHandoffCount).toBe(2);
+    expect(status.legacyHandoffCount).toBe(3);
   });
 });

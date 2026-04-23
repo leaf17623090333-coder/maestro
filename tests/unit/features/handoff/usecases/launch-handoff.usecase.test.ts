@@ -44,6 +44,9 @@ function makeHandoffStore(): HandoffStorePort & { readonly updates: HandoffRecor
     async list() {
       return current ? [current] : [];
     },
+    async listOpenForTask() {
+      return current ? [current] : [];
+    },
     resolveArtifactPath(relativePath: string) {
       return `/tmp/project/${relativePath}`;
     },

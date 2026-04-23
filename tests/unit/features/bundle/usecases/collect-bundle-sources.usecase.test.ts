@@ -188,6 +188,9 @@ class FakeHandoffStore implements HandoffStorePort {
   async consume(): Promise<HandoffRecord> { throw new Error("not implemented"); }
   async get(id: string) { return this.handoffs.find((handoff) => handoff.id === id); }
   async list() { return this.handoffs; }
+  async listOpenForTask(input: { readonly taskId: string }) {
+    return this.handoffs.filter((handoff) => handoff.refs.taskId === input.taskId);
+  }
   resolveArtifactPath(relativePath: string) { return join(projectDir, relativePath); }
 }
 

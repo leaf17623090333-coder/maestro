@@ -10,14 +10,18 @@ export async function listOpenHandoffsForTask(
   taskId: string,
   options: {
     readonly taskStore?: Pick<TaskQueryPort, "get">;
+    readonly currentProjectRoot?: string;
   } = {},
 ): Promise<readonly string[]> {
-  const all = await store.list();
-  const relevantOpen = all.filter((record) => record.refs.taskId === taskId && isOpenHandoffRecord(record));
-  const reconciled = options.taskStore
+  const { currentProjectRoot, taskStore } = options;
+  const relevantOpen = currentProjectRoot
+    ? await store.listOpenForTask({ taskId, projectRoot: currentProjectRoot })
+    : (await store.list()).filter((record) => record.refs.taskId === taskId && isOpenHandoffRecord(record));
+  const reconciled = taskStore && currentProjectRoot
     ? await Promise.all(relevantOpen.map((record) => reconcileHandoffRecord({
       handoffStore: store,
-      taskStore: options.taskStore!,
+      taskStore,
+      currentProjectRoot,
     }, record)))
     : relevantOpen;
   return reconciled

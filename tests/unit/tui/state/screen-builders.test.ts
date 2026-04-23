@@ -9,7 +9,7 @@ import {
   buildTimelineMilestones,
 } from "@/tui/state/snapshot.js";
 import type { Feature, Milestone, Principle, PrincipleOutcomeRecord } from "@/features/mission";
-import type { HandoffLaunchRecord } from "@/features/handoff";
+import type { HandoffRecord } from "@/features/handoff";
 import type { MissionControlEvent } from "@/tui/state/types.js";
 import type { Task, TaskQueryPort } from "@/features/task";
 import type { AgentReply } from "@/features/reply";
@@ -41,12 +41,12 @@ function makeMilestone(overrides: Partial<Milestone> & { id: string }): Mileston
   };
 }
 
-function makeLaunch(id: string, overrides: Partial<HandoffLaunchRecord> = {}): HandoffLaunchRecord {
+function makeHandoff(id: string, overrides: Partial<HandoffRecord> = {}): HandoffRecord {
   return {
     id,
     createdAt: "2026-01-01T00:00:00Z",
     task: `Task ${id}`,
-    name: `Launch ${id}`,
+    name: `Handoff ${id}`,
     agent: "codex",
     model: "gpt-5.4",
     status: "launched",
@@ -409,19 +409,19 @@ describe("buildPrincipleEffectivenessRows", () => {
     expect(rows[2]!.lowSample).toBe(true);
   });
 
-  it("collects recent kickback examples from launches when available", () => {
+  it("collects recent kickback examples from handoffs when available", () => {
     const principles = [makePrinciple("p-1")];
     const outcomes = [
       makeOutcome("p-1", "h-1", "unhelpful", "2026-04-13T00:00:00Z"),
       makeOutcome("p-1", "h-2", "unhelpful", "2026-04-13T01:00:00Z"),
       makeOutcome("p-1", "h-3", "helpful", "2026-04-13T02:00:00Z"),
     ];
-    const launches = [
-      makeLaunch("h-1", { name: "Broken migration" }),
-      makeLaunch("h-2", { name: "Failing tests" }),
+    const handoffs = [
+      makeHandoff("h-1", { name: "Broken migration" }),
+      makeHandoff("h-2", { name: "Failing tests" }),
     ];
 
-    const rows = buildPrincipleEffectivenessRows(principles, outcomes, launches);
+    const rows = buildPrincipleEffectivenessRows(principles, outcomes, handoffs);
     const row = rows[0]!;
     expect(row.recentKickbackExamples.length).toBe(2);
     expect(row.recentKickbackExamples[0]).toContain("Failing tests"); // newest first

@@ -42,6 +42,12 @@ describe("FsHandoffStoreAdapter", () => {
       agent: "codex",
       model: "gpt-5.4",
       status: "launching",
+      refs: {
+        missionId: "2026-04-20-001",
+        featureId: "f1",
+        milestoneId: "m1",
+        projectRoot: storeRoot,
+      },
     });
   });
 
@@ -132,5 +138,55 @@ describe("FsHandoffStoreAdapter", () => {
     await writeFile(join(storeRoot, MAESTRO_DIR, HANDOFF_DIR, created.id, "handoff.json"), "{bad json\n");
 
     await expect(store.get(created.id)).rejects.toThrow();
+  });
+
+  it("lists open task-linked packets by task id within one project only", async () => {
+    const store = new FsHandoffStoreAdapter(storeRoot);
+    const projectA = join(storeRoot, "project-a");
+    const projectB = join(storeRoot, "project-b");
+    const matching = await store.create({
+      task: "Project B handoff",
+      name: "[Handoff] Project B handoff",
+      agent: "codex",
+      model: "gpt-5.4",
+      wait: false,
+      sourceDir: projectB,
+      targetDir: projectB,
+      refs: { taskId: "tsk-123" },
+      prompt: "## Task\n\nProject B handoff\n",
+    });
+    await store.create({
+      task: "Project A handoff",
+      name: "[Handoff] Project A handoff",
+      agent: "codex",
+      model: "gpt-5.4",
+      wait: false,
+      sourceDir: projectA,
+      targetDir: projectA,
+      refs: { taskId: "tsk-123" },
+      prompt: "## Task\n\nProject A handoff\n",
+    });
+    const closed = await store.create({
+      task: "Closed Project B handoff",
+      name: "[Handoff] Closed Project B handoff",
+      agent: "codex",
+      model: "gpt-5.4",
+      wait: false,
+      sourceDir: projectB,
+      targetDir: projectB,
+      refs: { taskId: "tsk-123" },
+      prompt: "## Task\n\nClosed Project B handoff\n",
+    });
+    await store.update({
+      ...closed,
+      status: "completed",
+    });
+
+    const result = await store.listOpenForTask({
+      taskId: "tsk-123",
+      projectRoot: projectB,
+    });
+
+    expect(result.map((record) => record.id)).toEqual([matching.id]);
   });
 });

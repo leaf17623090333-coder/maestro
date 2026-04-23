@@ -101,6 +101,7 @@ const handoffStore: HandoffStorePort = {
   async consume(): Promise<HandoffRecord> { throw new Error("nope"); },
   async get() { return undefined; },
   async list() { return []; },
+  async listOpenForTask() { return []; },
   resolveArtifactPath(relativePath: string) { return join(tmpDir, relativePath); },
 };
 
@@ -291,6 +292,7 @@ describe("bundle commands", () => {
 
     expect(archive.readManifestCalls).toEqual(["/tmp/does-not-matter.tar.gz"]);
     expect(captured.logs[0]).toBe("Bundle abc-123");
+    expect(captured.logs.some((line) => line.includes("0 handoff"))).toBe(true);
     expect(captured.logs.some((l) => l.includes("Memory:  (redacted)"))).toBe(true);
   });
 });

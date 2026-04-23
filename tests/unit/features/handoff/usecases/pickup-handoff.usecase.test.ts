@@ -6,6 +6,7 @@ import { FsHandoffStoreAdapter, pickupHandoff } from "@/features/handoff";
 import { FsContractStoreAdapter } from "@/features/task/adapters/fs-contract-store.adapter.js";
 import { createContract } from "@/features/task/usecases/contract/create-contract.usecase.js";
 import { lockContract } from "@/features/task/usecases/contract/lock-contract.usecase.js";
+import { resolveMaestroProjectRoot } from "@/shared/lib/project-root.js";
 import {
   FsTaskContinuationHistoryStoreAdapter,
   FsTaskContinuationStoreAdapter,
@@ -262,6 +263,7 @@ describe("pickupHandoff", () => {
           actorAgent: "codex",
           actorSessionId: "pickup-2",
           ownerId: "codex-pickup-2",
+          currentProjectRoot: resolveMaestroProjectRoot(tmpDir),
         },
       ),
     ).rejects.toThrow(`already finished because linked task ${task.id} is completed`);

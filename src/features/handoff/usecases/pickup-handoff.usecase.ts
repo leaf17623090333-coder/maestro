@@ -37,6 +37,7 @@ export async function pickupHandoff(
     readonly actorAgent: string;
     readonly actorSessionId?: string;
     readonly ownerId?: string;
+    readonly currentProjectRoot?: string;
   },
 ): Promise<PickupHandoffResult> {
   const storedLaunch = await deps.handoffStore.get(input.id);
@@ -44,7 +45,11 @@ export async function pickupHandoff(
     throw new MaestroError(`Handoff not found: ${input.id}`);
   }
   const launch = await reconcileHandoffRecord(
-    { handoffStore: deps.handoffStore, taskStore: deps.taskStore },
+    {
+      handoffStore: deps.handoffStore,
+      taskStore: deps.taskStore,
+      currentProjectRoot: input.currentProjectRoot,
+    },
     storedLaunch,
   );
   if (launch.consumedAt) {

@@ -1,15 +1,22 @@
 import type { TaskQueryPort } from "@/features/task";
 import type { HandoffRecord, HandoffStorePort } from "../domain/handoff-types.js";
 import { isOpenHandoffRecord } from "../domain/handoff-state.js";
+import { isHandoffInProject } from "../domain/project-scope.js";
 
 export async function reconcileHandoffRecord(
   deps: {
     readonly handoffStore: HandoffStorePort;
     readonly taskStore: Pick<TaskQueryPort, "get">;
+    readonly currentProjectRoot?: string;
   },
   record: HandoffRecord,
 ): Promise<HandoffRecord> {
-  if (!record.refs.taskId || !isOpenHandoffRecord(record)) {
+  if (
+    !record.refs.taskId
+    || !deps.currentProjectRoot
+    || !isOpenHandoffRecord(record)
+    || !isHandoffInProject(record, deps.currentProjectRoot)
+  ) {
     return record;
   }
 

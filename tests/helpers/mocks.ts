@@ -23,6 +23,8 @@ import type {
 import type { RatchetStorePort, RatchetSuite, RatchetBaseline } from "@/features/ratchet";
 import type { ProjectGraphStorePort, ProjectGraph } from "@/features/graph";
 import type { HandoffRecord, HandoffStorePort } from "@/features/handoff";
+import { isOpenHandoffRecord } from "@/features/handoff";
+import { isHandoffInProject } from "@/features/handoff/domain/project-scope.js";
 import type { GitState } from "@/infra/domain/git-types.js";
 import type { MaestroConfig } from "@/infra/domain/config-types.js";
 import type { AgentSession } from "@/features/session";
@@ -501,6 +503,13 @@ export function mockHandoffStore(records: readonly HandoffRecord[] = []): Handof
     async consume() { throw new Error("not used in mockHandoffStore"); },
     async get(id) { return recordMap.get(id); },
     async list() { return [...recordMap.values()]; },
+    async listOpenForTask(input) {
+      return [...recordMap.values()].filter((record) => (
+        record.refs.taskId === input.taskId
+        && isOpenHandoffRecord(record)
+        && isHandoffInProject(record, input.projectRoot)
+      ));
+    },
     resolveArtifactPath(p: string) { return p; },
   };
 }

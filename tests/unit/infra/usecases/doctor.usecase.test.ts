@@ -91,9 +91,11 @@ describe("runDoctor", () => {
     });
   });
 
-  it("warns when legacy handoff artifacts are still present", async () => {
+  it("warns when legacy handoff or launch artifacts are still present", async () => {
     await mkdir(join(cwd, ".maestro", "handoffs"), { recursive: true });
     await writeFile(join(cwd, ".maestro", "handoffs", "2026-04-20-001.json"), "{}\n");
+    await mkdir(join(cwd, ".maestro", "launches"), { recursive: true });
+    await writeFile(join(cwd, ".maestro", "launches", "2026-04-20-002.json"), "{}\n");
 
     const checks = await runDoctor(
       mockGit(),
@@ -103,6 +105,7 @@ describe("runDoctor", () => {
 
     expect(checks.find((check) => check.name === "legacy-handoffs")).toMatchObject({
       status: "warn",
+      message: "Found 2 legacy handoff artifact(s) under .maestro/handoffs/ or .maestro/launches/",
     });
   });
 });

@@ -119,7 +119,7 @@ function formatExportResult(result: BundleExportResult): string[] {
     `  Status:  ${manifest.mission.status}`,
     `  Output:  ${outputPath}`,
     `  Size:    ${formatBytes(bytes)}`,
-    `  Stats:   ${manifest.stats.features} feat / ${manifest.stats.assertions} asrt / ${manifest.stats.agents} work / ${manifest.stats.replies} reply / ${manifest.stats.handoffs} handoff / ${manifest.stats.checkpoints} chkpt`,
+    formatBundleStats(manifest, { includeMilestones: false }),
     `  Principles: ${manifest.stats.principlesSnapshot} principles, ${manifest.stats.outcomesSnapshot} outcomes`,
   ];
   if (manifest.stats.memorySnapshot) {
@@ -148,7 +148,7 @@ function formatInspectResult(manifest: BundleManifest): string[] {
     `  Maestro: ${manifest.maestroVersion}`,
     `  Mission: ${manifest.mission.id} (${manifest.mission.title})`,
     `  Status:  ${manifest.mission.status}`,
-    `  Stats:   ${manifest.stats.features} feat / ${manifest.stats.milestones} mile / ${manifest.stats.assertions} asrt / ${manifest.stats.agents} work / ${manifest.stats.replies} reply / ${manifest.stats.launches} launch / ${manifest.stats.checkpoints} chkpt`,
+    formatBundleStats(manifest, { includeMilestones: true }),
     `  Principles: ${manifest.stats.principlesSnapshot} principles, ${manifest.stats.outcomesSnapshot} outcomes`,
   ];
   if (manifest.stats.memorySnapshot) {
@@ -167,6 +167,18 @@ function formatInspectResult(manifest: BundleManifest): string[] {
     );
   }
   return lines;
+}
+
+function formatBundleStats(
+  manifest: BundleManifest,
+  options: {
+    readonly includeMilestones: boolean;
+  },
+): string {
+  const milestoneSegment = options.includeMilestones
+    ? ` / ${manifest.stats.milestones} mile`
+    : "";
+  return `  Stats:   ${manifest.stats.features} feat${milestoneSegment} / ${manifest.stats.assertions} asrt / ${manifest.stats.agents} work / ${manifest.stats.replies} reply / ${manifest.stats.handoffs} handoff / ${manifest.stats.checkpoints} chkpt`;
 }
 
 function formatBytes(bytes: number): string {

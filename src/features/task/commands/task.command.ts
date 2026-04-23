@@ -5,6 +5,7 @@ import { getServices } from "@/services.js";
 import { MaestroError } from "@/shared/errors.js";
 import { readTextOrStdin } from "@/shared/lib/fs.js";
 import { output, resolveJsonFlag, warn } from "@/shared/lib/output.js";
+import { resolveMaestroProjectRoot } from "@/shared/lib/project-root.js";
 import { createTask } from "../usecases/create-task.usecase.js";
 import { showTask } from "../usecases/show-task.usecase.js";
 import { listTasks } from "../usecases/list-tasks.usecase.js";
@@ -361,11 +362,15 @@ function registerShowCommand(taskCmd: Command, program: Command): void {
     .action(async (id: string, opts) => {
       const services = getServices();
       const isJson = resolveJsonFlag(opts, program);
+      const currentProjectRoot = resolveMaestroProjectRoot(process.cwd());
 
       if (isJson) {
         const [task, openHandoffs] = await Promise.all([
           showTask(services.taskStore, id),
-          listOpenHandoffsForTask(services.handoffStore, id, { taskStore: services.taskStore }),
+          listOpenHandoffsForTask(services.handoffStore, id, {
+            taskStore: services.taskStore,
+            currentProjectRoot,
+          }),
         ]);
         output(true, { ...task, openHandoffs }, formatTaskDetail);
         return;
@@ -377,7 +382,10 @@ function registerShowCommand(taskCmd: Command, program: Command): void {
           continuationStore: services.taskContinuationStore,
           continuationHistory: services.taskContinuationHistory,
         }, id),
-        listOpenHandoffsForTask(services.handoffStore, id, { taskStore: services.taskStore }),
+        listOpenHandoffsForTask(services.handoffStore, id, {
+          taskStore: services.taskStore,
+          currentProjectRoot,
+        }),
       ]);
       // Hide blockers that have already completed: the runtime treats them as
       // resolved (they no longer gate readiness), so showing them as active

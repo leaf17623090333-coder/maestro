@@ -1,13 +1,18 @@
-import { basename, join } from "node:path";
+import { createHash } from "node:crypto";
+import { basename, dirname, join } from "node:path";
 import { open } from "node:fs/promises";
 import type { HandoffAgent, HandoffRecord, HandoffRefs, HandoffStorePort, HandoffWorktree } from "../domain/handoff-types.js";
+import { isOpenHandoffRecord } from "../domain/handoff-state.js";
+import { isHandoffInProject, resolveHandoffProjectRoot } from "../domain/project-scope.js";
 import { MAESTRO_DIR } from "@/shared/domain/defaults.js";
 import { generateHandoffId, HANDOFF_ID_PATTERN } from "@/shared/domain/id.js";
 import { assertSafeSegment } from "@/shared/lib/path-safety.js";
-import { ensureDir, listDirs, readJson, removeIfExists, writeJson, writeText } from "@/shared/lib/fs.js";
+import { appendText, ensureDir, listDirs, readJson, readText, removeIfExists, writeJson, writeText } from "@/shared/lib/fs.js";
 import { MaestroError } from "@/shared/errors.js";
+import { resolveMaestroProjectRoot } from "@/shared/lib/project-root.js";
 
 export const HANDOFF_DIR = "handoff";
+const HANDOFF_INDEX_DIR = "handoff-index";
 const PICKUP_LOCK_WAIT_MS = 2_000;
 const PICKUP_LOCK_RETRY_MS = 20;
 
@@ -34,6 +39,10 @@ export class FsHandoffStoreAdapter implements HandoffStorePort {
     const handoffDirRelative = join(MAESTRO_DIR, HANDOFF_DIR, id);
     const promptPath = join(handoffDirRelative, "prompt.md");
     const outputPath = join(handoffDirRelative, "output.log");
+    const refs: HandoffRefs = {
+      ...input.refs,
+      ...(input.refs.projectRoot ? {} : { projectRoot: resolveMaestroProjectRoot(input.sourceDir) }),
+    };
     const record: HandoffRecord = {
       id,
       createdAt,
@@ -48,7 +57,7 @@ export class FsHandoffStoreAdapter implements HandoffStorePort {
       promptPath,
       outputPath,
       command: [],
-      refs: input.refs,
+      refs,
       ...(input.createdByAgent ? { createdByAgent: input.createdByAgent } : {}),
       ...(input.createdBySessionId ? { createdBySessionId: input.createdBySessionId } : {}),
       ...(input.worktree ? { worktree: input.worktree } : {}),
@@ -60,6 +69,7 @@ export class FsHandoffStoreAdapter implements HandoffStorePort {
       writeText(join(this.root, promptPath), input.prompt),
       writeText(join(this.root, outputPath), ""),
       writeJson(join(handoffDir, "handoff.json"), record),
+      this.appendTaskIndex(record),
     ]);
     return record;
   }
@@ -134,6 +144,23 @@ export class FsHandoffStoreAdapter implements HandoffStorePort {
     return records.filter((record): record is HandoffRecord => record !== undefined);
   }
 
+  async listOpenForTask(input: {
+    readonly taskId: string;
+    readonly projectRoot: string;
+  }): Promise<readonly HandoffRecord[]> {
+    const indexed = await this.readTaskIndex(input.taskId, input.projectRoot);
+    if (indexed) {
+      return indexed;
+    }
+
+    const all = await this.list();
+    return all.filter((record) => (
+      record.refs.taskId === input.taskId
+      && isOpenHandoffRecord(record)
+      && isHandoffInProject(record, input.projectRoot)
+    ));
+  }
+
   resolveArtifactPath(relativePath: string): string {
     return join(this.root, relativePath);
   }
@@ -153,6 +180,51 @@ export class FsHandoffStoreAdapter implements HandoffStorePort {
 
   private resolveHandoffDir(id: string): string {
     return join(this.handoffDir(), id);
+  }
+
+  private async appendTaskIndex(record: HandoffRecord): Promise<void> {
+    const taskId = record.refs.taskId;
+    if (!taskId) {
+      return;
+    }
+
+    const indexPath = this.taskIndexPath(resolveHandoffProjectRoot(record), taskId);
+    await ensureDir(dirname(indexPath));
+    await appendText(indexPath, `${record.id}\n`);
+  }
+
+  private async readTaskIndex(
+    taskId: string,
+    projectRoot: string,
+  ): Promise<readonly HandoffRecord[] | undefined> {
+    const indexPath = this.taskIndexPath(projectRoot, taskId);
+    const raw = await readText(indexPath);
+    if (raw === undefined) {
+      return undefined;
+    }
+
+    const ids = [...new Set(
+      raw
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter((id) => HANDOFF_ID_PATTERN.test(id)),
+    )];
+    const records = await Promise.all(ids.map((id) => this.get(id)));
+    return records.filter((record): record is HandoffRecord => (
+      record !== undefined
+      && record.refs.taskId === taskId
+      && isOpenHandoffRecord(record)
+      && isHandoffInProject(record, projectRoot)
+    ));
+  }
+
+  private taskIndexDir(): string {
+    return join(this.root, MAESTRO_DIR, HANDOFF_INDEX_DIR, "by-task");
+  }
+
+  private taskIndexPath(projectRoot: string, taskId: string): string {
+    const projectKey = createHash("sha1").update(projectRoot).digest("hex");
+    return join(this.taskIndexDir(), projectKey, `${encodeURIComponent(taskId)}.jsonl`);
   }
 }
 

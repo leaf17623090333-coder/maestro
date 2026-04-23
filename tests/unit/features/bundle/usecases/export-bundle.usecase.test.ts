@@ -108,6 +108,7 @@ const handoffStore: HandoffStorePort = {
   async consume(): Promise<HandoffRecord> { throw new Error("nope"); },
   async get() { return undefined; },
   async list() { return []; },
+  async listOpenForTask() { return []; },
   resolveArtifactPath(relativePath: string) { return join(projectDir, relativePath); },
 };
 

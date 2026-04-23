@@ -6,20 +6,27 @@ import { reconcileHandoffRecord } from "./reconcile-handoff-record.usecase.js";
 export interface ListHandoffsOptions {
   readonly openOnly?: boolean;
   readonly taskStore?: Pick<TaskQueryPort, "get">;
+  readonly currentProjectRoot?: string;
 }
 
 export async function listHandoffs(
   store: HandoffStorePort,
   options: ListHandoffsOptions = {},
 ): Promise<readonly HandoffRecord[]> {
-  const { taskStore } = options;
+  const { currentProjectRoot, taskStore } = options;
   const all = await store.list();
-  const reconciled = taskStore
-    ? await Promise.all(all.map((record) => reconcileHandoffRecord({
-      handoffStore: store,
-      taskStore,
-    }, record)))
-    : all;
+  const candidates = options.openOnly ? all.filter(isOpenHandoffRecord) : all;
+  const reconciled = taskStore && currentProjectRoot
+    ? await Promise.all(candidates.map((record) => (
+        record.refs.taskId
+          ? reconcileHandoffRecord({
+              handoffStore: store,
+              taskStore,
+              currentProjectRoot,
+            }, record)
+          : record
+      )))
+    : candidates;
   const filtered = options.openOnly ? reconciled.filter(isOpenHandoffRecord) : reconciled;
   return [...filtered].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }

@@ -10,6 +10,7 @@ export interface HandoffRefs {
   readonly featureId?: string;
   readonly milestoneId?: string;
   readonly taskId?: string;
+  readonly projectRoot?: string;
 }
 
 export interface HandoffRelevantFile {
@@ -114,5 +115,9 @@ export interface HandoffStorePort {
   }): Promise<HandoffRecord>;
   get(id: string): Promise<HandoffRecord | undefined>;
   list(): Promise<readonly HandoffRecord[]>;
+  listOpenForTask(input: {
+    readonly taskId: string;
+    readonly projectRoot: string;
+  }): Promise<readonly HandoffRecord[]>;
   resolveArtifactPath(relativePath: string): string;
 }

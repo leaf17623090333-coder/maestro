@@ -21,6 +21,7 @@ import {
 } from "@/features/task";
 import { MaestroError } from "@/shared/errors.js";
 import { output, resolveJsonFlag, warn } from "@/shared/lib/output.js";
+import { resolveMaestroProjectRoot } from "@/shared/lib/project-root.js";
 
 export function registerHandoffCommand(program: Command): void {
   const handoffCmd = program
@@ -113,6 +114,7 @@ export function registerHandoffCommand(program: Command): void {
     .action(async (opts, command: Command) => {
       const services = getServices();
       const isJson = resolveJsonFlag(opts, program);
+      const currentProjectRoot = resolveMaestroProjectRoot(process.cwd());
       const handoffId = await resolvePickupId(typeof opts.id === "string" ? opts.id : undefined);
       const launch = await services.handoffStore.get(handoffId);
       if (!launch) {
@@ -137,6 +139,7 @@ export function registerHandoffCommand(program: Command): void {
           actorAgent: actor.agent,
           ...(actor.sessionId ? { actorSessionId: actor.sessionId } : {}),
           ...(actor.ownerId ? { ownerId: actor.ownerId } : {}),
+          currentProjectRoot,
         },
       );
 
@@ -160,9 +163,11 @@ export function registerHandoffCommand(program: Command): void {
     .action(async (opts) => {
       const services = getServices();
       const isJson = resolveJsonFlag(opts, program);
+      const currentProjectRoot = resolveMaestroProjectRoot(process.cwd());
       const records = await listHandoffs(services.handoffStore, {
         openOnly: Boolean(opts.open),
         taskStore: services.taskStore,
+        currentProjectRoot,
       });
       output(isJson, records, formatHandoffList);
     });
@@ -174,7 +179,11 @@ export function registerHandoffCommand(program: Command): void {
     .action(async (id: string, opts) => {
       const services = getServices();
       const isJson = resolveJsonFlag(opts, program);
-      const record = await showHandoff(services.handoffStore, id, { taskStore: services.taskStore });
+      const currentProjectRoot = resolveMaestroProjectRoot(process.cwd());
+      const record = await showHandoff(services.handoffStore, id, {
+        taskStore: services.taskStore,
+        currentProjectRoot,
+      });
       output(isJson, record, (r) => formatHandoffDetail(r));
     });
 }
@@ -253,9 +262,11 @@ async function resolvePickupId(explicitId: string | undefined): Promise<string> 
   }
 
   const services = getServices();
+  const currentProjectRoot = resolveMaestroProjectRoot(process.cwd());
   const open = await listHandoffs(services.handoffStore, {
     openOnly: true,
     taskStore: services.taskStore,
+    currentProjectRoot,
   });
   if (open.length === 0) {
     throw new MaestroError("No open handoff packets are available to pick up");
