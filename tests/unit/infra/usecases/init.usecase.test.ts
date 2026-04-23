@@ -30,10 +30,11 @@ describe("initMaestro", () => {
     expect(result.created.some((p) => p.includes(".maestro"))).toBe(true);
   });
 
-  it("creates launches subdirectory for project scope", async () => {
+  it("does not create a project-local handoff directory (handoffs live globally at ~/.maestro/handoff/)", async () => {
     const config = mockConfig();
     const result = await initMaestro(config, { global: false, dir: tmpDir });
-    expect(result.created.some((p) => p.includes("launches"))).toBe(true);
+    expect(result.created).not.toContain(join(tmpDir, ".maestro", "launches"));
+    expect(result.created).not.toContain(join(tmpDir, ".maestro", "handoff"));
     expect(result.created).toContain(join(tmpDir, ".maestro", "bootstrap", "services.yaml"));
     expect(result.created).toContain(join(tmpDir, ".maestro", "AGENTS.md"));
   });
@@ -139,7 +140,8 @@ describe("initMaestro", () => {
     await initMaestro(config, { global: false, dir: tmpDir });
 
     const gitignore = await readFile(join(tmpDir, ".gitignore"), "utf8");
-    expect(gitignore).toContain(".maestro/launches/");
+    expect(gitignore).not.toContain(".maestro/launches/");
+    expect(gitignore).not.toContain(".maestro/handoff/");
     expect(gitignore).toContain(".maestro/missions/");
     expect(gitignore).toContain(".maestro/sessions/");
     expect(gitignore).toContain(".maestro/tasks/local-history/");

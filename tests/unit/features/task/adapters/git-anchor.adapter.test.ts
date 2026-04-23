@@ -134,12 +134,11 @@ describe("ShellGitAnchorAdapter", () => {
     expect(result.actualFilesTouched).not.toContain(".maestro/tasks/tasks.jsonl");
   });
 
-  it("ignores untracked agent runtime files and handoff launch packets", async () => {
+  it("ignores untracked agent runtime files", async () => {
     await commitFile("base.txt", "base\n", "base");
     await mkdir(join(tmpDir, ".bun", "install", "cache", "@t@"), { recursive: true });
     await mkdir(join(tmpDir, ".codex", ".tmp", "plugins"), { recursive: true });
     await mkdir(join(tmpDir, ".codex", "skills", ".system"), { recursive: true });
-    await mkdir(join(tmpDir, ".maestro", "launches", "demo-launch"), { recursive: true });
     await mkdir(join(tmpDir, ".claude"), { recursive: true });
     await mkdir(join(tmpDir, "Library", "Caches", "bun", "@t@"), { recursive: true });
 
@@ -152,8 +151,6 @@ describe("ShellGitAnchorAdapter", () => {
     await Bun.write(join(tmpDir, ".codex", "state_5.sqlite"), "state\n");
     await Bun.write(join(tmpDir, ".codex", "skills", ".system", ".codex-system-skills.marker"), "marker\n");
     await Bun.write(join(tmpDir, ".maestro", "config.yaml"), "contracts:\n  default: prompt\n");
-    await Bun.write(join(tmpDir, ".maestro", "launches", "demo-launch", "launch.json"), "{}\n");
-    await Bun.write(join(tmpDir, ".maestro", "launches", "demo-launch", "output.log"), "provider output\n");
     await Bun.write(join(tmpDir, ".claude", "scheduled_tasks.lock"), "lock\n");
     await Bun.write(join(tmpDir, "Library", "Caches", "bun", "@t@", "cache.pile"), "pile\n");
 

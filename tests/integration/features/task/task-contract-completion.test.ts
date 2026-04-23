@@ -50,7 +50,7 @@ async function installFakeProvider(name: "codex" | "claude"): Promise<string> {
   return binDir;
 }
 
-async function writeContractRuntimeNoise(launchId: string): Promise<void> {
+async function writeContractRuntimeNoise(): Promise<void> {
   await mkdir(join(tmpDir, ".codex", ".tmp", "plugins"), { recursive: true });
   await mkdir(join(tmpDir, ".codex", "skills", ".system"), { recursive: true });
   await mkdir(join(tmpDir, ".claude"), { recursive: true });
@@ -64,8 +64,6 @@ async function writeContractRuntimeNoise(launchId: string): Promise<void> {
   await Bun.write(join(tmpDir, ".codex", "skills", ".system", ".codex-system-skills.marker"), "marker\n");
   await Bun.write(join(tmpDir, ".claude", "scheduled_tasks.lock"), "lock\n");
   await Bun.write(join(tmpDir, ".maestro", "config.yaml"), "contracts:\n  default: prompt\n");
-
-  expect(await Bun.file(join(tmpDir, ".maestro", "launches", launchId, "launch.json")).exists()).toBe(true);
 }
 
 describe("task contract completion", () => {
@@ -450,8 +448,14 @@ describe("task contract completion", () => {
     await rm(templatePath, { force: true });
 
     const binDir = await installFakeProvider("codex");
+    // Use a separate fake home so the handoff packet lands at
+    // ${fakeHome}/.maestro/handoff/, which is outside the project's git tree
+    // and therefore cannot appear in `actualFilesTouched`.
+    const fakeHome = await mkdtemp(join(tmpdir(), "maestro-handoff-home-"));
+    cleanupDirs.push(fakeHome);
     const env = {
-      HOME: tmpDir,
+      HOME: fakeHome,
+      USERPROFILE: fakeHome,
       PATH: `${binDir}:${process.env.PATH ?? ""}`,
       CODEX_THREAD_ID: "",
       CLAUDECODE: "",
@@ -461,7 +465,7 @@ describe("task contract completion", () => {
     expect(launched.exitCode).toBe(0);
     const handoff = expectJson<{ id: string }>(launched);
 
-    await writeContractRuntimeNoise(handoff.id);
+    await writeContractRuntimeNoise();
     await Bun.write(join(tmpDir, "README.md"), "hello\nruntime-safe\n");
 
     const preview = expectJson<{
@@ -476,7 +480,9 @@ describe("task contract completion", () => {
     expect(preview.verdict.actualFilesTouched).not.toContain(".maestro/config.yaml");
     expect(preview.verdict.actualFilesTouched).not.toContain(".codex/config.toml");
     expect(preview.verdict.actualFilesTouched).not.toContain(".claude/scheduled_tasks.lock");
-    expect(preview.verdict.actualFilesTouched).not.toContain(`.maestro/launches/${handoff.id}/launch.json`);
+    // Handoff packets are stored outside the project at ~/.maestro/handoff/
+    // (here redirected to `fakeHome`), so they can never appear in the verdict.
+    expect(preview.verdict.actualFilesTouched.some((f) => f.includes("handoff"))).toBe(false);
     expect(preview.verdict.outOfScopeFiles).toEqual([]);
 
     await runCli(
@@ -513,7 +519,7 @@ describe("task contract completion", () => {
     expect(closed.verdict?.actualFilesTouched).not.toContain(".maestro/config.yaml");
     expect(closed.verdict?.actualFilesTouched).not.toContain(".codex/config.toml");
     expect(closed.verdict?.actualFilesTouched).not.toContain(".claude/scheduled_tasks.lock");
-    expect(closed.verdict?.actualFilesTouched).not.toContain(`.maestro/launches/${handoff.id}/launch.json`);
+    expect(closed.verdict?.actualFilesTouched?.some((f) => f.includes("handoff")) ?? false).toBe(false);
     expect(closed.verdict?.outOfScopeFiles).toEqual([]);
   }, SLOW_CLI_TIMEOUT_MS);
 

@@ -15,7 +15,7 @@ import type {
   Mission,
   MissionStorePort,
 } from "@/features/mission/index.js";
-import type { HandoffLaunchRecord, LaunchStorePort } from "@/features/handoff/index.js";
+import type { HandoffRecord, HandoffStorePort } from "@/features/handoff/index.js";
 import type { ReplyStorePort } from "@/features/reply/index.js";
 import type { AgentReply } from "@/features/reply/index.js";
 
@@ -89,21 +89,21 @@ function buildCheckpoint(id: string): Checkpoint {
   };
 }
 
-function buildLaunch(id: string, refs: HandoffLaunchRecord["refs"]): HandoffLaunchRecord {
+function buildHandoff(id: string, refs: HandoffRecord["refs"]): HandoffRecord {
   return {
     id,
     createdAt: "2026-04-13T02:00:00.000Z",
-    task: "bundle launch",
-    name: "[Handoff] bundle launch",
+    task: "bundle handoff",
+    name: "[Handoff] bundle handoff",
     agent: "claude",
     model: "opus",
     status: "completed",
     wait: true,
     sourceDir: projectDir,
     targetDir: projectDir,
-    promptPath: `.maestro/launches/${id}/prompt.md`,
-    outputPath: `.maestro/launches/${id}/output.log`,
-    command: ["claude", "--print", "bundle launch"],
+    promptPath: `.maestro/handoff/${id}/prompt.md`,
+    outputPath: `.maestro/handoff/${id}/output.log`,
+    command: ["claude", "--print", "bundle handoff"],
     refs,
   };
 }
@@ -181,13 +181,13 @@ class FakeReplyStore implements ReplyStorePort {
   async markIngested() { /* noop */ }
 }
 
-class FakeLaunchStore implements LaunchStorePort {
-  constructor(private readonly launches: readonly HandoffLaunchRecord[]) {}
-  async create(): Promise<HandoffLaunchRecord> { throw new Error("not implemented"); }
-  async update(record: HandoffLaunchRecord) { return record; }
-  async consume(): Promise<HandoffLaunchRecord> { throw new Error("not implemented"); }
-  async get(id: string) { return this.launches.find((launch) => launch.id === id); }
-  async list() { return this.launches; }
+class FakeHandoffStore implements HandoffStorePort {
+  constructor(private readonly handoffs: readonly HandoffRecord[]) {}
+  async create(): Promise<HandoffRecord> { throw new Error("not implemented"); }
+  async update(record: HandoffRecord) { return record; }
+  async consume(): Promise<HandoffRecord> { throw new Error("not implemented"); }
+  async get(id: string) { return this.handoffs.find((handoff) => handoff.id === id); }
+  async list() { return this.handoffs; }
   resolveArtifactPath(relativePath: string) { return join(projectDir, relativePath); }
 }
 
@@ -241,7 +241,7 @@ async function seedMemory(): Promise<void> {
 
 function makeDeps({
   replies = new Map<string, AgentReply>(),
-  launches = [] as readonly HandoffLaunchRecord[],
+  handoffs = [] as readonly HandoffRecord[],
   checkpoints = [] as readonly Checkpoint[],
   assertions = [] as readonly Assertion[],
 } = {}) {
@@ -255,7 +255,7 @@ function makeDeps({
     assertionStore: new FakeAssertionStore(assertions),
     checkpointStore: new FakeCheckpointStore(checkpoints),
     replyStore: new FakeReplyStore(replies),
-    launchStore: new FakeLaunchStore(launches),
+    handoffStore: new FakeHandoffStore(handoffs),
   };
 }
 
@@ -264,7 +264,7 @@ function filesByPath(files: readonly BundleFile[]): Map<string, BundleFile> {
 }
 
 describe("collectBundleSources", () => {
-  it("aggregates a minimal mission without replies, launches, or memory", async () => {
+  it("aggregates a minimal mission without replies, handoffs, or memory", async () => {
     const deps = makeDeps();
     const result = await collectBundleSources(deps, {
       missionId: MISSION_ID,
@@ -281,19 +281,19 @@ describe("collectBundleSources", () => {
     expect(result.stats.milestones).toBe(2);
     expect(result.stats.agents).toBe(0);
     expect(result.stats.replies).toBe(0);
-    expect(result.stats.launches).toBe(0);
+    expect(result.stats.handoffs).toBe(0);
     expect(result.stats.memorySnapshot).toEqual({ corrections: 0, learnings: 0 });
   });
 
-  it("includes agent files, replies, launches, checkpoints, principles, and memory", async () => {
+  it("includes agent files, replies, handoffs, checkpoints, principles, and memory", async () => {
     await seedAgents("f1");
     await seedAgents("f2");
     await seedReplies("f1");
     await seedPrinciplesAndOutcomes();
     await seedMemory();
 
-    const launchInScope = buildLaunch("2026-04-13-101", { missionId: MISSION_ID });
-    const launchOutOfScope = buildLaunch("2026-04-13-102", { missionId: "2020-01-01-001" });
+    const handoffInScope = buildHandoff("2026-04-13-101", { missionId: MISSION_ID });
+    const handoffOutOfScope = buildHandoff("2026-04-13-102", { missionId: "2020-01-01-001" });
 
     const replies = new Map<string, AgentReply>([
       [`${MISSION_ID}:f1`, buildReply("f1")],
@@ -301,7 +301,7 @@ describe("collectBundleSources", () => {
 
     const deps = makeDeps({
       replies,
-      launches: [launchInScope, launchOutOfScope],
+      handoffs: [handoffInScope, handoffOutOfScope],
       checkpoints: [buildCheckpoint("20260413-010000-000")],
       assertions: [buildAssertion("a1", "m1")],
     });
@@ -317,8 +317,8 @@ describe("collectBundleSources", () => {
     expect(files.has(`${MISSION_ID}.mission/mission/agents/f1/report.json`)).toBe(true);
     expect(files.has(`${MISSION_ID}.mission/mission/agents/f2/prompt.md`)).toBe(true);
     expect(files.has(`${MISSION_ID}.mission/replies/f1.yaml`)).toBe(true);
-    expect(files.has(`${MISSION_ID}.mission/launches/2026-04-13-101.json`)).toBe(true);
-    expect(files.has(`${MISSION_ID}.mission/launches/2026-04-13-102.json`)).toBe(false);
+    expect(files.has(`${MISSION_ID}.mission/handoffs/2026-04-13-101.json`)).toBe(true);
+    expect(files.has(`${MISSION_ID}.mission/handoffs/2026-04-13-102.json`)).toBe(false);
     expect(files.has(`${MISSION_ID}.mission/mission/checkpoints/20260413-010000-000.json`)).toBe(true);
     expect(files.has(`${MISSION_ID}.mission/principles/principles.jsonl`)).toBe(true);
     expect(files.has(`${MISSION_ID}.mission/principles/outcomes.jsonl`)).toBe(true);
@@ -328,7 +328,7 @@ describe("collectBundleSources", () => {
     expect(result.stats.features).toBe(2);
     expect(result.stats.agents).toBe(2);
     expect(result.stats.replies).toBe(1);
-    expect(result.stats.launches).toBe(1);
+    expect(result.stats.handoffs).toBe(1);
     expect(result.stats.checkpoints).toBe(1);
     expect(result.stats.assertions).toBe(1);
     expect(result.stats.principlesSnapshot).toBe(2);

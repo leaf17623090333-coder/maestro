@@ -1,12 +1,12 @@
 import { describe, expect, it } from "bun:test";
-import { launchHandoff, type HandoffLaunchPort, type HandoffLaunchRecord, type LaunchStorePort } from "@/features/handoff";
+import { launchHandoff, type HandoffLaunchPort, type HandoffRecord, type HandoffStorePort } from "@/features/handoff";
 import type { Feature, Mission } from "@/features/mission";
 import type { GitPort } from "@/infra/ports/git.port.js";
 import { mockAssertionStore, mockFeatureStore, mockMissionStore } from "../../../../helpers/mocks.js";
 
-function makeLaunchStore(): LaunchStorePort & { readonly updates: HandoffLaunchRecord[] } {
-  let current: HandoffLaunchRecord | undefined;
-  const updates: HandoffLaunchRecord[] = [];
+function makeHandoffStore(): HandoffStorePort & { readonly updates: HandoffRecord[] } {
+  let current: HandoffRecord | undefined;
+  const updates: HandoffRecord[] = [];
   return {
     updates,
     async create(input) {
@@ -21,8 +21,8 @@ function makeLaunchStore(): LaunchStorePort & { readonly updates: HandoffLaunchR
         wait: input.wait,
         sourceDir: input.sourceDir,
         targetDir: input.targetDir,
-        promptPath: ".maestro/launches/2026-04-20-001/prompt.md",
-        outputPath: ".maestro/launches/2026-04-20-001/output.log",
+        promptPath: ".maestro/handoff/2026-04-20-001/prompt.md",
+        outputPath: ".maestro/handoff/2026-04-20-001/output.log",
         command: [],
         refs: input.refs,
         ...(input.worktree ? { worktree: input.worktree } : {}),
@@ -76,7 +76,7 @@ function makeGit(): GitPort {
 
 describe("launchHandoff", () => {
   it("uses the agent default model and records a detached launch", async () => {
-    const launchStore = makeLaunchStore();
+    const handoffStore = makeHandoffStore();
     const launchCalls: Array<Parameters<HandoffLaunchPort["launch"]>[0]> = [];
     const codexLauncher: HandoffLaunchPort = {
       agent: "codex",
@@ -94,7 +94,7 @@ describe("launchHandoff", () => {
       featureStore: mockFeatureStore("2026-04-20-001", []),
       assertionStore: mockAssertionStore("2026-04-20-001", []),
       git: makeGit(),
-      launchStore,
+      handoffStore,
       launchers: {
         codex: codexLauncher,
         claude: { agent: "claude", async launch() { throw new Error("not used"); } },
@@ -124,7 +124,7 @@ describe("launchHandoff", () => {
         featureStore: mockFeatureStore("2026-04-20-001", []),
         assertionStore: mockAssertionStore("2026-04-20-001", []),
         git: makeGit(),
-        launchStore: makeLaunchStore(),
+        handoffStore: makeHandoffStore(),
         launchers: {
           codex: { agent: "codex", async launch() { throw new Error("not used"); } },
           claude: { agent: "claude", async launch() { throw new Error("not used"); } },
@@ -140,7 +140,7 @@ describe("launchHandoff", () => {
   });
 
   it("creates a worktree and waits for a claude launch to finish", async () => {
-    const launchStore = makeLaunchStore();
+    const handoffStore = makeHandoffStore();
     const claudeLauncher: HandoffLaunchPort = {
       agent: "claude",
       async launch(request) {
@@ -158,7 +158,7 @@ describe("launchHandoff", () => {
       featureStore: mockFeatureStore("2026-04-20-001", []),
       assertionStore: mockAssertionStore("2026-04-20-001", []),
       git: makeGit(),
-      launchStore,
+      handoffStore,
       launchers: {
         codex: { agent: "codex", async launch() { throw new Error("not used"); } },
         claude: claudeLauncher,
@@ -182,7 +182,7 @@ describe("launchHandoff", () => {
   });
 
   it("throws when a waited launch exits non-zero after recording the failure", async () => {
-    const launchStore = makeLaunchStore();
+    const handoffStore = makeHandoffStore();
 
     await expect(
       launchHandoff({
@@ -190,7 +190,7 @@ describe("launchHandoff", () => {
         featureStore: mockFeatureStore("2026-04-20-001", []),
         assertionStore: mockAssertionStore("2026-04-20-001", []),
         git: makeGit(),
-        launchStore,
+        handoffStore,
         launchers: {
           codex: {
             agent: "codex",
@@ -211,12 +211,12 @@ describe("launchHandoff", () => {
       }),
     ).rejects.toThrow("codex handoff exited with code 7");
 
-    expect(launchStore.updates.at(-1)?.status).toBe("failed");
-    expect(launchStore.updates.at(-1)?.exitCode).toBe(7);
+    expect(handoffStore.updates.at(-1)?.status).toBe("failed");
+    expect(handoffStore.updates.at(-1)?.exitCode).toBe(7);
   });
 
   it("throws when a waited launch does not report an exit code", async () => {
-    const launchStore = makeLaunchStore();
+    const handoffStore = makeHandoffStore();
 
     await expect(
       launchHandoff({
@@ -224,7 +224,7 @@ describe("launchHandoff", () => {
         featureStore: mockFeatureStore("2026-04-20-001", []),
         assertionStore: mockAssertionStore("2026-04-20-001", []),
         git: makeGit(),
-        launchStore,
+        handoffStore,
         launchers: {
           codex: {
             agent: "codex",
@@ -244,8 +244,8 @@ describe("launchHandoff", () => {
       }),
     ).rejects.toThrow("codex handoff did not report an exit code");
 
-    expect(launchStore.updates.at(-1)?.status).toBe("failed");
-    expect(launchStore.updates.at(-1)?.exitCode).toBeUndefined();
+    expect(handoffStore.updates.at(-1)?.status).toBe("failed");
+    expect(handoffStore.updates.at(-1)?.exitCode).toBeUndefined();
   });
 
   describe("--prompt-file bypass", () => {
@@ -254,7 +254,7 @@ describe("launchHandoff", () => {
       const briefContent = "## Task\n\nHand-written brief body.\n\n## Constraints\n- Do not edit.\n";
       await Bun.write(briefPath, briefContent);
 
-      const launchStore = makeLaunchStore();
+      const handoffStore = makeHandoffStore();
       const codexLauncher: HandoffLaunchPort = {
         agent: "codex",
         async launch(request) {
@@ -272,7 +272,7 @@ describe("launchHandoff", () => {
         featureStore: mockFeatureStore("2026-04-20-001", []),
         assertionStore: mockAssertionStore("2026-04-20-001", []),
         git: makeGit(),
-        launchStore,
+        handoffStore,
         launchers: {
           codex: codexLauncher,
           claude: { agent: "claude", async launch() { throw new Error("not used"); } },
@@ -287,7 +287,7 @@ describe("launchHandoff", () => {
 
       expect(result.prompt).toContain("maestro handoff pickup --id 2026-04-20-001 --json");
       expect(result.prompt).toContain(briefContent);
-      expect(launchStore.updates[0]?.task).toBe("Ignored when promptFile is set");
+      expect(handoffStore.updates[0]?.task).toBe("Ignored when promptFile is set");
       // Note: the supplied brief remains embedded in the launched prompt after
       // the startup pickup preamble is injected.
     });
@@ -329,13 +329,13 @@ describe("launchHandoff", () => {
         updatedAt: "2026-04-20T00:00:00.000Z",
       };
 
-      const launchStore = makeLaunchStore();
+      const handoffStore = makeHandoffStore();
       const result = await launchHandoff({
         missionStore: mockMissionStore([mission]),
         featureStore: mockFeatureStore(mission.id, [feature]),
         assertionStore: mockAssertionStore(mission.id, []),
         git: makeGit(),
-        launchStore,
+        handoffStore,
         launchers: {
           codex: {
             agent: "codex",
@@ -361,7 +361,7 @@ describe("launchHandoff", () => {
         featureId: feature.id,
         milestoneId: "m1",
       });
-      expect(launchStore.updates[0]?.refs).toMatchObject({
+      expect(handoffStore.updates[0]?.refs).toMatchObject({
         missionId: mission.id,
         featureId: feature.id,
         milestoneId: "m1",
@@ -375,7 +375,7 @@ describe("launchHandoff", () => {
           featureStore: mockFeatureStore("2026-04-20-001", []),
           assertionStore: mockAssertionStore("2026-04-20-001", []),
           git: makeGit(),
-          launchStore: makeLaunchStore(),
+          handoffStore: makeHandoffStore(),
           launchers: {
             codex: { agent: "codex", async launch() { throw new Error("not used"); } },
             claude: { agent: "claude", async launch() { throw new Error("not used"); } },
@@ -409,7 +409,7 @@ describe("launchHandoff", () => {
               };
             },
           },
-          launchStore: makeLaunchStore(),
+          handoffStore: makeHandoffStore(),
           launchers: {
             codex: { agent: "codex", async launch() { throw new Error("not used"); } },
             claude: { agent: "claude", async launch() { throw new Error("not used"); } },
@@ -438,7 +438,7 @@ describe("launchHandoff", () => {
             featureStore: mockFeatureStore("2026-04-20-001", []),
             assertionStore: mockAssertionStore("2026-04-20-001", []),
             git: makeGit(),
-            launchStore: makeLaunchStore(),
+            handoffStore: makeHandoffStore(),
             launchers: {
               codex: { agent: "codex", async launch() { throw new Error("not used"); } },
               claude: { agent: "claude", async launch() { throw new Error("not used"); } },
@@ -475,7 +475,7 @@ describe("launchHandoff", () => {
             featureStore: mockFeatureStore("2026-04-20-001", []),
             assertionStore: mockAssertionStore("2026-04-20-001", []),
             git: makeGit(),
-            launchStore: makeLaunchStore(),
+            handoffStore: makeHandoffStore(),
             launchers: {
               codex: { agent: "codex", async launch() { throw new Error("not used"); } },
               claude: { agent: "claude", async launch() { throw new Error("not used"); } },
@@ -503,7 +503,7 @@ describe("launchHandoff", () => {
           featureStore: mockFeatureStore("2026-04-20-001", []),
           assertionStore: mockAssertionStore("2026-04-20-001", []),
           git: makeGit(),
-          launchStore: makeLaunchStore(),
+          handoffStore: makeHandoffStore(),
           launchers: {
             codex: { agent: "codex", async launch() { throw new Error("not used"); } },
             claude: { agent: "claude", async launch() { throw new Error("not used"); } },
@@ -532,7 +532,7 @@ describe("launchHandoff", () => {
           featureStore: mockFeatureStore("2026-04-20-001", []),
           assertionStore: mockAssertionStore("2026-04-20-001", []),
           git: makeGit(),
-          launchStore: makeLaunchStore(),
+          handoffStore: makeHandoffStore(),
           launchers: {
             codex: {
               agent: "codex",

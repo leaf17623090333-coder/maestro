@@ -318,6 +318,8 @@ describe.skipIf(process.platform === "win32")("compiled handoff launcher E2E", (
         tmpDir,
         {
           env: {
+            HOME: tmpDir,
+            USERPROFILE: tmpDir,
             PATH: `${binDir}:${process.env.PATH ?? ""}`,
             FAKE_PROVIDER_ARGS: argsPath,
             FAKE_PROVIDER_CWD: cwdPath,
@@ -354,7 +356,7 @@ describe.skipIf(process.platform === "win32")("compiled handoff launcher E2E", (
       expect(prompt).toContain("## Acceptance Criteria");
       expect(prompt).toContain("Next action:");
 
-      const launchMeta = await readFile(join(tmpDir, ".maestro", "launches", record.id, "launch.json"), "utf8");
+      const launchMeta = await readFile(join(tmpDir, ".maestro", "handoff", record.id, "handoff.json"), "utf8");
       expect(launchMeta).toContain('"agent": "codex"');
       expect(launchMeta).toContain(`"taskId": "${taskId}"`);
 
@@ -394,6 +396,8 @@ describe.skipIf(process.platform === "win32")("compiled handoff launcher E2E", (
         tmpDir,
         {
           env: {
+            HOME: tmpDir,
+            USERPROFILE: tmpDir,
             PATH: `${binDir}:${process.env.PATH ?? ""}`,
             FAKE_PROVIDER_ARGS: argsPath,
             FAKE_PROVIDER_CWD: cwdPath,
@@ -468,6 +472,8 @@ describe.skipIf(process.platform === "win32")("compiled handoff launcher E2E", (
         nestedDir,
         {
           env: {
+            HOME: tmpDir,
+            USERPROFILE: tmpDir,
             PATH: `${binDir}:${process.env.PATH ?? ""}`,
             FAKE_PROVIDER_ARGS: argsPath,
             FAKE_PROVIDER_CWD: cwdPath,
@@ -509,6 +515,8 @@ describe.skipIf(process.platform === "win32")("compiled handoff launcher E2E", (
         tmpDir,
         {
           env: {
+            HOME: tmpDir,
+            USERPROFILE: tmpDir,
             PATH: `${binDir}:${process.env.PATH ?? ""}`,
           },
         },
@@ -519,15 +527,15 @@ describe.skipIf(process.platform === "win32")("compiled handoff launcher E2E", (
       expect(payload.error).toContain("claude handoff exited with code 7");
       expect(payload.hints.join(" ")).toContain("Launch record:");
 
-      const launchesDir = join(tmpDir, ".maestro", "launches");
-      const [launchId] = await Bun.$`ls ${launchesDir}`.text().then((text) => text.trim().split("\n").filter(Boolean));
-      expect(launchId).toBeDefined();
-      const launchRecord = JSON.parse(await readFile(join(launchesDir, launchId!, "launch.json"), "utf8")) as {
+      const handoffDir = join(tmpDir, ".maestro", "handoff");
+      const [handoffId] = await Bun.$`ls ${handoffDir}`.text().then((text) => text.trim().split("\n").filter(Boolean));
+      expect(handoffId).toBeDefined();
+      const handoffRecord = JSON.parse(await readFile(join(handoffDir, handoffId!, "handoff.json"), "utf8")) as {
         status: string;
         exitCode?: number;
       };
-      expect(launchRecord.status).toBe("failed");
-      expect(launchRecord.exitCode).toBe(7);
+      expect(handoffRecord.status).toBe("failed");
+      expect(handoffRecord.exitCode).toBe(7);
     },
     SLOW_CLI_TIMEOUT_MS,
   );
@@ -541,16 +549,18 @@ describe.skipIf(process.platform === "win32")("compiled handoff launcher E2E", (
       const cwdPath = join(tmpDir, "codex-pickup-cwd.txt");
       const binDir = await installFakeProvider("codex", argsPath, cwdPath);
 
+      const handoffEnv = {
+        HOME: tmpDir,
+        USERPROFILE: tmpDir,
+        PATH: `${binDir}:${process.env.PATH ?? ""}`,
+        FAKE_PROVIDER_ARGS: argsPath,
+        FAKE_PROVIDER_CWD: cwdPath,
+      };
+
       const launched = await runCompiled(
         ["handoff", "Transfer this task", "--task-id", taskId, "--json"],
         tmpDir,
-        {
-          env: {
-            PATH: `${binDir}:${process.env.PATH ?? ""}`,
-            FAKE_PROVIDER_ARGS: argsPath,
-            FAKE_PROVIDER_CWD: cwdPath,
-          },
-        },
+        { env: handoffEnv },
       );
       expect(launched.exitCode).toBe(0);
       const record = expectJson<{ id: string }>(launched);
@@ -558,6 +568,7 @@ describe.skipIf(process.platform === "win32")("compiled handoff launcher E2E", (
       const picked = await runCompiled(
         ["handoff", "pickup", "--id", record.id, "--agent", "claude", "--session", "pickup-1", "--json"],
         tmpDir,
+        { env: handoffEnv },
       );
       expect(picked.exitCode).toBe(0);
       const consumed = expectJson<{ pickedUpByAgent?: string; pickedUpBySessionId?: string; consumedAt?: string }>(picked);
@@ -584,6 +595,7 @@ describe.skipIf(process.platform === "win32")("compiled handoff launcher E2E", (
       const secondPickup = await runCompiled(
         ["handoff", "pickup", "--id", record.id, "--agent", "codex", "--session", "pickup-2", "--json"],
         tmpDir,
+        { env: handoffEnv },
       );
       expect(secondPickup.exitCode).not.toBe(0);
       expect(expectJson<{ error: string }>(secondPickup).error).toContain("already consumed");
@@ -601,6 +613,8 @@ describe.skipIf(process.platform === "win32")("compiled handoff launcher E2E", (
       const binDir = await installBehavioralProvider("codex", argsPath, cwdPath, promptPath);
 
       const env = {
+        HOME: tmpDir,
+        USERPROFILE: tmpDir,
         PATH: `${binDir}:${process.env.PATH ?? ""}`,
         FAKE_PROVIDER_ARGS: argsPath,
         FAKE_PROVIDER_CWD: cwdPath,
@@ -647,6 +661,10 @@ describe.skipIf(process.platform === "win32")("compiled handoff launcher E2E", (
       });
       const runtimeDir = await mkdtemp(join(tmpdir(), "maestro-handoff-runtime-noise-"));
       cleanupDirs.push(runtimeDir);
+      // Use a fakeHome OUTSIDE tmpDir so the handoff packet lands outside the
+      // project's git tree and cannot leak into contract verdicts.
+      const fakeHome = await mkdtemp(join(tmpdir(), "maestro-handoff-noise-home-"));
+      cleanupDirs.push(fakeHome);
       const argsPath = join(runtimeDir, "codex-runtime-noise-args.txt");
       const cwdPath = join(runtimeDir, "codex-runtime-noise-cwd.txt");
       const promptPath = join(runtimeDir, "codex-runtime-noise-prompt.txt");
@@ -655,6 +673,8 @@ describe.skipIf(process.platform === "win32")("compiled handoff launcher E2E", (
       });
 
       const env = {
+        HOME: fakeHome,
+        USERPROFILE: fakeHome,
         PATH: `${binDir}:${process.env.PATH ?? ""}`,
         FAKE_PROVIDER_ARGS: argsPath,
         FAKE_PROVIDER_CWD: cwdPath,
@@ -695,7 +715,9 @@ describe.skipIf(process.platform === "win32")("compiled handoff launcher E2E", (
       expect(shown.verdict?.actualFilesTouched).not.toContain(".maestro/config.yaml");
       expect(shown.verdict?.actualFilesTouched).not.toContain(".codex/config.toml");
       expect(shown.verdict?.actualFilesTouched).not.toContain(".claude/scheduled_tasks.lock");
-      expect(shown.verdict?.actualFilesTouched).not.toContain(`.maestro/launches/${record.id}/launch.json`);
+      // With HOME pointing outside the project, the handoff packet is stored
+      // at ~/.maestro/handoff/ and cannot appear in the project's git diff.
+      expect(shown.verdict?.actualFilesTouched?.some((f) => f.includes("handoff"))).toBe(false);
       expect(shown.verdict?.outOfScopeFiles).toEqual([]);
     },
     SLOW_CLI_TIMEOUT_MS,
@@ -711,6 +733,8 @@ describe.skipIf(process.platform === "win32")("compiled handoff launcher E2E", (
       const binDir = await installBehavioralProvider("codex", argsPath, cwdPath, promptPath);
 
       const env = {
+        HOME: tmpDir,
+        USERPROFILE: tmpDir,
         PATH: `${binDir}:${process.env.PATH ?? ""}`,
         FAKE_PROVIDER_ARGS: argsPath,
         FAKE_PROVIDER_CWD: cwdPath,
@@ -797,7 +821,7 @@ describe.skipIf(process.platform === "win32")("compiled handoff launcher E2E", (
       expect(record.refs.taskId).toBeUndefined();
 
       const launchMeta = await readFile(
-        join(fakeHome, ".maestro", "launches", record.id, "launch.json"),
+        join(fakeHome, ".maestro", "handoff", record.id, "handoff.json"),
         "utf8",
       );
       expect(launchMeta).not.toContain('"taskId"');
@@ -925,9 +949,9 @@ describe.skipIf(process.platform === "win32")("compiled handoff launcher E2E", (
         const record = expectJson<{ id: string; refs: { taskId?: string } }>(launched);
         expect(record.refs.taskId).toBeUndefined();
 
-        await access(join(fakeHome, ".maestro", "launches", record.id, "launch.json"));
+        await access(join(fakeHome, ".maestro", "handoff", record.id, "handoff.json"));
         await expect(
-          access(join(workspaceA, ".maestro", "launches", record.id, "launch.json")),
+          access(join(workspaceA, ".maestro", "handoff", record.id, "handoff.json")),
         ).rejects.toThrow();
 
         const picked = await runCompiled(

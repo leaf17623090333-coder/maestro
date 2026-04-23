@@ -18,7 +18,7 @@ import type {
   Mission,
   MissionStorePort,
 } from "@/features/mission/index.js";
-import type { HandoffLaunchRecord, LaunchStorePort } from "@/features/handoff/index.js";
+import type { HandoffRecord, HandoffStorePort } from "@/features/handoff/index.js";
 import type { ReplyStorePort, AgentReply } from "@/features/reply/index.js";
 
 const originalConsoleLog = console.log;
@@ -95,10 +95,10 @@ const replyStore: ReplyStorePort = {
   async markIngested() { /* noop */ },
 };
 
-const launchStore: LaunchStorePort = {
-  async create(): Promise<HandoffLaunchRecord> { throw new Error("nope"); },
+const handoffStore: HandoffStorePort = {
+  async create(): Promise<HandoffRecord> { throw new Error("nope"); },
   async update(record) { return record; },
-  async consume(): Promise<HandoffLaunchRecord> { throw new Error("nope"); },
+  async consume(): Promise<HandoffRecord> { throw new Error("nope"); },
   async get() { return undefined; },
   async list() { return []; },
   resolveArtifactPath(relativePath: string) { return join(tmpDir, relativePath); },
@@ -132,7 +132,7 @@ async function loadRegisterBundleCommand() {
       assertionStore,
       checkpointStore,
       replyStore,
-      launchStore,
+      handoffStore,
       archive,
       sessionDetect: undefined,
     }),
@@ -268,7 +268,7 @@ describe("bundle commands", () => {
         assertions: 0,
         agents: 0,
         replies: 0,
-        launches: 0,
+        handoffs: 0,
         checkpoints: 0,
         principlesSnapshot: 0,
         outcomesSnapshot: 0,

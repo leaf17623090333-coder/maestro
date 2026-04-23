@@ -2,21 +2,21 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { access, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { FsLaunchStoreAdapter } from "@/features/handoff";
+import { FsHandoffStoreAdapter } from "@/features/handoff";
 
-let projectDir: string;
+let storeRoot: string;
 
 beforeEach(async () => {
-  projectDir = await mkdtemp(join(tmpdir(), "maestro-launch-store-"));
+  storeRoot = await mkdtemp(join(tmpdir(), "maestro-handoff-store-"));
 });
 
 afterEach(async () => {
-  await rm(projectDir, { recursive: true, force: true });
+  await rm(storeRoot, { recursive: true, force: true });
 });
 
-describe("FsLaunchStoreAdapter", () => {
-  it("persists prompt, output log, and metadata under .maestro/launches/<id>/", async () => {
-    const store = new FsLaunchStoreAdapter(projectDir);
+describe("FsHandoffStoreAdapter", () => {
+  it("persists prompt, output log, and metadata under .maestro/handoff/<id>/", async () => {
+    const store = new FsHandoffStoreAdapter(storeRoot);
 
     const record = await store.create({
       task: "Investigate the failing build",
@@ -24,15 +24,15 @@ describe("FsLaunchStoreAdapter", () => {
       agent: "codex",
       model: "gpt-5.4",
       wait: false,
-      sourceDir: projectDir,
-      targetDir: projectDir,
+      sourceDir: storeRoot,
+      targetDir: storeRoot,
       refs: { missionId: "2026-04-20-001", featureId: "f1", milestoneId: "m1" },
       prompt: "## Task\n\nInvestigate the failing build\n",
     });
 
-    await access(join(projectDir, record.promptPath));
-    await access(join(projectDir, record.outputPath));
-    await access(join(projectDir, ".maestro", "launches", record.id, "launch.json"));
+    await access(join(storeRoot, record.promptPath));
+    await access(join(storeRoot, record.outputPath));
+    await access(join(storeRoot, ".maestro", "handoff", record.id, "handoff.json"));
 
     const listed = await store.list();
     expect(listed).toHaveLength(1);
@@ -44,16 +44,16 @@ describe("FsLaunchStoreAdapter", () => {
     });
   });
 
-  it("updates launch metadata after the agent process finishes", async () => {
-    const store = new FsLaunchStoreAdapter(projectDir);
+  it("updates handoff metadata after the agent process finishes", async () => {
+    const store = new FsHandoffStoreAdapter(storeRoot);
     const created = await store.create({
       task: "Fix tests",
       name: "[Handoff] Fix tests",
       agent: "claude",
       model: "opus",
       wait: true,
-      sourceDir: projectDir,
-      targetDir: join(projectDir, "worktree"),
+      sourceDir: storeRoot,
+      targetDir: join(storeRoot, "worktree"),
       refs: {},
       prompt: "## Task\n\nFix tests\n",
     });
@@ -77,15 +77,15 @@ describe("FsLaunchStoreAdapter", () => {
   });
 
   it("consumes a handoff once and rejects a second pickup", async () => {
-    const store = new FsLaunchStoreAdapter(projectDir);
+    const store = new FsHandoffStoreAdapter(storeRoot);
     const created = await store.create({
       task: "Fix tests",
       name: "[Handoff] Fix tests",
       agent: "codex",
       model: "gpt-5.4",
       wait: false,
-      sourceDir: projectDir,
-      targetDir: projectDir,
+      sourceDir: storeRoot,
+      targetDir: storeRoot,
       refs: { taskId: "tsk-123" },
       prompt: "## Task\n\nFix tests\n",
     });
@@ -114,21 +114,21 @@ describe("FsLaunchStoreAdapter", () => {
     ).rejects.toThrow("already consumed");
   });
 
-  it("surfaces corrupt launch metadata instead of treating it as missing", async () => {
-    const store = new FsLaunchStoreAdapter(projectDir);
+  it("surfaces corrupt handoff metadata instead of treating it as missing", async () => {
+    const store = new FsHandoffStoreAdapter(storeRoot);
     const created = await store.create({
       task: "Corrupt me",
       name: "[Handoff] Corrupt me",
       agent: "codex",
       model: "gpt-5.4",
       wait: false,
-      sourceDir: projectDir,
-      targetDir: projectDir,
+      sourceDir: storeRoot,
+      targetDir: storeRoot,
       refs: {},
       prompt: "## Task\n\nCorrupt me\n",
     });
 
-    await writeFile(join(projectDir, ".maestro", "launches", created.id, "launch.json"), "{bad json\n");
+    await writeFile(join(storeRoot, ".maestro", "handoff", created.id, "handoff.json"), "{bad json\n");
 
     await expect(store.get(created.id)).rejects.toThrow();
   });

@@ -22,7 +22,7 @@ import type {
 } from "@/features/memory";
 import type { RatchetStorePort, RatchetSuite, RatchetBaseline } from "@/features/ratchet";
 import type { ProjectGraphStorePort, ProjectGraph } from "@/features/graph";
-import type { HandoffLaunchRecord, LaunchStorePort } from "@/features/handoff";
+import type { HandoffRecord, HandoffStorePort } from "@/features/handoff";
 import type { GitState } from "@/infra/domain/git-types.js";
 import type { MaestroConfig } from "@/infra/domain/config-types.js";
 import type { AgentSession } from "@/features/session";
@@ -464,9 +464,9 @@ export function mockProjectGraphStore(
   };
 }
 
-export function makeHandoffLaunchRecord(
-  partial: Partial<HandoffLaunchRecord> & { id: string; createdAt: string },
-): HandoffLaunchRecord {
+export function makeHandoffRecord(
+  partial: Partial<HandoffRecord> & { id: string; createdAt: string },
+): HandoffRecord {
   return {
     id: partial.id,
     createdAt: partial.createdAt,
@@ -490,15 +490,15 @@ export function makeHandoffLaunchRecord(
   };
 }
 
-export function mockLaunchStore(records: readonly HandoffLaunchRecord[] = []): LaunchStorePort {
+export function mockHandoffStore(records: readonly HandoffRecord[] = []): HandoffStorePort {
   const recordMap = new Map(records.map((record) => [record.id, record] as const));
   return {
-    async create() { throw new Error("not used in mockLaunchStore"); },
+    async create() { throw new Error("not used in mockHandoffStore"); },
     async update(r) {
       recordMap.set(r.id, r);
       return r;
     },
-    async consume() { throw new Error("not used in mockLaunchStore"); },
+    async consume() { throw new Error("not used in mockHandoffStore"); },
     async get(id) { return recordMap.get(id); },
     async list() { return [...recordMap.values()]; },
     resolveArtifactPath(p: string) { return p; },

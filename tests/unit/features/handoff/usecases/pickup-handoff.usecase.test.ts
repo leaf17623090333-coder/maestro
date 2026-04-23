@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "bun:test";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { FsLaunchStoreAdapter, pickupHandoff } from "@/features/handoff";
+import { FsHandoffStoreAdapter, pickupHandoff } from "@/features/handoff";
 import { FsContractStoreAdapter } from "@/features/task/adapters/fs-contract-store.adapter.js";
 import { createContract } from "@/features/task/usecases/contract/create-contract.usecase.js";
 import { lockContract } from "@/features/task/usecases/contract/lock-contract.usecase.js";
@@ -18,7 +18,7 @@ import {
 
 describe("pickupHandoff", () => {
   let tmpDir: string;
-  let launchStore: FsLaunchStoreAdapter;
+  let handoffStore: FsHandoffStoreAdapter;
   let taskStore: JsonlTaskStoreAdapter;
   let contractStore: FsContractStoreAdapter;
   let continuationStore: FsTaskContinuationStoreAdapter;
@@ -26,7 +26,7 @@ describe("pickupHandoff", () => {
 
   beforeEach(async () => {
     tmpDir = await mkdtemp(join(tmpdir(), "handoff-pickup-usecase-"));
-    launchStore = new FsLaunchStoreAdapter(tmpDir);
+    handoffStore = new FsHandoffStoreAdapter(tmpDir);
     taskStore = new JsonlTaskStoreAdapter(tmpDir);
     contractStore = new FsContractStoreAdapter(tmpDir);
     continuationStore = new FsTaskContinuationStoreAdapter(tmpDir);
@@ -83,7 +83,7 @@ describe("pickupHandoff", () => {
       },
     );
 
-    const launch = await launchStore.create({
+    const launch = await handoffStore.create({
       task: "Pick this up",
       name: "[Handoff] Pick this up",
       agent: "claude",
@@ -99,7 +99,7 @@ describe("pickupHandoff", () => {
 
     const result = await pickupHandoff(
       {
-        launchStore,
+        handoffStore,
         taskStore,
         contractStore,
         continuationStore,
@@ -139,7 +139,7 @@ describe("pickupHandoff", () => {
   });
 
   it("consumes a task-less handoff without touching task state", async () => {
-    const launch = await launchStore.create({
+    const launch = await handoffStore.create({
       task: "Prompt-only handoff",
       name: "[Handoff] Prompt-only",
       agent: "claude",
@@ -153,7 +153,7 @@ describe("pickupHandoff", () => {
 
     const result = await pickupHandoff(
       {
-        launchStore,
+        handoffStore,
         taskStore,
         contractStore,
         continuationStore,
@@ -177,7 +177,7 @@ describe("pickupHandoff", () => {
     });
     expect(result.record.consumedAt).toBeTruthy();
 
-    const reloaded = await launchStore.get(launch.id);
+    const reloaded = await handoffStore.get(launch.id);
     expect(reloaded?.consumedAt).toBeTruthy();
 
     const tasksAfter = await taskStore.all();
@@ -185,7 +185,7 @@ describe("pickupHandoff", () => {
   });
 
   it("consumes a task-less handoff without an ownerId when no session is resolved", async () => {
-    const launch = await launchStore.create({
+    const launch = await handoffStore.create({
       task: "Prompt-only handoff, agent only",
       name: "[Handoff] Prompt-only no-session",
       agent: "claude",
@@ -199,7 +199,7 @@ describe("pickupHandoff", () => {
 
     const result = await pickupHandoff(
       {
-        launchStore,
+        handoffStore,
         taskStore,
         contractStore,
         continuationStore,
@@ -236,7 +236,7 @@ describe("pickupHandoff", () => {
       },
     );
 
-    const launch = await launchStore.create({
+    const launch = await handoffStore.create({
       task: "Should fail",
       name: "[Handoff] Should fail",
       agent: "codex",
@@ -251,7 +251,7 @@ describe("pickupHandoff", () => {
     await expect(
       pickupHandoff(
         {
-          launchStore,
+          handoffStore,
           taskStore,
           contractStore,
           continuationStore,
@@ -266,7 +266,7 @@ describe("pickupHandoff", () => {
       ),
     ).rejects.toThrow(`already finished because linked task ${task.id} is completed`);
 
-    const reloaded = await launchStore.get(launch.id);
+    const reloaded = await handoffStore.get(launch.id);
     expect(reloaded?.status).toBe("completed");
     expect(reloaded?.consumedAt).toBeUndefined();
   });
@@ -321,7 +321,7 @@ describe("pickupHandoff", () => {
       },
     );
 
-    const launch = await launchStore.create({
+    const launch = await handoffStore.create({
       task: "Pick this up",
       name: "[Handoff] Pick this up",
       agent: "claude",
@@ -337,7 +337,7 @@ describe("pickupHandoff", () => {
 
     const result = await pickupHandoff(
       {
-        launchStore,
+        handoffStore,
         taskStore,
         contractStore: {
           ...contractStore,
@@ -362,7 +362,7 @@ describe("pickupHandoff", () => {
       status: "in_progress",
       assignee: "claude-code-pickup-3",
     });
-    const reloaded = await launchStore.get(launch.id);
+    const reloaded = await handoffStore.get(launch.id);
     expect(reloaded?.consumedAt).toBeTruthy();
     expect(result.contractTransferWarning).toMatch(/contract ownership transfer failed/);
     expect(result.contractTransferWarning).toContain("contract store offline");
@@ -370,7 +370,7 @@ describe("pickupHandoff", () => {
 
   it("unlinks and proceeds standalone when the linked task was deleted", async () => {
     const task = await createTask(taskStore, { title: "About to be deleted" });
-    const launch = await launchStore.create({
+    const launch = await handoffStore.create({
       task: "Pick this up",
       name: "[Handoff] deleted target",
       agent: "claude",
@@ -386,7 +386,7 @@ describe("pickupHandoff", () => {
 
     const result = await pickupHandoff(
       {
-        launchStore,
+        handoffStore,
         taskStore,
         contractStore,
         continuationStore,
@@ -405,7 +405,7 @@ describe("pickupHandoff", () => {
     expect(result.record.consumedAt).toBeTruthy();
     expect(result.record.pickedUpByAgent).toBe("claude");
 
-    const reloaded = await launchStore.get(launch.id);
+    const reloaded = await handoffStore.get(launch.id);
     expect(reloaded?.consumedAt).toBeTruthy();
   });
 });
