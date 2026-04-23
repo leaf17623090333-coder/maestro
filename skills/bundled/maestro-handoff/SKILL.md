@@ -22,15 +22,10 @@ You are handing off the current task to another session via maestro's native lau
 A portable transfer artifact persisted on disk:
 
 - `prompt.md`: the brief sent to the receiving session
-- `launch.json`: metadata (agent, model, status, refs, timing)
+- `handoff.json`: metadata (agent, model, status, refs, timing)
 - `output.log`: stdout/stderr from the launched session
 
-**Where the packet lands depends on `--task-id`:**
-
-- **With `--task-id`** (task-linked packet): `<project>/.maestro/launches/<id>/`, inside the current project. Use this for work tied to a specific maestro task the receiver should also pick up.
-- **Without `--task-id`** (standalone packet): `~/.maestro/launches/<id>/`, in the global home store. Use this for ad-hoc handoffs that don't link to a task.
-
-`promptPath` and `outputPath` in the JSON output are relative; resolve them against the project root for task-linked packets and against `~/` for standalone packets. `maestro handoff list` reads from both stores and returns a merged view, so packets from other workspaces show up there too.
+**Every packet lands in one global store: `~/.maestro/handoff/<id>/`.** There is no per-project store. `--task-id` links the packet to a task for continuation and ownership transfer on pickup, but it does not change where the packet is written. `promptPath` and `outputPath` in the JSON output are relative; resolve them against `~/` (the global store root). `maestro handoff list` scans the single global store, so handoffs created in one working directory are visible from any other.
 
 Packets are detached by default. The launcher returns immediately with a handoff id. The launched receiver prompt now tells the new session to run `maestro handoff pickup --id <id> --json` before any other work so ownership and packet state stay aligned.
 

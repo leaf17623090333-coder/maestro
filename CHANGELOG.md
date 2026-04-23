@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.58.0 - Single global handoff store + rename launch to handoff (BREAKING)
+
+- Collapse the two-store handoff routing into a single global store at
+  `~/.maestro/handoff/`. Every packet, task-linked or standalone, lives
+  there. `--task-id` now links a packet to a task (for continuation and
+  ownership transfer on pickup) without affecting storage location.
+  Cross-PWD pickup works by default: creating a handoff in project A and
+  running `maestro handoff pickup --id <id>` from project B now succeeds.
+- Rename internal vocabulary from "launch" to "handoff":
+  `LaunchStorePort` -> `HandoffStorePort`,
+  `HandoffLaunchRecord` -> `HandoffRecord`,
+  `HandoffLaunchStatus` -> `HandoffStatus`,
+  `FsLaunchStoreAdapter` -> `FsHandoffStoreAdapter`.
+  Deleted: `CompositeLaunchStore`. Renamed files: `launch-types.ts`,
+  `launch-state.ts`, `launch-store.adapter.ts`, `list-launches.usecase.ts`,
+  `show-launch.usecase.ts`, `reconcile-launch-record.usecase.ts` all
+  move to `handoff-*` counterparts.
+- On-disk change: the per-packet metadata file renames from `launch.json`
+  to `handoff.json`. The per-packet directory renames from `launches/<id>/`
+  to `handoff/<id>/`. Packets are now always rooted at `~/.maestro/`.
+- `Services.launchStore` renames to `Services.handoffStore`. Any code
+  importing maestro internals that reads `services.launchStore` needs
+  updating.
+- Bundle stats JSON field `launches` renames to `handoffs`. Bundle tar
+  layout changes from `<mission>.mission/launches/<id>.json` to
+  `<mission>.mission/handoffs/<id>.json`.
+- Init no longer creates `.maestro/launches/` in new projects and
+  `.maestro/launches/` is removed from the generated `.gitignore`
+  (handoffs live outside the repo now).
+- No migration: any existing packets in `~/.maestro/launches/` or
+  `<project>/.maestro/launches/` are orphaned. Re-issue any in-flight
+  handoffs after upgrade. `doctor` still flags legacy
+  `.maestro/handoffs/` folders from earlier renames.
+
 ## 0.46.0 - Rename worker to agent (runtime role) (BREAKING)
 
 - Rename the runtime-role concept "worker" (the thing that executes a

@@ -217,7 +217,7 @@ maestro handoff \
   --agent codex
 ```
 
-Launches are detached by default. Maestro persists the handoff under `.maestro/launches/<id>/` and returns the launch record with the prompt path, log path, target directory, linked task id, and agent details.
+Launches are detached by default. Maestro persists the handoff under `~/.maestro/handoff/<id>/` (a single global store) and returns the launch record with the prompt path, log path, target directory, linked task id, and agent details.
 
 Useful variants:
 
@@ -240,7 +240,7 @@ maestro milestone seal implement --mission <mission-id>
 
 ## Handoffs
 
-`maestro handoff "<task>"` builds a self-contained markdown brief from the current repo state plus the linked task continuation, then launches a fresh Codex or Claude run. Every launch is persisted under `.maestro/launches/<id>/` so the operator can inspect exactly what was sent and what the child process printed. `maestro handoff pickup` consumes one open packet and immediately takes over the linked task.
+`maestro handoff "<task>"` builds a self-contained markdown brief from the current repo state plus the linked task continuation, then launches a fresh Codex or Claude run. Every launch is persisted under `~/.maestro/handoff/<id>/` (a single global store) so the operator can inspect exactly what was sent and what the child process printed. `maestro handoff pickup` consumes one open packet and immediately takes over the linked task. Handoffs created in one working directory are visible from any other, so cross-project pickup works by default.
 
 ### What a launch contains
 
@@ -581,14 +581,13 @@ Maestro stores project-local state in `.maestro/` and user-level defaults in `~/
 
 | Surface | Lives where | Holds |
 |---|---|---|
-| Project workflow state | `.maestro/` | Missions, launches, tasks, notes, and local memory artifacts |
-| User-level defaults | `~/.maestro/` | Global config and graph metadata |
+| Project workflow state | `.maestro/` | Missions, tasks, notes, and local memory artifacts |
+| User-level defaults | `~/.maestro/` | Global config, graph metadata, and the global handoff store |
 | Read-only projections | Mission Control | Terminal previews and JSON snapshots over the same state |
 
 ```text
 .maestro/
 ├── config.yaml
-├── launches/
 ├── memory/
 │   ├── corrections/
 │   ├── learnings/
@@ -613,11 +612,16 @@ Maestro stores project-local state in `.maestro/` and user-level defaults in `~/
 
 ~/.maestro/
 ├── config.yaml
-└── graph/
-    └── projects.json
+├── graph/
+│   └── projects.json
+└── handoff/
+    └── <id>/
+        ├── handoff.json
+        ├── prompt.md
+        └── output.log
 ```
 
-The design is intentionally transparent: state is inspectable, diffable, and easy to back up. `.maestro/tasks/**` and `.maestro/principles.jsonl` are intentionally repo-tracked so the daily queue and behavioral rules are reviewed like any other code change; `.maestro/missions/**` and `.maestro/launches/**` stay ignored as local orchestration artifacts. Legacy `.maestro/handoffs/**` folders can remain on disk, but Maestro no longer reads them and `status` or `doctor` will warn when they are present.
+The design is intentionally transparent: state is inspectable, diffable, and easy to back up. `.maestro/tasks/**` and `.maestro/principles.jsonl` are intentionally repo-tracked so the daily queue and behavioral rules are reviewed like any other code change; `.maestro/missions/**` stays ignored as local orchestration artifacts. Handoff packets live in the global `~/.maestro/handoff/` store (outside the repo) so they are visible across every working directory. Legacy `.maestro/handoffs/**` and `.maestro/launches/**` folders can remain on disk from earlier versions, but Maestro no longer reads them; `status` or `doctor` will warn when they are present.
 
 ## Codebase Layout
 
