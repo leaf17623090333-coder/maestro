@@ -15,7 +15,7 @@ import type { CorrectionStorePort, LearningStorePort } from "@/features/memory";
 import { buildMemoryStats } from "@/features/memory";
 import type { RatchetStorePort } from "@/features/ratchet";
 import type { ProjectGraphStorePort } from "@/features/graph";
-import type { HandoffRecord, HandoffStorePort } from "@/features/handoff";
+import { isHandoffInProject, type HandoffRecord, type HandoffStorePort } from "@/features/handoff";
 import { TASK_STATUSES, type TaskQueryPort, type TaskStatus } from "@/features/task";
 import type { ReplyStorePort, AgentReply, ReplyOutcome } from "@/features/reply";
 import { ingestReply } from "@/features/reply";
@@ -37,6 +37,7 @@ import {
   getValidFeatureTransitions,
 } from "@/features/mission";
 import { getMissionControlBackgroundMode, listIgnoredProjectConfigKeys } from "@/shared/domain/ui-config.js";
+import { resolveMaestroProjectRoot } from "@/shared/lib/project-root.js";
 import type { DoctorCheck, StatusReport } from "@/infra/domain/status-types.js";
 import { getGraphContext } from "@/features/graph";
 import { deriveEvents } from "./events.js";
@@ -118,6 +119,7 @@ export async function buildSnapshot(
   missionId: string,
   options: SnapshotBuildOptions = {},
 ): Promise<MissionControlSnapshot> {
+  const currentProjectRoot = resolveMaestroProjectRoot(deps.cwd);
   const taskBoardPromise = options.includeTaskBoard === true
     ? buildTaskBoard(deps.taskStore)
     : Promise.resolve(undefined);
@@ -126,7 +128,7 @@ export async function buildSnapshot(
   // post-ingest state (advanced/kicked-back). Without this the inbox appears
   // stale for one poll cycle.
   const ingest = options.includeReplies === true
-    ? await loadAndIngestReplies(deps, missionId)
+    ? await loadAndIngestReplies(deps, missionId, currentProjectRoot)
     : { replies: undefined as readonly AgentReply[] | undefined, outcomesCache: undefined };
   const replies = ingest.replies;
 
@@ -250,7 +252,7 @@ export async function buildSnapshot(
   // Reuse the in-memory outcomes cache from ingest to avoid re-reading
   // outcomes.jsonl.
   const principleEffectiveness = options.includeReplies === true
-    ? await loadPrincipleEffectiveness(deps, ingest.outcomesCache, ingest.handoffsCache)
+    ? await loadPrincipleEffectiveness(deps, currentProjectRoot, ingest.outcomesCache, ingest.handoffsCache)
     : undefined;
 
   // Conductor screen data
@@ -314,6 +316,7 @@ export async function buildHomeSnapshot(
   deps: HomeSnapshotDeps,
   options: SnapshotBuildOptions = {},
 ): Promise<MissionControlSnapshot> {
+  const currentProjectRoot = resolveMaestroProjectRoot(deps.cwd);
   const taskBoardPromise = options.includeTaskBoard === true
     ? buildTaskBoard(deps.taskStore)
     : Promise.resolve(undefined);
@@ -411,7 +414,7 @@ export async function buildHomeSnapshot(
     timelineMilestones: [],
     replyInbox: homeReplyInbox,
     principleEffectiveness: options.includeReplies === true
-      ? await loadPrincipleEffectiveness(deps)
+      ? await loadPrincipleEffectiveness(deps, currentProjectRoot)
       : undefined,
     home: {
       headline,
@@ -818,6 +821,7 @@ interface IngestResult {
 async function loadAndIngestReplies(
   deps: SnapshotDeps,
   missionId: string,
+  currentProjectRoot: string,
 ): Promise<IngestResult> {
   if (!deps.replyStore) return { replies: [] };
   try {
@@ -832,7 +836,7 @@ async function loadAndIngestReplies(
       ? [...(await deps.principleStore.listOutcomes())]
       : undefined;
     const handoffsCache: readonly HandoffRecord[] | undefined = deps.handoffStore
-      ? await deps.handoffStore.list()
+      ? filterHandoffsForProject(await deps.handoffStore.list(), currentProjectRoot)
       : undefined;
 
     const recordPrincipleOutcomes = buildPrincipleRecorder(deps, missionId, outcomesCache, handoffsCache);
@@ -954,6 +958,7 @@ function filterPendingForHandoff(
 
 async function loadPrincipleEffectiveness(
   deps: SnapshotDeps | HomeSnapshotDeps,
+  currentProjectRoot: string,
   cachedOutcomes?: readonly PrincipleOutcomeRecord[],
   cachedHandoffs?: readonly HandoffRecord[],
 ): Promise<readonly PrincipleEffectivenessRow[] | undefined> {
@@ -970,10 +975,29 @@ async function loadPrincipleEffectiveness(
         ? Promise.resolve(cachedHandoffs)
         : (handoffStore ? handoffStore.list() : Promise.resolve<readonly HandoffRecord[]>([])),
     ]);
-    return buildPrincipleEffectivenessRows(principles, outcomes, handoffs);
+    const scopedHandoffs = filterHandoffsForProject(handoffs, currentProjectRoot);
+    const scopedOutcomes = handoffStore || cachedHandoffs !== undefined
+      ? filterOutcomesForHandoffs(outcomes, scopedHandoffs)
+      : outcomes;
+    return buildPrincipleEffectivenessRows(principles, scopedOutcomes, scopedHandoffs);
   } catch {
     return undefined;
   }
+}
+
+function filterHandoffsForProject(
+  handoffs: readonly HandoffRecord[],
+  currentProjectRoot: string,
+): readonly HandoffRecord[] {
+  return handoffs.filter((handoff) => isHandoffInProject(handoff, currentProjectRoot));
+}
+
+function filterOutcomesForHandoffs(
+  outcomes: readonly PrincipleOutcomeRecord[],
+  handoffs: readonly HandoffRecord[],
+): readonly PrincipleOutcomeRecord[] {
+  const handoffIds = new Set(handoffs.map((handoff) => handoff.id));
+  return outcomes.filter((record) => handoffIds.has(record.handoffId));
 }
 
 export function buildPrincipleEffectivenessRows(

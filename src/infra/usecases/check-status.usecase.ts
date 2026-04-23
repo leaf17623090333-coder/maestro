@@ -7,6 +7,7 @@ export async function checkStatus(
   config: ConfigPort,
   git: GitPort,
   dir: string,
+  options: { readonly homeDir?: string } = {},
 ): Promise<StatusReport> {
   const [
     projectConfigExists,
@@ -17,7 +18,7 @@ export async function checkStatus(
     config.exists("project", dir),
     config.exists("global", dir),
     git.isRepo(dir),
-    countLegacyHandoffFiles(dir),
+    countLegacyHandoffFiles(dir, { homeDir: options.homeDir }),
   ]);
 
   const configSource: StatusReport["configSource"] = projectConfigExists

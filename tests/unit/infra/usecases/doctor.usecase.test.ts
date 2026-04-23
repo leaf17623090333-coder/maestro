@@ -6,9 +6,12 @@ import { runDoctor } from "@/infra/usecases/run-doctor.usecase.js";
 import { mockGit, mockConfig } from "../../../helpers/mocks.js";
 
 let cwd: string;
+let homeDir: string;
 
 beforeEach(async () => {
   cwd = await mkdtemp(join(tmpdir(), "maestro-doctor-"));
+  homeDir = join(cwd, "home");
+  await mkdir(homeDir, { recursive: true });
 });
 
 afterEach(async () => {
@@ -20,7 +23,7 @@ describe("runDoctor", () => {
     const config = mockConfig({
       exists: async () => true,
     });
-    const checks = await runDoctor(mockGit(), config, cwd);
+    const checks = await runDoctor(mockGit(), config, cwd, { homeDir });
 
     expect(checks.length).toBe(3);
     expect(checks.every((c) => c.status === "ok")).toBe(true);
@@ -28,7 +31,7 @@ describe("runDoctor", () => {
 
   it("reports git as fail when not in repo", async () => {
     const git = mockGit({ isRepo: async () => false });
-    const checks = await runDoctor(git, mockConfig(), cwd);
+    const checks = await runDoctor(git, mockConfig(), cwd, { homeDir });
 
     const gitCheck = checks.find((c) => c.name === "git");
     expect(gitCheck?.status).toBe("fail");
@@ -37,7 +40,7 @@ describe("runDoctor", () => {
 
   it("reports missing config as warn with fix hint", async () => {
     const config = mockConfig({ exists: async () => false });
-    const checks = await runDoctor(mockGit(), config, cwd);
+    const checks = await runDoctor(mockGit(), config, cwd, { homeDir });
 
     const projectCheck = checks.find((c) => c.name === "project-config");
     expect(projectCheck?.status).toBe("warn");
@@ -84,7 +87,7 @@ describe("runDoctor", () => {
       }),
     });
 
-    const checks = await runDoctor(mockGit(), config, cwd);
+    const checks = await runDoctor(mockGit(), config, cwd, { homeDir });
 
     expect(checks.find((c) => c.name === "ignored-ui-missionControl-backgroundMode")).toMatchObject({
       status: "warn",
@@ -96,16 +99,19 @@ describe("runDoctor", () => {
     await writeFile(join(cwd, ".maestro", "handoffs", "2026-04-20-001.json"), "{}\n");
     await mkdir(join(cwd, ".maestro", "launches"), { recursive: true });
     await writeFile(join(cwd, ".maestro", "launches", "2026-04-20-002.json"), "{}\n");
+    await mkdir(join(homeDir, ".maestro", "launches"), { recursive: true });
+    await writeFile(join(homeDir, ".maestro", "launches", "2026-04-20-003.json"), "{}\n");
 
     const checks = await runDoctor(
       mockGit(),
       mockConfig({ exists: async () => true }),
       cwd,
+      { homeDir },
     );
 
     expect(checks.find((check) => check.name === "legacy-handoffs")).toMatchObject({
       status: "warn",
-      message: "Found 2 legacy handoff artifact(s) under .maestro/handoffs/ or .maestro/launches/",
+      message: "Found 3 legacy handoff artifact(s) under .maestro/handoffs/, .maestro/launches/, or ~/.maestro/launches/",
     });
   });
 });

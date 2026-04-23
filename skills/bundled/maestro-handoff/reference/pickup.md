@@ -66,8 +66,10 @@ claim silently and records a `handoff_claim_transferred` event in the task's
 continuation history. This is the intended "agent B picks up work that agent
 A started" path.
 
-If the linked task was deleted out of band in the source project, pickup
-unlinks silently and proceeds as a standalone pickup. No error.
+During same-project pickup, if the linked task was deleted out of band in the
+source project, pickup unlinks silently and proceeds as a standalone pickup.
+No error. Cross-project pickup never uses this fallback; it errors unless
+`--standalone` is passed explicitly.
 
 ## Contract inheritance
 

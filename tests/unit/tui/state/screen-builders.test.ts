@@ -3,16 +3,18 @@ import {
   buildAgentGrid,
   buildDispatchQueue,
   buildEventStream,
+  buildHomeSnapshot,
   buildPrincipleEffectivenessRows,
   buildReplyInbox,
   buildTaskBoard,
   buildTimelineMilestones,
 } from "@/tui/state/snapshot.js";
-import type { Feature, Milestone, Principle, PrincipleOutcomeRecord } from "@/features/mission";
-import type { HandoffRecord } from "@/features/handoff";
+import type { Feature, Milestone, Principle, PrincipleOutcomeRecord, PrincipleStorePort } from "@/features/mission";
+import type { HandoffRecord, HandoffStorePort } from "@/features/handoff";
 import type { MissionControlEvent } from "@/tui/state/types.js";
 import type { Task, TaskQueryPort } from "@/features/task";
 import type { AgentReply } from "@/features/reply";
+import { mockConfig, mockGit } from "../../../helpers/mocks.js";
 
 function makeFeature(overrides: Partial<Feature> & { id: string }): Feature {
   return {
@@ -426,5 +428,55 @@ describe("buildPrincipleEffectivenessRows", () => {
     expect(row.recentKickbackExamples.length).toBe(2);
     expect(row.recentKickbackExamples[0]).toContain("Failing tests"); // newest first
     expect(row.recentKickbackExamples[1]).toContain("Broken migration");
+  });
+});
+
+describe("buildHomeSnapshot principle effectiveness", () => {
+  it("scopes global handoff-backed outcomes to the current project", async () => {
+    const currentProjectRoot = "/tmp/maestro-project-a";
+    const foreignProjectRoot = "/tmp/maestro-project-b";
+    const principles = [makePrinciple("p-1", "Preserve ownership")];
+    const outcomes = [
+      makeOutcome("p-1", "h-local", "unhelpful", "2026-04-13T01:00:00Z"),
+      makeOutcome("p-1", "h-foreign", "unhelpful", "2026-04-13T02:00:00Z"),
+    ];
+    const handoffs = [
+      makeHandoff("h-local", {
+        name: "Local kickback",
+        refs: { projectRoot: currentProjectRoot },
+        sourceDir: currentProjectRoot,
+      }),
+      makeHandoff("h-foreign", {
+        name: "Foreign kickback",
+        refs: { projectRoot: foreignProjectRoot },
+        sourceDir: foreignProjectRoot,
+      }),
+    ];
+    const principleStore = {
+      list: async () => principles,
+      listOutcomes: async () => outcomes,
+    } as unknown as PrincipleStorePort;
+    const handoffStore = {
+      list: async () => handoffs,
+    } as unknown as HandoffStorePort;
+
+    const snapshot = await buildHomeSnapshot(
+      {
+        config: mockConfig(),
+        git: mockGit(),
+        cwd: currentProjectRoot,
+        principleStore,
+        handoffStore,
+      },
+      { includeReplies: true },
+    );
+
+    const row = snapshot.principleEffectiveness?.[0];
+    expect(row).toMatchObject({
+      id: "p-1",
+      unhelpful: 1,
+      total: 1,
+      recentKickbackExamples: ["h-local: Local kickback"],
+    });
   });
 });

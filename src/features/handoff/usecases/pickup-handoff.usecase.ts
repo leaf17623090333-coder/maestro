@@ -65,7 +65,6 @@ export async function pickupHandoff(
     const consumedOnly = await consumeHandoffOnly(deps.handoffStore, input);
     return {
       record: consumedOnly,
-      ownerId: input.ownerId,
     };
   }
   if (launch.status === "completed") {
@@ -100,7 +99,6 @@ export async function pickupHandoff(
     const consumedOnly = await consumeHandoffOnly(deps.handoffStore, input);
     return {
       record: consumedOnly,
-      ownerId: input.ownerId,
       unlinkedTaskId: taskId,
     };
   }

@@ -6,9 +6,12 @@ import { checkStatus } from "@/infra/usecases/check-status.usecase.js";
 import { mockConfig, mockGit } from "../../../helpers/mocks.js";
 
 let cwd: string;
+let homeDir: string;
 
 beforeEach(async () => {
   cwd = await mkdtemp(join(tmpdir(), "maestro-status-"));
+  homeDir = join(cwd, "home");
+  await mkdir(homeDir, { recursive: true });
 });
 
 afterEach(async () => {
@@ -21,6 +24,7 @@ describe("checkStatus", () => {
       mockConfig({ exists: async () => true }),
       mockGit(),
       cwd,
+      { homeDir },
     );
 
     expect(status).toEqual({
@@ -39,13 +43,17 @@ describe("checkStatus", () => {
     const launchDir = join(cwd, ".maestro", "launches");
     await mkdir(launchDir, { recursive: true });
     await writeFile(join(launchDir, "2026-04-20-003.json"), "{}\n");
+    const globalLaunchDir = join(homeDir, ".maestro", "launches");
+    await mkdir(globalLaunchDir, { recursive: true });
+    await writeFile(join(globalLaunchDir, "2026-04-20-004.json"), "{}\n");
 
     const status = await checkStatus(
       mockConfig({ exists: async () => true }),
       mockGit(),
       cwd,
+      { homeDir },
     );
 
-    expect(status.legacyHandoffCount).toBe(3);
+    expect(status.legacyHandoffCount).toBe(4);
   });
 });

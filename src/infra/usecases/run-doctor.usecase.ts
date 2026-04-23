@@ -13,6 +13,7 @@ export async function runDoctor(
   git: GitPort,
   config: ConfigPort,
   dir: string,
+  options: { readonly homeDir?: string } = {},
 ): Promise<DoctorCheck[]> {
   const [gitAvailable, projectConfig, globalConfig, configLayers, legacyHandoffCount] =
     await Promise.all([
@@ -20,7 +21,7 @@ export async function runDoctor(
       config.exists("project", dir),
       config.exists("global", dir),
       config.loadLayers(dir),
-      countLegacyHandoffFiles(dir),
+      countLegacyHandoffFiles(dir, { homeDir: options.homeDir }),
     ]);
 
   const doctorChecks: DoctorCheck[] = [
@@ -57,7 +58,7 @@ export async function runDoctor(
     doctorChecks.push({
       name: "legacy-handoffs",
       status: "warn",
-      message: `Found ${legacyHandoffCount} legacy handoff artifact(s) under .maestro/handoffs/ or .maestro/launches/`,
+      message: `Found ${legacyHandoffCount} legacy handoff artifact(s) under .maestro/handoffs/, .maestro/launches/, or ~/.maestro/launches/`,
       fix: "Review or remove the old files manually. Maestro now writes handoff artifacts to ~/.maestro/handoff/",
     });
   }

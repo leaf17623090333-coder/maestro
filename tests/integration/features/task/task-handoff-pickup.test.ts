@@ -20,6 +20,26 @@ const baseEnv = (tmp: string): Record<string, string> => ({
   USERPROFILE: tmp,
 });
 
+async function setupCrossProjectRepos(root: string): Promise<{
+  readonly sharedHome: string;
+  readonly projectA: string;
+  readonly projectB: string;
+}> {
+  const sharedHome = join(root, "shared-home");
+  const projectA = join(root, "project-a");
+  const projectB = join(root, "project-b");
+
+  await mkdir(sharedHome, { recursive: true });
+  await mkdir(projectA, { recursive: true });
+  await mkdir(projectB, { recursive: true });
+  await initGitRepo(projectA);
+  await initGitRepo(projectB);
+  expect((await runCli(["init"], projectA, { env: baseEnv(sharedHome) })).exitCode).toBe(0);
+  expect((await runCli(["init"], projectB, { env: baseEnv(sharedHome) })).exitCode).toBe(0);
+
+  return { sharedHome, projectA, projectB };
+}
+
 beforeEach(async () => {
   tmpDir = await mkdtemp(join(tmpdir(), "maestro-task-handoff-"));
   await initGitRepo(tmpDir);
@@ -222,17 +242,7 @@ describe("task + handoff pickup CLI", () => {
   }, SLOW_CLI_TIMEOUT_MS);
 
   it("does not reconcile a foreign project's stale handoff when task ids collide in the global store", async () => {
-    const sharedHome = join(tmpDir, "shared-home");
-    const projectA = join(tmpDir, "project-a");
-    const projectB = join(tmpDir, "project-b");
-
-    await mkdir(sharedHome, { recursive: true });
-    await mkdir(projectA, { recursive: true });
-    await mkdir(projectB, { recursive: true });
-    await initGitRepo(projectA);
-    await initGitRepo(projectB);
-    expect((await runCli(["init"], projectA, { env: baseEnv(sharedHome) })).exitCode).toBe(0);
-    expect((await runCli(["init"], projectB, { env: baseEnv(sharedHome) })).exitCode).toBe(0);
+    const { sharedHome, projectA, projectB } = await setupCrossProjectRepos(tmpDir);
 
     const created = await runCli(["task", "create", "project-b task", "--json"], projectB, {
       env: baseEnv(sharedHome),
@@ -276,17 +286,7 @@ describe("task + handoff pickup CLI", () => {
   }, SLOW_CLI_TIMEOUT_MS);
 
   it("rejects foreign-project task-linked pickup unless --standalone is passed", async () => {
-    const sharedHome = join(tmpDir, "shared-home");
-    const projectA = join(tmpDir, "project-a");
-    const projectB = join(tmpDir, "project-b");
-
-    await mkdir(sharedHome, { recursive: true });
-    await mkdir(projectA, { recursive: true });
-    await mkdir(projectB, { recursive: true });
-    await initGitRepo(projectA);
-    await initGitRepo(projectB);
-    expect((await runCli(["init"], projectA, { env: baseEnv(sharedHome) })).exitCode).toBe(0);
-    expect((await runCli(["init"], projectB, { env: baseEnv(sharedHome) })).exitCode).toBe(0);
+    const { sharedHome, projectA, projectB } = await setupCrossProjectRepos(tmpDir);
 
     const created = await runCli(["task", "create", "project-a handoff task", "--json"], projectA, {
       env: baseEnv(sharedHome),
@@ -334,17 +334,7 @@ describe("task + handoff pickup CLI", () => {
   }, SLOW_CLI_TIMEOUT_MS);
 
   it("allows explicit standalone pickup for a foreign task-linked packet", async () => {
-    const sharedHome = join(tmpDir, "shared-home");
-    const projectA = join(tmpDir, "project-a");
-    const projectB = join(tmpDir, "project-b");
-
-    await mkdir(sharedHome, { recursive: true });
-    await mkdir(projectA, { recursive: true });
-    await mkdir(projectB, { recursive: true });
-    await initGitRepo(projectA);
-    await initGitRepo(projectB);
-    expect((await runCli(["init"], projectA, { env: baseEnv(sharedHome) })).exitCode).toBe(0);
-    expect((await runCli(["init"], projectB, { env: baseEnv(sharedHome) })).exitCode).toBe(0);
+    const { sharedHome, projectA, projectB } = await setupCrossProjectRepos(tmpDir);
 
     const created = await runCli(["task", "create", "project-a standalone override", "--json"], projectA, {
       env: baseEnv(sharedHome),
@@ -398,17 +388,7 @@ describe("task + handoff pickup CLI", () => {
   }, SLOW_CLI_TIMEOUT_MS);
 
   it("allows prompt-only pickup from a different project", async () => {
-    const sharedHome = join(tmpDir, "shared-home");
-    const projectA = join(tmpDir, "project-a");
-    const projectB = join(tmpDir, "project-b");
-
-    await mkdir(sharedHome, { recursive: true });
-    await mkdir(projectA, { recursive: true });
-    await mkdir(projectB, { recursive: true });
-    await initGitRepo(projectA);
-    await initGitRepo(projectB);
-    expect((await runCli(["init"], projectA, { env: baseEnv(sharedHome) })).exitCode).toBe(0);
-    expect((await runCli(["init"], projectB, { env: baseEnv(sharedHome) })).exitCode).toBe(0);
+    const { sharedHome, projectA, projectB } = await setupCrossProjectRepos(tmpDir);
 
     const handoffStore = new FsHandoffStoreAdapter(sharedHome);
     const handoff = await handoffStore.create({

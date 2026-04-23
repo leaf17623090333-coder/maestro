@@ -621,7 +621,7 @@ Maestro stores project-local state in `.maestro/` and user-level defaults in `~/
         └── output.log
 ```
 
-The design is intentionally transparent: state is inspectable, diffable, and easy to back up. `.maestro/tasks/**` and `.maestro/principles.jsonl` are intentionally repo-tracked so the daily queue and behavioral rules are reviewed like any other code change; `.maestro/missions/**` stays ignored as local orchestration artifacts. Handoff packets live in the global `~/.maestro/handoff/` store (outside the repo) so they are visible across every working directory. Legacy `.maestro/handoffs/**` and `.maestro/launches/**` folders can remain on disk from earlier versions, but Maestro no longer reads them; `status` or `doctor` will warn when they are present.
+The design is intentionally transparent: state is inspectable, diffable, and easy to back up. `.maestro/tasks/**` and `.maestro/principles.jsonl` are intentionally repo-tracked so the daily queue and behavioral rules are reviewed like any other code change; `.maestro/missions/**` stays ignored as local orchestration artifacts. Handoff packets live in the global `~/.maestro/handoff/` store (outside the repo) so they are visible across every working directory. Legacy `.maestro/handoffs/**`, `.maestro/launches/**`, and `~/.maestro/launches/**` folders can remain on disk from earlier versions, but Maestro no longer reads them; `status` or `doctor` will warn when they are present.
 
 ## Codebase Layout
 

@@ -106,7 +106,7 @@ export function registerHandoffCommand(program: Command): void {
 
   handoffCmd
     .command("pickup")
-    .description("Pick up an open handoff packet and take over its linked task")
+    .description("Pick up an open handoff packet and resume its linked task unless --standalone is passed")
     .option("--id <id>", "Specific handoff id to pick up")
     .option("--agent <agent>", "Current agent when auto-detection is unavailable")
     .option("--session <id>", "Current session id when auto-detection is unavailable")
@@ -465,7 +465,7 @@ function formatPickupRecord(
   return [
     `[ok] Handoff picked up: ${record.id}`,
     ...(taskId ? [`  Task: ${taskId}`] : []),
-    ...(ownerId ? [`  Owner: ${ownerId}`] : []),
+    ...(taskId && ownerId ? [`  Owner: ${ownerId}`] : []),
     ...(record.pickedUpByAgent ? [`  Picked up by: ${record.pickedUpByAgent}${record.pickedUpBySessionId ? `/${record.pickedUpBySessionId}` : ""}`] : []),
     ...(record.consumedAt ? [`  Consumed at: ${record.consumedAt}`] : []),
     `  Prompt: ${record.promptPath}`,

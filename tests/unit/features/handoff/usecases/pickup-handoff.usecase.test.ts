@@ -170,7 +170,7 @@ describe("pickupHandoff", () => {
 
     expect(result.taskId).toBeUndefined();
     expect(result.contractTransferWarning).toBeUndefined();
-    expect(result.ownerId).toBe("claude-code-pickup-taskless");
+    expect(result.ownerId).toBeUndefined();
     expect(result.record).toMatchObject({
       id: launch.id,
       pickedUpByAgent: "claude",

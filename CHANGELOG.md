@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.58.2 - Worktree-safe global handoff scoping
+
+- Normalize git worktrees back to the owning Maestro project root before
+  comparing handoff provenance, so task-linked pickup from a legitimate
+  worktree is not mistaken for a foreign-project takeover.
+- Scope Mission Control principle rollups to the current project's global
+  handoff packets and filter handoff-backed outcomes through that scoped id
+  set.
+- `status` and `doctor` now also flag legacy `~/.maestro/launches/`
+  artifacts left by pre-0.58 standalone global launches.
+
 ## 0.58.1 - Project-anchored task-linked handoff pickup
 
 - Keep the handoff store global at `~/.maestro/handoff/`, but stop
@@ -22,8 +33,9 @@
   `~/.maestro/handoff/`. Every packet, task-linked or standalone, lives
   there. `--task-id` now links a packet to a task (for continuation and
   ownership transfer on pickup) without affecting storage location.
-  Cross-PWD pickup works by default: creating a handoff in project A and
-  running `maestro handoff pickup --id <id>` from project B now succeeds.
+  Handoffs are globally visible from any working directory. Prompt-only
+  packets can be picked up anywhere; task-linked packets must be picked up
+  from their source project unless `--standalone` is passed.
 - Rename internal vocabulary from "launch" to "handoff":
   `LaunchStorePort` -> `HandoffStorePort`,
   `HandoffLaunchRecord` -> `HandoffRecord`,
